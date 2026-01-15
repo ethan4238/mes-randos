@@ -1,0 +1,20 @@
+{
+  "items": [
+    {
+      "title": "Mont Blanc du Tacul",
+      "description": "Ascension du Mont Blanc du Tacul. Une course magnifique en haute montagne.",
+      "gpx": "gpx/Mont-Blanc-du-Tacul.gpx",
+      "photos": [
+        "photos/Mont-Blanc-du-Tacul.jpeg"
+      ]
+    },
+    {
+      "title": "Mont Coin",
+      "description": "Le Mont Coin un sommet permettant de voir le lever du soleil sur le Mont Blanc",
+      "gpx": "gpx/Mont-Coin.gpx",
+      "photos": [
+        "photos/Mont-Coin.jpeg"
+      ]
+    }
+  ]
+}

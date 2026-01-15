@@ -1,0 +1,23 @@
+backend:
+  name: git-gateway
+  branch: main
+
+media_folder: "uploads"
+public_folder: "uploads"
+
+collections:
+  - name: "data"
+    label: "Configuration"
+    files:
+      - name: "randos"
+        label: "Mes Randonnées"
+        file: "randos.json"
+        fields:
+          - label: "Liste des randonnées"
+            name: "items"
+            widget: "list"
+            fields:
+              - {label: "Titre", name: "title", widget: "string"}
+              - {label: "Description", name: "description", widget: "text"}
+              - {label: "Fichier GPX", name: "gpx", widget: "file"}
+              - {label: "Photos", name: "photos", widget: "list", field: {label: "Image", name: "image", widget: "image"}}
