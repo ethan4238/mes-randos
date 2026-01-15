@@ -5,7 +5,7 @@ const sections = document.querySelectorAll('.page-section');
 function showSection(targetId) {
     // 1. Cacher toutes les sections
     sections.forEach(sec => sec.classList.remove('active'));
-    sections.forEach(sec => sec.classList.add('hidden')); // Pour le panel map
+    sections.forEach(sec => sec.classList.add('hidden')); 
 
     // 2. Enlever active des liens
     navLinks.forEach(link => link.classList.remove('active'));
@@ -111,7 +111,6 @@ fetch('randos.json')
                         map.fitBounds(gpxLayer.getBounds());
                         afficherDetails(data, gpxLayer);
                         updateActiveItem(index);
-                        // Sur mobile, on ferme la sidebar si on veut (optionnel)
                     });
                     list.appendChild(item);
                 }
@@ -164,11 +163,24 @@ function afficherDetails(data, gpxLayer) {
     const elev = gpxLayer.get_elevation_gain().toFixed(0);    
     const time = msToTime(gpxLayer.get_moving_time());
     
+    // --- ICI ON AJOUTE LES ICÔNES ---
     document.getElementById('stats-placeholder').innerHTML = `
         <div class="stats-grid">
-            <div class="stat-item"><span class="stat-value">${dist} km</span><span class="stat-label">Distance</span></div>
-            <div class="stat-item"><span class="stat-value">${elev} m</span><span class="stat-label">Dénivelé</span></div>
-            <div class="stat-item"><span class="stat-value">${time}</span><span class="stat-label">Temps</span></div>
+            <div class="stat-item">
+                <span class="stat-icon">📏</span>
+                <span class="stat-value">${dist} km</span>
+                <span class="stat-label">Distance</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-icon">🏔️</span>
+                <span class="stat-value">${elev} m</span>
+                <span class="stat-label">Dénivelé</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-icon">⏱️</span>
+                <span class="stat-value">${time}</span>
+                <span class="stat-label">Temps</span>
+            </div>
         </div>
     `;
 
@@ -186,7 +198,7 @@ function afficherDetails(data, gpxLayer) {
     // Chart
     const raw = gpxLayer.get_elevation_data();
     const lbls=[], dataPoints=[];
-    raw.forEach((p, i) => { if(i%10===0) { lbls.push(p[0].toFixed(1)); dataPoints.push(p[1]); }}); // Moins de points pour perf
+    raw.forEach((p, i) => { if(i%10===0) { lbls.push(p[0].toFixed(1)); dataPoints.push(p[1]); }}); 
 
     if(myElevationChart) myElevationChart.destroy();
     myElevationChart = new Chart(document.getElementById('elevationChart'), {

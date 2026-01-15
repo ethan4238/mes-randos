@@ -1,212 +1,376 @@
 /* =========================================
-   1. VARIABLES & BASE
+   1. VARIABLES & PALETTE "BLUE & ORANGE ACCENT"
    ========================================= */
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Open+Sans:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Nunito+Sans:wght@400;600&display=swap');
 
 :root {
-    --primary: #2c3e50;
-    --accent: #e67e22;
-    --text: #333;
-    --bg: #f4f7f6;
+    /* --- COULEURS --- */
+    --primary: #1e3a8a;       /* Bleu Nuit (Titres, Textes importants) */
+    --primary-soft: #3b82f6;  /* Bleu plus clair (Icônes, déco) */
+    
+    --accent: #f97316;        /* Orange Vitaminé (Boutons, Actions) */
+    --accent-hover: #ea580c;  /* Orange plus foncé au survol */
+    
+    --text-main: #334155;     /* Gris Ardoise (Lecture) */
+    --text-light: #94a3b8;    /* Gris clair (Détails) */
+    
+    --bg-page: #f8fafc;       /* Fond très léger bleuté */
+    --white: #ffffff;
+    
+    --radius: 12px;
+    --header-height: 70px;
+    --shadow-card: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
 }
 
 * { box-sizing: border-box; }
 
 body, html { 
     margin: 0; padding: 0; height: 100%; width: 100%;
-    font-family: 'Open Sans', sans-serif;
-    background-color: var(--bg);
-    color: var(--text);
-    overflow: hidden; /* Important pour gérer nos propres scrolls */
+    font-family: 'Nunito Sans', sans-serif;
+    background-color: var(--bg-page);
+    color: var(--text-main);
+    overflow: hidden; 
 }
 
-h1, h2, h3 { font-family: 'Montserrat', sans-serif; }
+h1, h2, h3 { font-family: 'Montserrat', sans-serif; color: var(--primary); }
 
 /* =========================================
-   2. EN-TÊTE
+   2. EN-TÊTE (HEADER)
    ========================================= */
 header {
-    height: 60px;
-    background: rgba(44, 62, 80, 0.95);
-    backdrop-filter: blur(5px);
-    color: white;
+    height: var(--header-height);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
     display: flex; align-items: center; justify-content: space-between;
-    padding: 0 30px;
+    padding: 0 40px;
     position: fixed; top: 0; left: 0; right: 0;
     z-index: 1000;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-bottom: 1px solid #e2e8f0; 
 }
 
-header .logo { font-weight: 900; font-size: 1.2rem; letter-spacing: 1px; }
+header .logo { 
+    font-weight: 800; font-size: 1.3rem; letter-spacing: -0.5px;
+    color: var(--primary);
+}
 
 header nav a {
-    color: rgba(255,255,255,0.7);
+    color: var(--text-main);
     text-decoration: none;
-    margin-left: 25px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    transition: 0.3s;
-    text-transform: uppercase;
+    margin-left: 30px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    position: relative;
+    transition: color 0.3s;
 }
+
 header nav a:hover, header nav a.active { color: var(--accent); }
 
+/* Petit trait orange sous le lien actif */
+header nav a.active::after {
+    content: ''; position: absolute; bottom: -5px; left: 0; right: 0;
+    height: 3px; background: var(--accent); border-radius: 2px;
+}
+
 /* =========================================
-   3. GESTION DES PAGES (SECTIONS)
+   3. SECTIONS (Gestion de l'affichage)
    ========================================= */
 .page-section {
-    position: absolute;
-    top: 60px; bottom: 0; left: 0; right: 0; /* Prend tout l'espace sous le header */
-    overflow-y: auto; /* Permet de scroller le contenu */
-    background: var(--bg);
-    display: none; /* Caché par défaut */
-    opacity: 0;
-    transition: opacity 0.3s ease;
+    position: absolute; top: var(--header-height); bottom: 0; left: 0; right: 0;
+    overflow-y: auto; background: var(--bg-page);
+    display: none; opacity: 0; transition: opacity 0.4s ease;
 }
-
-.page-section.active {
-    display: block; /* Ou display flex selon le besoin */
-    opacity: 1;
-}
-
-/* Cas spécial pour la carte : pas de scroll global, c'est le layout flex qui gère */
-#app-container.active {
-    display: flex;
-    overflow: hidden;
-}
+.page-section.active { display: block; opacity: 1; }
+#app-container.active { display: flex; overflow: hidden; }
 
 /* =========================================
    4. PAGE ACCUEIL (HOME)
    ========================================= */
 .hero {
-    height: 80vh; /* 80% de la hauteur */
-    background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url('photos/banniere.jpg');
-    background-size: cover;
-    background-position: center;
-    display: flex; align-items: center; justify-content: center;
+    height: 100%;
+    /* Filtre sombre léger pour que le texte blanc ressorte bien */
+    background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.4)), url('photos/banniere.jpg');
+    background-size: cover; background-position: center;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
     text-align: center;
-    color: white;
 }
 
-.hero h1 { font-size: 3.5rem; margin: 0 0 20px 0; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-.hero p { font-size: 1.2rem; max-width: 600px; margin: 0 auto 30px auto; }
+.hero-content {
+    padding: 20px;
+    max-width: 800px;
+}
+
+.hero h1 { 
+    font-size: 3.5rem; margin: 0 0 20px 0; 
+    color: white;
+    text-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    text-transform: uppercase; letter-spacing: 2px;
+}
+
+.hero p { 
+    font-size: 1.3rem; color: rgba(255, 255, 255, 0.9); 
+    margin-bottom: 40px; font-weight: 600;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
 
 .cta-button {
-    padding: 15px 30px;
+    padding: 18px 45px;
     background: var(--accent);
     color: white; border: none;
-    font-size: 1rem; font-weight: 700;
+    font-size: 1rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
     border-radius: 50px; cursor: pointer;
-    transition: transform 0.2s;
+    box-shadow: 0 10px 25px rgba(249, 115, 22, 0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
 }
-.cta-button:hover { transform: scale(1.05); background: #d35400; }
+.cta-button:hover { 
+    background: var(--accent-hover); 
+    transform: translateY(-3px); 
+    box-shadow: 0 15px 35px rgba(249, 115, 22, 0.5); 
+}
 
+/* Blocs Features en bas */
 .features {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 30px; padding: 60px 10%;
+    position: relative; bottom: 0; left: 0; right: 0;
     background: white;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 40px; padding: 60px 10%;
 }
-.feature-box { text-align: center; padding: 20px; }
-.feature-box h3 { color: var(--primary); margin-bottom: 10px; }
+.feature-box { text-align: center; }
+.feature-box h3 { font-size: 1.2rem; margin-bottom: 10px; color: var(--primary); }
+.feature-box p { color: var(--text-light); }
 
 /* =========================================
-   5. PAGE À PROPOS
+   5. PAGE À PROPOS (Style Zig-Zag + Hauteur égale)
    ========================================= */
 .about-container {
-    max-width: 1000px;
-    margin: 60px auto;
-    padding: 0 20px;
-    display: flex; gap: 50px;
-    align-items: center;
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 0 30px 80px 30px;
+}
+
+.about-main-title {
+    text-align: center; font-size: 2.5rem; margin-bottom: 60px;
+    color: var(--primary); text-transform: uppercase; letter-spacing: 1px;
+}
+
+/* LIGNE FLEXIBLE */
+.about-row {
+    display: flex;
+    /* MAGIQUE : Stretch force les deux colonnes à avoir la même hauteur */
+    align-items: stretch; 
+    gap: 60px;
+    margin-bottom: 80px;
+}
+
+/* Colonne Image */
+.about-image {
+    flex: 1;        /* Prend 50% de largeur */
+    display: flex;  /* Nécessaire pour que l'image enfant remplisse le bloc */
 }
 
 .about-image img {
-    width: 350px; height: 450px;
-    object-fit: cover;
-    border-radius: 20px;
-    box-shadow: 20px 20px 0 var(--primary);
+    width: 100%;
+    height: 100%;       /* Prend toute la hauteur disponible du texte d'à côté */
+    object-fit: cover;  /* Coupe l'image proprement sans la déformer */
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-card);
 }
 
-.about-text h2 { color: var(--primary); font-size: 2.5rem; margin-top: 0; }
-.about-text p { line-height: 1.8; color: #555; margin-bottom: 20px; }
-
-blockquote {
-    border-left: 5px solid var(--accent);
-    margin: 30px 0; padding-left: 20px;
-    font-style: italic; color: var(--primary); font-weight: 600;
+/* Colonne Texte */
+.about-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Centre le texte verticalement si l'image est plus grande */
 }
 
-.socials { margin-top: 30px; display: flex; gap: 15px; }
+.about-text p {
+    line-height: 1.8; color: var(--text-main);
+    margin-bottom: 20px; font-size: 1.05rem;
+    text-align: justify;
+}
+
+.about-text strong {
+    color: var(--primary); font-weight: 800;
+}
+
+/* Boutons Sociaux */
+.socials-container {
+    display: flex; justify-content: center; gap: 20px;
+    margin-top: 40px; padding-top: 40px;
+    border-top: 1px solid #e2e8f0;
+    flex-wrap: wrap;
+}
+
 .social-btn {
-    padding: 10px 20px; border: 2px solid var(--primary);
-    text-decoration: none; color: var(--primary); font-weight: 700;
-    border-radius: 5px; transition: 0.3s;
+    padding: 12px 35px; border: 2px solid var(--primary);
+    text-decoration: none; color: var(--primary);
+    font-weight: 700; border-radius: 50px;
+    transition: 0.3s; text-transform: uppercase; font-size: 0.9rem;
 }
-.social-btn:hover { background: var(--primary); color: white; }
 
-/* Responsive About */
-@media (max-width: 768px) {
-    .hero h1 { font-size: 2.5rem; }
-    .about-container { flex-direction: column; text-align: center; }
-    .about-image img { width: 100%; height: auto; box-shadow: 10px 10px 0 var(--primary); }
-    blockquote { border-left: none; border-top: 5px solid var(--accent); padding-top: 20px; padding-left: 0; }
-    .socials { justify-content: center; }
+.social-btn:hover {
+    background: var(--primary); color: white;
+    transform: translateY(-3px); box-shadow: 0 5px 15px rgba(30, 58, 138, 0.2);
 }
 
 /* =========================================
-   6. PAGE CARTE (Existant + Clean)
+   6. APP CARTE - Sidebar
    ========================================= */
 #sidebar {
-    width: 380px; min-width: 380px;
-    background: white; border-right: 1px solid #ddd;
-    display: flex; flex-direction: column;
-    z-index: 5;
+    width: 400px; min-width: 400px;
+    background: var(--white); border-right: 1px solid #e2e8f0;
+    display: flex; flex-direction: column; z-index: 5;
+    box-shadow: 5px 0 20px rgba(0,0,0,0.02);
 }
 
+#sidebar h2 { 
+    padding: 25px; margin: 0; 
+    font-size: 1.3rem; color: var(--primary); 
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.search-container { padding: 20px 25px; }
+#search-input { 
+    width: 100%; padding: 12px 15px; 
+    border: 1px solid #cbd5e1; background: #f8fafc;
+    border-radius: 8px; outline: none; transition: 0.3s;
+}
+#search-input:focus { border-color: var(--primary); background: white; }
+
+#randonnees-list { flex-grow: 1; overflow-y: auto; padding: 0 15px; }
+
+.rando-item { 
+    padding: 18px 20px; margin-bottom: 10px;
+    background: var(--white); border: 1px solid #f1f5f9;
+    border-radius: 8px; cursor: pointer; transition: all 0.2s;
+}
+.rando-item:hover { 
+    transform: translateY(-2px); border-color: var(--primary-soft);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.rando-item.active { 
+    background: #eff6ff; border: 1px solid var(--primary-soft);
+}
+
+.rando-item h3 { margin: 0 0 5px 0; font-size: 1rem; color: var(--primary); }
+.rando-item p { margin: 0; font-size: 0.85rem; color: var(--text-light); }
+.sidebar-footer { padding: 15px; text-align: center; color: #ccc; font-size: 0.8rem; margin-top: auto;}
+/* =========================================
+   7. MAP & OVERLAY
+   ========================================= */
 #map { flex-grow: 1; height: 100%; z-index: 1; }
 
-#sidebar h2 { padding: 20px; margin: 0; font-size: 1.1rem; color: var(--primary); background: #fff; }
-.search-container { padding: 0 20px 20px; border-bottom: 1px solid #eee; }
-#search-input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9; }
+.map-switch-btn {
+    position: absolute; top: 20px; right: 20px; z-index: 999;
+    background: white; color: var(--primary);
+    padding: 10px 20px; border-radius: 30px; border: none;
+    font-weight: 700; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 8px;
+}
+.map-switch-btn:hover { color: var(--accent); }
 
-#randonnees-list { flex-grow: 1; overflow-y: auto; padding: 0; }
-.rando-item { padding: 20px; border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s; }
-.rando-item:hover { background: #f9f9f9; border-left: 4px solid var(--accent); }
-.rando-item.active { background: #f0f4f8; border-left: 4px solid var(--accent); }
-
-/* Overlay Panel */
+/* PANEL DÉTAILS */
 #info-panel {
     position: absolute; top: 20px; right: 20px; bottom: 20px;
-    width: 400px; background: white; z-index: 1000;
-    border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    width: 400px; background: var(--white); z-index: 1000;
+    border-radius: 16px; 
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
     display: flex; flex-direction: column;
-    transform: translateX(0); transition: transform 0.3s;
-    overflow: hidden;
+    transform: translateX(0); transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    
+    /* CACHER LA SCROLLBAR (Le panneau reste scrollable) */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE and Edge */
 }
+/* Cacher la scrollbar pour Chrome/Safari */
+#info-panel::-webkit-scrollbar, .panel-content::-webkit-scrollbar { display: none; }
+
 #info-panel.hidden { transform: translateX(450px); }
 
-.panel-header { padding: 20px; display: flex; justify-content: space-between; background: #fff; border-bottom: 1px solid #f0f0f0; }
-.panel-content { padding: 20px; overflow-y: auto; }
+.panel-header { 
+    padding: 20px 25px; flex-shrink: 0; /* Empêche le header de s'écraser */
+    display: flex; justify-content: space-between; align-items: flex-start;
+    background: white; border-bottom: 1px solid #f1f5f9;
+}
+.panel-header h2 { 
+    margin: 0; font-size: 1.4rem; color: var(--primary); line-height: 1.3;
+}
+#close-panel-btn { 
+    background: #f1f5f9; width: 32px; height: 32px; border-radius: 50%;
+    border: none; color: #64748b; font-size: 20px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: 0.2s;
+}
+#close-panel-btn:hover { background: #e2e8f0; color: #ef4444; }
 
-/* Map controls */
-.map-switch-btn {
-    position: absolute; top: 10px; right: 50px; z-index: 999;
-    background: white; padding: 8px 15px; border-radius: 20px; border: none;
-    font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+.panel-content { 
+    padding: 25px; 
+    overflow-y: auto; /* Scroll uniquement ici */
+    scrollbar-width: none; 
 }
 
-/* Stats & Photos Styles (gardés du précédent) */
-.stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-.stat-item { text-align: center; background: #f8f9fa; padding: 10px; border-radius: 8px; }
-.stat-value { font-weight: bold; color: var(--primary); display: block; }
-.stat-label { font-size: 0.7em; text-transform: uppercase; color: #888; }
-.chart-container { height: 150px; margin-bottom: 20px; }
-#rando-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.photo-box img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; }
+/* STATS GRID (Avec icônes) */
+.stats-grid { 
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 25px; 
+}
+.stat-item { 
+    text-align: center; background: #f8fafc; 
+    padding: 15px 5px; /* Un peu plus de hauteur */
+    border-radius: 12px; border: 1px solid #f1f5f9;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
 
-/* Responsive Mobile Carte */
+/* Style des nouvelles icônes */
+.stat-icon {
+    font-size: 1.5rem; margin-bottom: 5px; display: block;
+}
+
+.stat-value { 
+    font-weight: 800; font-size: 1.1rem; display: block;
+    color: var(--primary); /* Bleu foncé pour les chiffres */
+}
+.stat-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: var(--text-light); margin-top: 4px; }
+
+.chart-container { height: 160px; margin-bottom: 25px; border: 1px solid #f1f5f9; border-radius: 8px; padding: 10px; }
+#rando-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.photo-box img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; cursor: zoom-in; transition: transform 0.3s;}
+.photo-box:hover img { transform: scale(1.05); }
+
+/* =========================================
+   8. RESPONSIVE (Tablettes & Mobiles)
+   ========================================= */
+@media (max-width: 900px) {
+    /* Pour la section À Propos sur mobile */
+    .about-row {
+        flex-direction: column; 
+        gap: 30px; margin-bottom: 50px;
+    }
+    
+    /* On inverse l'ordre pour mettre l'image AU-DESSUS du texte */
+    .about-row.reverse-mobile {
+        flex-direction: column-reverse; 
+    }
+    
+    /* Sur mobile, on remet la hauteur auto pour éviter des images géantes */
+    .about-image img { 
+        height: auto; 
+        max-height: 400px; 
+    }
+    
+    .about-main-title { font-size: 2rem; margin-bottom: 40px; }
+    
+    /* On annule le display flex sur le texte pour le mobile */
+    .about-text { display: block; }
+}
+
 @media (max-width: 768px) {
+    /* Pour l'App Carte et le Header */
+    header { padding: 0 20px; }
+    .hero h1 { font-size: 2.2rem; }
+    .about-container { grid-template-columns: 1fr; gap: 30px; }
+    
     #app-container { flex-direction: column-reverse; }
-    #sidebar { width: 100%; height: 40%; min-width: 100%; border-top: 1px solid #ccc; }
+    #sidebar { width: 100%; height: 40%; min-width: 100%; border-radius: 20px 20px 0 0; }
     #map { height: 60%; }
     #info-panel { width: 100%; top: auto; bottom: 0; left: 0; right: 0; height: 85vh; border-radius: 20px 20px 0 0; }
     #info-panel.hidden { transform: translateY(100%); }
