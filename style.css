@@ -1,299 +1,325 @@
 /* =========================================
-   1. RESET ET BASE
+   1. IMPORTS & VARIABLES
+   ========================================= */
+/* On importe une belle police moderne (Montserrat pour les titres, Open Sans pour le texte) */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Open+Sans:wght@400;600&display=swap');
+
+:root {
+    --primary-color: #2c3e50;   /* Bleu nuit profond */
+    --accent-color: #e67e22;    /* Orange Montagne (Sécurité/Action) */
+    --bg-light: #f4f7f6;        /* Gris très très clair pour le fond */
+    --text-dark: #34495e;       /* Gris foncé pour le texte (moins dur que le noir) */
+    --shadow-soft: 0 4px 6px rgba(0,0,0,0.05); /* Ombre légère */
+    --shadow-hover: 0 10px 15px rgba(0,0,0,0.1); /* Ombre au survol */
+    --radius: 12px;             /* Arrondi standard */
+}
+
+/* =========================================
+   2. RESET ET BASE
    ========================================= */
 body, html { 
     margin: 0; 
     padding: 0; 
     height: 100%; 
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    font-family: 'Open Sans', sans-serif;
+    color: var(--text-dark);
+    background-color: var(--bg-light);
 }
 
+h1, h2, h3 { font-family: 'Montserrat', sans-serif; }
+
 /* =========================================
-   2. EN-TÊTE (HEADER)
+   3. EN-TÊTE (HEADER)
    ========================================= */
 header {
-    height: 60px;
-    background-color: #2c3e50;
+    height: 64px;
+    background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%); /* Dégradé subtil */
     color: white;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 20px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    z-index: 10;
+    padding: 0 24px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    z-index: 20;
     position: relative;
 }
 
 header .logo {
-    font-size: 1.2rem;
-    font-weight: bold;
-    letter-spacing: 1px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 header nav a {
-    color: #ecf0f1;
+    color: rgba(255,255,255,0.8);
     text-decoration: none;
-    margin-left: 20px;
+    margin-left: 25px;
     font-size: 0.9rem;
-    transition: color 0.3s;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    padding: 5px 0;
+    position: relative;
 }
 
-header nav a:hover { color: #e67e22; }
-header nav a.active { color: #e67e22; font-weight: bold; border-bottom: 2px solid #e67e22; }
+header nav a:hover, header nav a.active {
+    color: white;
+}
+
+/* Petit trait animé sous les liens */
+header nav a::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: 0;
+    left: 0;
+    background-color: var(--accent-color);
+    transition: width 0.3s;
+}
+header nav a:hover::after, header nav a.active::after { width: 100%; }
 
 /* =========================================
-   3. LAYOUT PRINCIPAL (CONTAINER)
+   4. LAYOUT PRINCIPAL
    ========================================= */
 #container {
     display: flex;
-    flex-direction: row; /* Par défaut : ligne (Ordi) */
+    flex-direction: row;
     width: 100%;
-    /* On prend toute la hauteur moins celle du header */
-    height: calc(100vh - 60px); 
+    height: calc(100vh - 64px); 
 }
 
 /* =========================================
-   4. SIDEBAR (COLONNE GAUCHE)
+   5. SIDEBAR (LA LISTE)
    ========================================= */
 #sidebar {
-    width: 350px;
-    min-width: 350px;
-    background: #f8f9fa;
-    border-right: 1px solid #ddd;
+    width: 380px; /* Un peu plus large pour le confort */
+    min-width: 380px;
+    background: white;
+    border-right: 1px solid #eee;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    z-index: 2;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    z-index: 5;
+    box-shadow: 4px 0 15px rgba(0,0,0,0.03);
 }
 
+/* Titre de la sidebar */
 #sidebar h2 {
-    padding: 20px;
+    padding: 25px 25px 15px 25px;
     margin: 0;
-    background: #2c3e50;
-    color: white;
-    font-size: 1.2rem;
+    color: var(--primary-color);
+    font-size: 1.1rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 1px;
 }
 
-/* Barre de recherche */
+/* Barre de recherche stylisée */
+.search-container { padding: 0 25px 20px 25px; }
+
 #search-input {
     width: 100%;
-    padding: 10px 15px;
-    border: 1px solid #ddd;
-    border-radius: 20px;
-    background-color: #f1f1f1;
-    font-family: inherit;
-    font-size: 0.9rem;
-    box-sizing: border-box;
+    padding: 12px 15px;
+    border: 2px solid #f1f1f1;
+    border-radius: var(--radius);
+    background-color: #f9f9f9;
+    font-size: 0.95rem;
     transition: all 0.3s;
     outline: none;
 }
 
 #search-input:focus {
     background-color: white;
-    border-color: #2c3e50;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.1);
 }
 
 /* Liste des randos */
+#randonnees-list { padding: 0 15px; }
+
 .rando-item {
-    padding: 15px 20px;
-    border-bottom: 1px solid #eee;
-    cursor: pointer;
-    transition: all 0.2s;
+    padding: 18px;
+    margin-bottom: 12px;
     background: white;
+    border: 1px solid #f0f0f0;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
 }
 
-.rando-item:hover { background: #e9ecef; border-left: 4px solid #e67e22; }
-.rando-item h3 { margin: 0 0 5px 0; font-size: 1rem; color: #333; }
-.rando-item p { margin: 0; font-size: 0.85rem; color: #666; }
+/* Effet "Carte" au survol */
+.rando-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+    border-color: transparent;
+}
 
-/* État Actif (Sélectionné) */
+.rando-item h3 { margin: 0 0 6px 0; font-size: 1.05rem; color: var(--primary-color); }
+.rando-item p { margin: 0; font-size: 0.85rem; color: #7f8c8d; display: flex; align-items: center; gap: 5px;}
+
+/* État Actif */
 .rando-item.active {
-    background-color: #2c3e50;
-    color: white;
-    border-left: 5px solid #e67e22;
+    background-color: #edf2f7; /* Bleu très très pâle */
+    border-color: var(--primary-color);
 }
-.rando-item.active h3 { color: white; }
-.rando-item.active p { color: #bdc3c7; }
+.rando-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 5px;
+    background-color: var(--accent-color);
+}
+
+/* Scrollbar jolie pour la sidebar */
+#sidebar::-webkit-scrollbar { width: 8px; }
+#sidebar::-webkit-scrollbar-track { background: transparent; }
+#sidebar::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 4px; }
 
 /* Pied de page Sidebar */
 .sidebar-footer {
     padding: 20px;
     text-align: center;
-    font-size: 0.8rem;
-    color: #999;
-    border-top: 1px solid #ddd;
-    background: #f8f9fa;
+    font-size: 0.75rem;
+    color: #bdc3c7;
     margin-top: auto;
+    border-top: 1px solid #f5f5f5;
 }
 
 /* =========================================
-   5. CARTE ET CONTRÔLES
+   6. CARTE & CONTRÔLES
    ========================================= */
 #map { flex-grow: 1; height: 100%; z-index: 1; }
 
-/* Bouton Switch Map/Sat */
+/* Bouton Switch Flottant */
 .map-switch-btn {
     background-color: white;
-    color: #333;
-    border: 2px solid white;
-    border-radius: 30px;
-    padding: 8px 15px;
-    font-size: 14px;
-    font-weight: bold;
+    color: var(--primary-color);
+    border: none;
+    border-radius: 50px;
+    padding: 10px 20px;
+    font-size: 0.9rem;
+    font-weight: 700;
     cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     display: flex;
     align-items: center;
     gap: 8px;
-    font-family: 'Segoe UI', sans-serif;
+    margin-top: 10px; margin-right: 10px; /* Marges pour décoller du bord */
 }
 
-.map-switch-btn:hover {
-    background-color: #f8f9fa;
-    transform: scale(1.02);
-}
+.map-switch-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.2); }
+.map-switch-btn.active { background-color: var(--primary-color); color: white; }
 
-.map-switch-btn.active {
-    background-color: #2c3e50;
-    color: white;
-    border-color: #2c3e50;
-}
+/* Personnalisation des contrôles Leaflet (Zoom/Locate) */
+.leaflet-bar { border: none !important; box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important; }
+.leaflet-bar a { border-radius: 8px !important; width: 36px !important; height: 36px !important; line-height: 36px !important; color: var(--primary-color) !important; }
+.leaflet-control-zoom-in { margin-bottom: 5px !important; }
 
 /* =========================================
-   6. PANNEAU D'INFORMATIONS (OVERLAY)
+   7. PANNEAU D'INFORMATIONS (OVERLAY)
    ========================================= */
 #info-panel {
     position: absolute;
-    top: 20px;
-    right: 20px;
-    width: 350px;
-    max-height: 85vh;
-    background: white;
+    top: 20px; right: 20px; bottom: 20px; /* Prend toute la hauteur avec marges */
+    width: 400px;
+    background: rgba(255, 255, 255, 0.95); /* Légèrement transparent */
+    backdrop-filter: blur(10px); /* Effet de flou iphone */
     z-index: 1000;
-    padding: 25px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    border-radius: 12px;
+    padding: 0; /* On gère le padding à l'intérieur */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    border-radius: 16px;
     overflow-y: auto;
-    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    display: flex; flex-direction: column;
 }
 
-#info-panel.hidden { transform: translateX(450px); display: block; }
+#info-panel.hidden { transform: translateX(450px); display: flex; }
+
+/* En-tête du panneau (avec l'image en fond possible plus tard) */
+.panel-header { padding: 25px 25px 10px 25px; }
 
 #close-btn {
     float: right;
     border: none;
-    background: none;
-    font-size: 28px;
-    cursor: pointer;
-    color: #999;
-    line-height: 20px;
+    background: #f1f1f1;
+    width: 32px; height: 32px; border-radius: 50%;
+    font-size: 20px; cursor: pointer; color: #555;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
 }
-#close-btn:hover { color: #333; }
+#close-btn:hover { background: #e74c3c; color: white; }
 
-#rando-title { margin-top: 0; color: #2c3e50; }
+#rando-title { margin-top: 10px; font-size: 1.5rem; color: var(--primary-color); line-height: 1.2; }
+#rando-desc { padding: 0 25px; color: #555; line-height: 1.6; font-size: 0.95rem; margin-bottom: 25px; }
 
 /* --- TABLEAU DE BORD (STATS) --- */
+.meta-info { padding: 0 25px; margin-bottom: 20px; }
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 colonnes */
-    gap: 10px;
-    margin-bottom: 20px;
-    background: #f8f9fa;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    background: white;
     padding: 15px;
-    border-radius: 12px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-soft);
+    border: 1px solid #f0f0f0;
 }
 
-.stat-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-}
+.stat-item { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.stat-icon { font-size: 1.4rem; margin-bottom: 5px; }
+.stat-value { font-size: 1.1rem; font-weight: 800; color: var(--primary-color); }
+.stat-label { font-size: 0.7rem; color: #95a5a6; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
 
-.stat-value {
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: #2c3e50;
-}
-
-.stat-label {
-    font-size: 0.75rem;
-    color: #7f8c8d;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-top: 4px;
-}
-
-.stat-icon { font-size: 1.2rem; margin-bottom: 2px; }
+/* Graphique */
+.chart-container { padding: 0 20px; margin-bottom: 30px; }
 
 /* --- GALERIE PHOTOS --- */
 #rando-photos {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-    gap: 12px;
-    margin-top: 25px;
-    padding-top: 20px;
-    border-top: 1px solid #eee;
+    grid-template-columns: repeat(2, 1fr); /* 2 colonnes, c'est plus joli dans le panel */
+    gap: 10px;
+    padding: 0 25px 25px 25px;
 }
 
 .photo-box {
     position: relative;
-    aspect-ratio: 1 / 1;
-    border-radius: 12px;
+    aspect-ratio: 4 / 3; /* Format photo standard */
+    border-radius: var(--radius);
     overflow: hidden;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-    background: #f0f0f0;
-    transition: all 0.3s ease;
-}
-
-.photo-box img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     cursor: zoom-in;
 }
-
-.photo-box:hover img { transform: scale(1.1); }
+.photo-box img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
+.photo-box:hover img { transform: scale(1.08); }
 
 
 /* =========================================
-   7. MOBILE RESPONSIVE
+   8. MOBILE RESPONSIVE
    ========================================= */
 @media (max-width: 768px) {
     #container { flex-direction: column-reverse; }
     
     #sidebar {
-        width: 100%;
-        min-width: 100%;
-        height: 35%;
-        border-right: none;
-        border-top: 1px solid #ddd;
+        width: 100%; min-width: 100%; height: 40%;
+        border-right: none; border-top: 1px solid #ddd;
+        border-radius: 20px 20px 0 0; /* Effet "Sheet" comme sur Google Maps */
+        box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
     }
     
-    #map { height: 65%; }
+    #map { height: 60%; }
 
     #info-panel {
-        top: auto;
-        bottom: 0;
-        right: 0;
-        left: 0;
-        width: 100%;
-        max-height: 60vh;
+        top: auto; bottom: 0; right: 0; left: 0;
+        width: 100%; max-height: 75vh;
         border-radius: 20px 20px 0 0;
         transform: translateY(0);
-        box-sizing: border-box;
+        margin: 0;
     }
-
     #info-panel.hidden { transform: translateY(100%); }
-
-    /* Photos un peu plus grandes sur mobile */
-    #rando-photos {
-        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-    }
+    
+    .map-switch-btn { top: 10px; right: 10px; position: absolute; margin: 0;}
 }
