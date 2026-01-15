@@ -78,6 +78,7 @@ header nav a.active::after {
     position: absolute; top: var(--header-height); bottom: 0; left: 0; right: 0;
     overflow-y: auto; background: var(--bg-page);
     display: none; opacity: 0; transition: opacity 0.4s ease;
+    
 }
 .page-section.active { display: block; opacity: 1; }
 #app-container.active { display: flex; overflow: hidden; }
@@ -89,6 +90,10 @@ header nav a.active::after {
     height: 100%;
     /* Filtre sombre léger pour que le texte blanc ressorte bien */
     background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.4)), url('photos/banniere.jpg');
+    
+    /* --- EFFET PARALLAXE ICI --- */
+    background-attachment: fixed; 
+    
     background-size: cover; background-position: center;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     text-align: center;
@@ -255,6 +260,7 @@ header nav a.active::after {
 .rando-item h3 { margin: 0 0 5px 0; font-size: 1rem; color: var(--primary); }
 .rando-item p { margin: 0; font-size: 0.85rem; color: var(--text-light); }
 .sidebar-footer { padding: 15px; text-align: center; color: #ccc; font-size: 0.8rem; margin-top: auto;}
+
 /* =========================================
    7. MAP & OVERLAY
    ========================================= */
