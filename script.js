@@ -1,273 +1,212 @@
-// 1. Définition des fonds de carte
-const topoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-    maxZoom: 17,
-    attribution: 'Map data: © OpenStreetMap | Style: © OpenTopoMap'
+// --- GESTION DE LA NAVIGATION (SPA) ---
+const navLinks = document.querySelectorAll('.nav-link');
+const sections = document.querySelectorAll('.page-section');
+
+function showSection(targetId) {
+    // 1. Cacher toutes les sections
+    sections.forEach(sec => sec.classList.remove('active'));
+    sections.forEach(sec => sec.classList.add('hidden')); // Pour le panel map
+
+    // 2. Enlever active des liens
+    navLinks.forEach(link => link.classList.remove('active'));
+
+    // 3. Montrer la section cible
+    const targetSection = document.getElementById(targetId);
+    if(targetSection) {
+        targetSection.classList.add('active');
+        targetSection.classList.remove('hidden');
+    }
+
+    // 4. Mettre le lien en actif
+    const activeLink = document.querySelector(`.nav-link[data-target="${targetId}"]`);
+    if(activeLink) activeLink.classList.add('active');
+
+    // 5. Si on va sur la carte, on force le recalcul de la taille (Bug Leaflet classique)
+    if(targetId === 'app-container' && map) {
+        setTimeout(() => { map.invalidateSize(); }, 100);
+    }
+}
+
+// Clics sur le menu
+navLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const target = link.getAttribute('data-target');
+        showSection(target);
+    });
 });
 
-const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom: 19,
-    attribution: 'Tiles © Esri'
-});
+// Bouton "Explorer" sur l'accueil
+function goToMap() {
+    showSection('app-container');
+}
 
-// 2. Initialisation de la carte
-var map = L.map('map', {
-    center: [45.8326, 6.8652],
-    zoom: 10,
-    layers: [topoLayer], 
-    zoomControl: false
-});
 
+// --- CODE EXISTANT (CARTE & RANDOS) ---
+
+// 1. Fonds de carte
+const topoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, attribution: '© OpenStreetMap' });
+const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: '© Esri' });
+
+// 2. Init Carte
+var map = L.map('map', { center: [45.8326, 6.8652], zoom: 10, layers: [topoLayer], zoomControl: false });
 L.control.zoom({ position: 'topleft' }).addTo(map);
 
-// 3. Switch Map/Sat
+// 3. Switch Sat
 const switchControl = L.Control.extend({
     options: { position: 'topright' },
     onAdd: function(map) {
-        const container = L.DomUtil.create('button', 'map-switch-btn');
-        container.innerHTML = '🛰️ Vue Satellite';
-        L.DomEvent.disableClickPropagation(container);
-        container.onclick = function() {
+        const btn = L.DomUtil.create('button', 'map-switch-btn');
+        btn.innerHTML = '🛰️ Satellite';
+        L.DomEvent.disableClickPropagation(btn);
+        btn.onclick = function() {
             if (map.hasLayer(topoLayer)) {
-                map.removeLayer(topoLayer);
-                map.addLayer(satelliteLayer);
-                this.classList.add('active');
-                this.innerHTML = '🗺️ Vue Plan';
+                map.removeLayer(topoLayer); map.addLayer(satelliteLayer); this.innerHTML = '🗺️ Plan';
             } else {
-                map.removeLayer(satelliteLayer);
-                map.addLayer(topoLayer);
-                this.classList.remove('active');
-                this.innerHTML = '🛰️ Vue Satellite';
+                map.removeLayer(satelliteLayer); map.addLayer(topoLayer); this.innerHTML = '🛰️ Satellite';
             }
         };
-        return container;
+        return btn;
     }
 });
 map.addControl(new switchControl());
 
-// 4. Localisation
+// 4. Locate
+L.control.locate({ position: 'topleft', strings: { title: "Me localiser" } }).addTo(map);
+
 let myElevationChart = null;
-L.control.locate({
-    position: 'topleft',
-    strings: { title: "Me localiser" },
-    locateOptions: { enableHighAccuracy: true, maxZoom: 15 }
-}).addTo(map);
 
-
-// =========================================================
-//  CHARGEMENT DES DONNÉES DEPUIS randos.json (Mode ADMIN)
-// =========================================================
-
+// CHARGEMENT DONNÉES
 fetch('randos.json')
     .then(response => response.json())
     .then(jsonData => {
-        // On récupère la liste dans le JSON
         const mesRandos = jsonData.items;
-
         if (mesRandos) {
             mesRandos.forEach((data, index) => {
-                
-                // A. Carte
+                // Carte
                 const gpxLayer = new L.GPX(data.gpx, {
                     async: true,
                     marker_options: {
-                        startIconUrl: 'icones/depart.png',
-                        endIconUrl: 'icones/arrivee.png',
-                        shadowUrl: null,
-                        iconSize: [32, 32], 
-                        iconAnchor: [16, 32] 
+                        startIconUrl: 'icones/depart.png', endIconUrl: 'icones/arrivee.png', shadowUrl: null, iconSize: [32, 32], iconAnchor: [16, 32]
                     },
-                    polyline_options: { color: 'red', opacity: 0.8, weight: 4, lineCap: 'round' }
+                    polyline_options: { color: 'red', opacity: 0.8, weight: 4 }
                 }).on('loaded', function(e) {
                     const dist = (e.target.get_distance() / 1000).toFixed(1);
-                    const elemDist = document.getElementById(`dist-${index}`);
-                    if(elemDist) elemDist.innerText = `${dist} km`;
+                    const el = document.getElementById(`dist-${index}`);
+                    if(el) el.innerText = `${dist} km`;
                 }).on('click', function(e) {
                     L.DomEvent.stopPropagation(e);
                     afficherDetails(data, gpxLayer);
                     updateActiveItem(index);
                 }).addTo(map);
 
-                // B. Liste
-                const listContainer = document.getElementById('randonnees-list');
-                if (listContainer) {
-                    const listItem = document.createElement('div');
-                    listItem.className = 'rando-item';
-                    listItem.id = `item-${index}`; 
-                    listItem.innerHTML = `
-                        <h3>${data.title}</h3>
-                        <p>Distance : <span id="dist-${index}">Calcul...</span></p>
-                    `;
-                    
-                    listItem.addEventListener('click', () => {
+                // Liste
+                const list = document.getElementById('randonnees-list');
+                if (list) {
+                    const item = document.createElement('div');
+                    item.className = 'rando-item';
+                    item.id = `item-${index}`;
+                    item.innerHTML = `<h3>${data.title}</h3><p>Distance : <span id="dist-${index}">...</span></p>`;
+                    item.addEventListener('click', () => {
                         map.fitBounds(gpxLayer.getBounds());
                         afficherDetails(data, gpxLayer);
                         updateActiveItem(index);
+                        // Sur mobile, on ferme la sidebar si on veut (optionnel)
                     });
-
-                    listContainer.appendChild(listItem);
+                    list.appendChild(item);
                 }
             });
         }
     })
-    .catch(error => console.error("Erreur chargement randos:", error));
+    .catch(err => console.error(err));
 
 
-// Footer
-const sidebar = document.getElementById('sidebar');
-const footer = document.createElement('div');
-footer.className = 'sidebar-footer';
-footer.innerHTML = "© 2026 - Ethan42380 - Mes Randonnées<br>Fait avec passion 🏔️";
-sidebar.appendChild(footer);
+// --- FONCTIONS UI ---
 
-
-// --- FONCTIONS ---
-
-function updateActiveItem(selectedIndex) {
-    const allItems = document.querySelectorAll('.rando-item');
-    allItems.forEach(item => item.classList.remove('active'));
-    const selectedItem = document.getElementById(`item-${selectedIndex}`);
-    if (selectedItem) {
-        selectedItem.classList.add('active');
-        selectedItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
+function updateActiveItem(idx) {
+    document.querySelectorAll('.rando-item').forEach(i => i.classList.remove('active'));
+    const sel = document.getElementById(`item-${idx}`);
+    if(sel) { sel.classList.add('active'); sel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
 }
 
 function msToTime(duration) {
-    if (!duration || duration === 0) return "--"; 
-    var minutes = Math.floor((duration / (1000 * 60)) % 60);
-    var hours = Math.floor((duration / (1000 * 60 * 60)) % 24);
-    hours = (hours < 10) ? "0" + hours : hours;
-    minutes = (minutes < 10) ? "0" + minutes : minutes;
-    return hours + "h" + minutes;
+    if (!duration) return "--"; 
+    var min = Math.floor((duration / (1000 * 60)) % 60);
+    var h = Math.floor((duration / (1000 * 60 * 60)) % 24);
+    return (h < 10 ? "0"+h : h) + "h" + (min < 10 ? "0"+min : min);
 }
 
 function afficherDetails(data, gpxLayer) {
     const panel = document.getElementById('info-panel');
     
-    // On vide le panel et on recrée la structure propre avec le padding
+    // Structure HTML Panel
     panel.innerHTML = `
         <div class="panel-header">
-            <h2 id="rando-title">${data.title}</h2>
-            <button id="close-btn">&times;</button>
+            <h2 style="margin:0; font-size:1.2rem; color:#2c3e50;">${data.title}</h2>
+            <button id="close-panel-btn" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
         </div>
         <div class="panel-content">
-            <div id="stats-container"></div>
-            <p id="rando-desc">${data.description}</p>
-            <div class="chart-container">
-                <canvas id="elevationChart"></canvas>
-            </div>
+            <div id="stats-placeholder"></div>
+            <p style="color:#666; line-height:1.5; margin: 15px 0;">${data.description}</p>
+            <div class="chart-container"><canvas id="elevationChart"></canvas></div>
             <div id="rando-photos"></div>
         </div>
     `;
 
-    // Réattacher l'événement fermeture
-    document.getElementById('close-btn').addEventListener('click', () => {
+    // Close Event
+    document.getElementById('close-panel-btn').onclick = () => {
         panel.classList.add('hidden');
         document.querySelectorAll('.rando-item').forEach(i => i.classList.remove('active'));
-    });
+    };
 
-    // --- CALCUL DES STATS ---
+    // Stats
     const dist = (gpxLayer.get_distance() / 1000).toFixed(1); 
     const elev = gpxLayer.get_elevation_gain().toFixed(0);    
-    const durationMs = gpxLayer.get_moving_time(); 
-    const durationStr = msToTime(durationMs);
+    const time = msToTime(gpxLayer.get_moving_time());
     
-    const statsHTML = `
+    document.getElementById('stats-placeholder').innerHTML = `
         <div class="stats-grid">
-            <div class="stat-item">
-                <span class="stat-icon">📏</span>
-                <span class="stat-value">${dist} km</span>
-                <span class="stat-label">Distance</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-icon">🏔️</span>
-                <span class="stat-value">${elev} m</span>
-                <span class="stat-label">Dénivelé</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-icon">🚶</span>
-                <span class="stat-value">${durationStr}</span>
-                <span class="stat-label">Temps</span>
-            </div>
+            <div class="stat-item"><span class="stat-value">${dist} km</span><span class="stat-label">Distance</span></div>
+            <div class="stat-item"><span class="stat-value">${elev} m</span><span class="stat-label">Dénivelé</span></div>
+            <div class="stat-item"><span class="stat-value">${time}</span><span class="stat-label">Temps</span></div>
         </div>
     `;
-    document.getElementById('stats-container').innerHTML = statsHTML;
 
-    // --- PHOTOS ---
-    const photoContainer = document.getElementById('rando-photos');
-    if(data.photos && data.photos.length > 0) {
-        data.photos.forEach(photoUrl => {
-            const photoBox = document.createElement('div');
-            photoBox.className = 'photo-box';
-            const link = document.createElement('a');
-            link.setAttribute('data-fslightbox', 'gallery'); 
-            link.href = photoUrl; 
-            const img = document.createElement('img');
-            img.src = photoUrl;
-            img.alt = data.title;
-            link.appendChild(img);
-            photoBox.appendChild(link);
-            photoContainer.appendChild(photoBox);
+    // Photos
+    const pContainer = document.getElementById('rando-photos');
+    if(data.photos) {
+        data.photos.forEach(url => {
+            const div = document.createElement('div'); div.className='photo-box';
+            div.innerHTML = `<a data-fslightbox="gallery" href="${url}"><img src="${url}"></a>`;
+            pContainer.appendChild(div);
         });
-        if (typeof refreshFsLightbox === 'function') refreshFsLightbox();
+        if(typeof refreshFsLightbox === 'function') refreshFsLightbox();
     }
 
-    // --- GRAPHIQUE ---
-    const rawData = gpxLayer.get_elevation_data(); 
-    const labels = [];
-    const elevations = [];
-    rawData.forEach((point, i) => {
-        if (i % 5 === 0) { 
-            labels.push(point[0].toFixed(1));
-            elevations.push(point[1].toFixed(0));
-        }
-    });
+    // Chart
+    const raw = gpxLayer.get_elevation_data();
+    const lbls=[], dataPoints=[];
+    raw.forEach((p, i) => { if(i%10===0) { lbls.push(p[0].toFixed(1)); dataPoints.push(p[1]); }}); // Moins de points pour perf
 
-    if (myElevationChart) { myElevationChart.destroy(); }
-    const ctx = document.getElementById('elevationChart').getContext('2d');
-    myElevationChart = new Chart(ctx, {
+    if(myElevationChart) myElevationChart.destroy();
+    myElevationChart = new Chart(document.getElementById('elevationChart'), {
         type: 'line',
         data: {
-            labels: labels,
+            labels: lbls,
             datasets: [{
-                label: 'Altitude',
-                data: elevations,
-                borderColor: '#e67e22',
-                backgroundColor: 'rgba(230, 126, 34, 0.1)',
-                fill: true,
-                pointRadius: 0,
-                tension: 0.3
+                label: 'Alt', data: dataPoints, borderColor: '#e67e22', backgroundColor: 'rgba(230,126,34,0.1)', fill: true, pointRadius: 0
             }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: { display: false }, /* On cache l'axe X pour gagner de la place sur mobile */
-                y: { display: true, ticks: { maxTicksLimit: 5 } }
-            },
-            plugins: { legend: { display: false } }
-        }
+        options: { responsive: true, maintainAspectRatio: false, scales: { x: {display:false} }, plugins: {legend:{display:false}} }
     });
 
     panel.classList.remove('hidden');
 }
 
-document.getElementById('close-btn').addEventListener('click', () => {
-    document.getElementById('info-panel').classList.add('hidden');
-    const allItems = document.querySelectorAll('.rando-item');
-    allItems.forEach(item => item.classList.remove('active'));
-});
-
 // Recherche
-const searchInput = document.getElementById('search-input');
-if (searchInput) {
-    searchInput.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase();
-        const allItems = document.querySelectorAll('.rando-item');
-        allItems.forEach(item => {
-            const title = item.querySelector('h3').innerText.toLowerCase();
-            item.style.display = title.includes(searchTerm) ? 'block' : 'none';
-        });
+document.getElementById('search-input').addEventListener('input', (e) => {
+    const term = e.target.value.toLowerCase();
+    document.querySelectorAll('.rando-item').forEach(item => {
+        item.style.display = item.querySelector('h3').innerText.toLowerCase().includes(term) ? 'block' : 'none';
     });
-}
+});

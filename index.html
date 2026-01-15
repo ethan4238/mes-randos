@@ -3,84 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mes Randonnées</title>
-    <meta name="description" content="Découvrez mes aventures en montagne, mes traces GPS et mes photos de randonnée.">
-
-    <meta property="og:title" content="🏔️ Le carnet de rando de [Votre Prénom]">
-    <meta property="og:description" content="Toutes mes sorties, profils d'altitude et photos en un seul endroit.">
-    <meta property="og:image" content="photos/Mont-Blanc-du-Tacul.jpeg"> <meta property="og:url" content="https://votre-site-netlify.app">
-    <meta property="og:type" content="website">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏔️</text></svg>">
+    <title>Ethan Randonnées - L'Appel des Sommets</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol/dist/L.Control.Locate.min.css" />
     <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-    <link rel="stylesheet" href="style.css" />
     
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    
+
     <header>
-        <div class="logo">🏔️ Mes Randos</div>
+        <div class="logo">🏔️ Ethan Randonnées</div>
         <nav>
-            <a href="#" class="active">Carte</a>
-            <a href="mailto:tonemail@gmail.com">Contact</a>
+            <a href="#home" class="nav-link active" data-target="home">Accueil</a>
+            <a href="#map" class="nav-link" data-target="app-container">Carte</a>
+            <a href="#about" class="nav-link" data-target="about">À Propos</a>
         </nav>
     </header>
 
-    <div id="container">
-        
+    <section id="home" class="page-section active">
+        <div class="hero">
+            <div class="hero-content">
+                <h1>L'APPEL DES SOMMETS</h1>
+                <p>Carnet de randonnée d'Ethan. Découvrez mes traces GPS, mes photos et mes aventures en montagne.</p>
+                <button onclick="goToMap()" class="cta-button">EXPLORER LA CARTE</button>
+            </div>
+        </div>
+        <div class="features">
+            <div class="feature-box">
+                <h3>🗺️ Traces GPS</h3>
+                <p>Téléchargez les fichiers GPX précis de toutes mes sorties.</p>
+            </div>
+            <div class="feature-box">
+                <h3>📈 Profils d'Altitude</h3>
+                <p>Visualisez le dénivelé et la difficulté avant de partir.</p>
+            </div>
+            <div class="feature-box">
+                <h3>📸 Galerie Photo</h3>
+                <p>Immergez-vous dans les paysages grâce aux photos géolocalisées.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="app-container" class="page-section hidden">
         <div id="sidebar">
             <h2>Mes Sorties</h2>
-            
-            <div style="padding: 0 20px 10px 20px;">
+            <div class="search-container">
                 <input type="text" id="search-input" placeholder="🔍 Rechercher une rando..." />
             </div>
-
-            <div id="randonnees-list">
-                </div>
+            <div id="randonnees-list"></div>
+            <div class="sidebar-footer">© 2026 - Ethan42380 - Fait avec passion 🏔️</div>
         </div>
 
         <div id="map"></div>
 
         <div id="info-panel" class="hidden">
-            <button id="close-btn">&times;</button>
-            <h2 id="rando-title">Titre</h2>
-            
-            <div class="meta-info">
-                <span id="rando-dist">-- km</span> | 
-                <span id="rando-elev">-- m</span>
             </div>
-            
-            <p id="rando-desc">Description...</p>
-            
-            <div class="chart-container" style="position: relative; height:200px; width:100%; margin-bottom: 20px;">
-                <canvas id="elevationChart"></canvas>
-            </div>
+    </section>
 
-            <div id="rando-photos"></div>
+    <section id="about" class="page-section hidden">
+        <div class="about-container">
+            <div class="about-image">
+                <img src="photos/profil.jpg" alt="Ethan en rando" onerror="this.src='https://via.placeholder.com/400x500?text=Photo+Profil'">
+            </div>
+            <div class="about-text">
+                <h2>À PROPOS DE MOI</h2>
+                <p>Salut, moi c'est <strong>Ethan</strong> !</p>
+                <p>Amoureux de la nature et de la technologie, j'ai créé ce site pour partager ma passion. Basé dans ma région de cœur, j'explore les sentiers dès que j'en ai l'occasion, que ce soit pour une balade tranquille ou une ascension technique.</p>
+                <p>Mon objectif ? Partager des topos clairs, des traces fiables et de belles images pour vous donner envie de chausser les crampons.</p>
+                
+                <blockquote>
+                    "La montagne nous offre le décor... À nous d'inventer l'histoire qui va avec !"
+                </blockquote>
+
+                <div class="socials">
+                    <a href="#" class="social-btn">Instagram</a>
+                    <a href="#" class="social-btn">Strava</a>
+                    <a href="mailto:tonemail@gmail.com" class="social-btn">Contact</a>
+                </div>
+            </div>
         </div>
-
-    </div>
+    </section>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/gpx.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol/dist/L.Control.Locate.min.js" charset="utf-8"></script>
-    
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol/dist/L.Control.Locate.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fslightbox/3.0.9/index.min.js"></script>
-
-    <script src="data.js"></script>
-
     <script src="script.js"></script>
-<script>
+    
+    <script>
       if (window.netlifyIdentity) {
         window.netlifyIdentity.on("init", user => {
           if (!user) {
-            window.netlifyIdentity.on("login", () => {
-              document.location.href = "/admin/";
-            });
+            window.netlifyIdentity.on("login", () => { document.location.href = "/admin/"; });
           }
         });
       }

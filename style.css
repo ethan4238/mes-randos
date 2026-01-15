@@ -1,214 +1,213 @@
 /* =========================================
-   1. IMPORTS & VARIABLES
+   1. VARIABLES & BASE
    ========================================= */
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Open+Sans:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Open+Sans:wght@400;600&display=swap');
 
 :root {
-    --primary-color: #2c3e50;
-    --accent-color: #e67e22;
-    --bg-light: #f4f7f6;
-    --text-dark: #34495e;
-    --radius: 16px; /* Arrondis plus doux */
+    --primary: #2c3e50;
+    --accent: #e67e22;
+    --text: #333;
+    --bg: #f4f7f6;
 }
 
-/* =========================================
-   2. RESET ET BASE
-   ========================================= */
-* {
-    box-sizing: border-box; /* Indispensable pour éviter les scrollbars horizontales */
-}
+* { box-sizing: border-box; }
 
 body, html { 
-    margin: 0; 
-    padding: 0; 
-    height: 100%; 
-    width: 100%;
-    overflow: hidden; /* Empêche le scroll global de la page */
+    margin: 0; padding: 0; height: 100%; width: 100%;
     font-family: 'Open Sans', sans-serif;
-    color: var(--text-dark);
-    background-color: var(--bg-light);
+    background-color: var(--bg);
+    color: var(--text);
+    overflow: hidden; /* Important pour gérer nos propres scrolls */
 }
 
 h1, h2, h3 { font-family: 'Montserrat', sans-serif; }
 
 /* =========================================
-   3. EN-TÊTE (HEADER)
+   2. EN-TÊTE
    ========================================= */
 header {
     height: 60px;
-    background: #2c3e50;
+    background: rgba(44, 62, 80, 0.95);
+    backdrop-filter: blur(5px);
     color: white;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    z-index: 20;
-    position: relative;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 30px;
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
-header .logo { font-size: 1.2rem; font-weight: 700; }
-header nav a { color: rgba(255,255,255,0.8); text-decoration: none; margin-left: 20px; font-size: 0.9rem; }
-header nav a:hover { color: white; }
+header .logo { font-weight: 900; font-size: 1.2rem; letter-spacing: 1px; }
+
+header nav a {
+    color: rgba(255,255,255,0.7);
+    text-decoration: none;
+    margin-left: 25px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: 0.3s;
+    text-transform: uppercase;
+}
+header nav a:hover, header nav a.active { color: var(--accent); }
 
 /* =========================================
-   4. LAYOUT PRINCIPAL
+   3. GESTION DES PAGES (SECTIONS)
    ========================================= */
-#container {
+.page-section {
+    position: absolute;
+    top: 60px; bottom: 0; left: 0; right: 0; /* Prend tout l'espace sous le header */
+    overflow-y: auto; /* Permet de scroller le contenu */
+    background: var(--bg);
+    display: none; /* Caché par défaut */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.page-section.active {
+    display: block; /* Ou display flex selon le besoin */
+    opacity: 1;
+}
+
+/* Cas spécial pour la carte : pas de scroll global, c'est le layout flex qui gère */
+#app-container.active {
     display: flex;
-    flex-direction: row;
-    width: 100%;
-    height: calc(100vh - 60px); 
     overflow: hidden;
 }
 
 /* =========================================
-   5. SIDEBAR (PC)
+   4. PAGE ACCUEIL (HOME)
    ========================================= */
-#sidebar {
-    width: 380px;
-    min-width: 380px;
-    background: white;
-    border-right: 1px solid #eee;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    z-index: 5;
-    box-shadow: 4px 0 15px rgba(0,0,0,0.03);
+.hero {
+    height: 80vh; /* 80% de la hauteur */
+    background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url('photos/banniere.jpg');
+    background-size: cover;
+    background-position: center;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center;
+    color: white;
 }
 
-#sidebar h2 { padding: 20px; margin: 0; font-size: 1.1rem; color: var(--primary-color); }
-.search-container { padding: 0 20px 20px 20px; }
-#search-input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9; }
+.hero h1 { font-size: 3.5rem; margin: 0 0 20px 0; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+.hero p { font-size: 1.2rem; max-width: 600px; margin: 0 auto 30px auto; }
 
-#randonnees-list { padding: 0 15px; }
-.rando-item {
-    padding: 15px; margin-bottom: 10px; background: white;
-    border: 1px solid #eee; border-radius: 10px; cursor: pointer;
+.cta-button {
+    padding: 15px 30px;
+    background: var(--accent);
+    color: white; border: none;
+    font-size: 1rem; font-weight: 700;
+    border-radius: 50px; cursor: pointer;
     transition: transform 0.2s;
 }
-.rando-item:hover { transform: translateY(-2px); border-color: var(--accent-color); }
-.rando-item.active { background-color: #f0f4f8; border-left: 4px solid var(--accent-color); }
-.rando-item h3 { margin: 0 0 5px 0; font-size: 1rem; color: var(--primary-color); }
-.rando-item p { margin: 0; font-size: 0.85rem; color: #7f8c8d; }
+.cta-button:hover { transform: scale(1.05); background: #d35400; }
 
-.sidebar-footer { padding: 20px; text-align: center; font-size: 0.75rem; color: #ccc; margin-top: auto; }
+.features {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px; padding: 60px 10%;
+    background: white;
+}
+.feature-box { text-align: center; padding: 20px; }
+.feature-box h3 { color: var(--primary); margin-bottom: 10px; }
 
 /* =========================================
-   6. CARTE
+   5. PAGE À PROPOS
    ========================================= */
+.about-container {
+    max-width: 1000px;
+    margin: 60px auto;
+    padding: 0 20px;
+    display: flex; gap: 50px;
+    align-items: center;
+}
+
+.about-image img {
+    width: 350px; height: 450px;
+    object-fit: cover;
+    border-radius: 20px;
+    box-shadow: 20px 20px 0 var(--primary);
+}
+
+.about-text h2 { color: var(--primary); font-size: 2.5rem; margin-top: 0; }
+.about-text p { line-height: 1.8; color: #555; margin-bottom: 20px; }
+
+blockquote {
+    border-left: 5px solid var(--accent);
+    margin: 30px 0; padding-left: 20px;
+    font-style: italic; color: var(--primary); font-weight: 600;
+}
+
+.socials { margin-top: 30px; display: flex; gap: 15px; }
+.social-btn {
+    padding: 10px 20px; border: 2px solid var(--primary);
+    text-decoration: none; color: var(--primary); font-weight: 700;
+    border-radius: 5px; transition: 0.3s;
+}
+.social-btn:hover { background: var(--primary); color: white; }
+
+/* Responsive About */
+@media (max-width: 768px) {
+    .hero h1 { font-size: 2.5rem; }
+    .about-container { flex-direction: column; text-align: center; }
+    .about-image img { width: 100%; height: auto; box-shadow: 10px 10px 0 var(--primary); }
+    blockquote { border-left: none; border-top: 5px solid var(--accent); padding-top: 20px; padding-left: 0; }
+    .socials { justify-content: center; }
+}
+
+/* =========================================
+   6. PAGE CARTE (Existant + Clean)
+   ========================================= */
+#sidebar {
+    width: 380px; min-width: 380px;
+    background: white; border-right: 1px solid #ddd;
+    display: flex; flex-direction: column;
+    z-index: 5;
+}
+
 #map { flex-grow: 1; height: 100%; z-index: 1; }
 
-.map-switch-btn {
-    background: white; color: var(--primary-color); border: none;
-    border-radius: 20px; padding: 8px 15px; font-weight: 700;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15); cursor: pointer;
-    display: flex; align-items: center; gap: 8px; margin-top: 10px; margin-right: 10px;
-}
-.map-switch-btn:hover { background: #f8f9fa; }
+#sidebar h2 { padding: 20px; margin: 0; font-size: 1.1rem; color: var(--primary); background: #fff; }
+.search-container { padding: 0 20px 20px; border-bottom: 1px solid #eee; }
+#search-input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9; }
 
-/* =========================================
-   7. PANNEAU D'INFORMATIONS (Overlay)
-   ========================================= */
+#randonnees-list { flex-grow: 1; overflow-y: auto; padding: 0; }
+.rando-item { padding: 20px; border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s; }
+.rando-item:hover { background: #f9f9f9; border-left: 4px solid var(--accent); }
+.rando-item.active { background: #f0f4f8; border-left: 4px solid var(--accent); }
+
+/* Overlay Panel */
 #info-panel {
-    position: absolute;
-    top: 20px; right: 20px; bottom: 20px;
-    width: 400px;
-    background: white;
-    z-index: 1000;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-    border-radius: var(--radius);
-    
-    /* GESTION DU SCROLL BAR PROPRE */
-    overflow-y: auto; 
-    scrollbar-width: none; /* Cache la barre sur Firefox */
-    -ms-overflow-style: none;  /* Cache la barre sur IE/Edge */
-    
+    position: absolute; top: 20px; right: 20px; bottom: 20px;
+    width: 400px; background: white; z-index: 1000;
+    border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);
     display: flex; flex-direction: column;
-    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    transform: translateX(0); transition: transform 0.3s;
+    overflow: hidden;
+}
+#info-panel.hidden { transform: translateX(450px); }
+
+.panel-header { padding: 20px; display: flex; justify-content: space-between; background: #fff; border-bottom: 1px solid #f0f0f0; }
+.panel-content { padding: 20px; overflow-y: auto; }
+
+/* Map controls */
+.map-switch-btn {
+    position: absolute; top: 10px; right: 50px; z-index: 999;
+    background: white; padding: 8px 15px; border-radius: 20px; border: none;
+    font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
-/* Cache la barre sur Chrome/Safari */
-#info-panel::-webkit-scrollbar { display: none; }
+/* Stats & Photos Styles (gardés du précédent) */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+.stat-item { text-align: center; background: #f8f9fa; padding: 10px; border-radius: 8px; }
+.stat-value { font-weight: bold; color: var(--primary); display: block; }
+.stat-label { font-size: 0.7em; text-transform: uppercase; color: #888; }
+.chart-container { height: 150px; margin-bottom: 20px; }
+#rando-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.photo-box img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; }
 
-#info-panel.hidden { transform: translateX(450px); display: flex; }
-
-/* Contenu du panneau avec PADDING CORRIGÉ */
-.panel-content {
-    padding: 0 25px 25px 25px; /* Marge interne pour que le texte ne touche pas les bords */
-}
-
-/* Header du panneau (Titre + Bouton fermer) */
-.panel-header {
-    position: sticky; top: 0; background: white; z-index: 10;
-    padding: 20px 25px 10px 25px;
-    display: flex; justify-content: space-between; align-items: start;
-}
-
-#close-btn {
-    background: #f1f1f1; border: none; width: 30px; height: 30px;
-    border-radius: 50%; cursor: pointer; font-size: 18px; color: #555;
-    flex-shrink: 0; /* Empêche le bouton de s'écraser */
-}
-
-#rando-title { margin: 0; font-size: 1.4rem; color: var(--primary-color); padding-right: 10px;}
-#rando-desc { color: #555; line-height: 1.6; margin-bottom: 25px; font-size: 0.95rem; }
-
-/* Stats Grid */
-.stats-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
-    background: #f8f9fa; padding: 15px; border-radius: 12px; margin-bottom: 20px;
-}
-.stat-item { text-align: center; display: flex; flex-direction: column; align-items: center; }
-.stat-value { font-weight: 800; color: var(--primary-color); font-size: 1.1rem; }
-.stat-label { font-size: 0.7rem; color: #999; text-transform: uppercase; margin-top: 4px; }
-.stat-icon { font-size: 1.2rem; }
-
-/* Graphique */
-.chart-container { width: 100%; height: 180px; margin-bottom: 25px; }
-
-/* Galerie */
-#rando-photos {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-}
-.photo-box {
-    aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden; background: #eee;
-}
-.photo-box img { width: 100%; height: 100%; object-fit: cover; }
-
-
-/* =========================================
-   8. MOBILE RESPONSIVE (CORRIGÉ)
-   ========================================= */
+/* Responsive Mobile Carte */
 @media (max-width: 768px) {
-    #container { flex-direction: column-reverse; }
-    
-    #sidebar {
-        width: 100%; min-width: 100%; height: 40%;
-        border-right: none; border-top: 1px solid #ddd;
-        border-radius: 20px 20px 0 0;
-        box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
-    }
-    
+    #app-container { flex-direction: column-reverse; }
+    #sidebar { width: 100%; height: 40%; min-width: 100%; border-top: 1px solid #ccc; }
     #map { height: 60%; }
-
-    /* Le panneau d'info sur mobile : STYLE "FEUILLE" */
-    #info-panel {
-        top: auto; bottom: 0; left: 0; right: 0;
-        width: 100%; 
-        height: 85vh; /* Prend 85% de la hauteur max */
-        border-radius: 20px 20px 0 0;
-        margin: 0;
-        transform: translateY(0);
-        /* Ombre pour bien séparer de la carte */
-        box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
-    }
-
+    #info-panel { width: 100%; top: auto; bottom: 0; left: 0; right: 0; height: 85vh; border-radius: 20px 20px 0 0; }
     #info-panel.hidden { transform: translateY(100%); }
-    
-    /* Plus de marge sur mobile */
-    .panel-content { padding: 0 20px 80px 20px; } /* 80px en bas pour scroller confortablement */
-    
-    /* Bouton Switch en haut à droite */
-    .map-switch-btn { position: absolute; top: 10px; right: 10px; z-index: 10; margin: 0; }
 }
