@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Randonnées</title>
+    <meta name="description" content="Découvrez mes aventures en montagne, mes traces GPS et mes photos de randonnée.">
+
+    <meta property="og:title" content="🏔️ Le carnet de rando de [Votre Prénom]">
+    <meta property="og:description" content="Toutes mes sorties, profils d'altitude et photos en un seul endroit.">
+    <meta property="og:image" content="photos/Mont-Blanc-du-Tacul.jpeg"> <meta property="og:url" content="https://votre-site-netlify.app">
+    <meta property="og:type" content="website">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏔️</text></svg>">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol/dist/L.Control.Locate.min.css" />
+    <link rel="stylesheet" href="style.css" />
+    
+</head>
+<body>
+    
+    <header>
+        <div class="logo">🏔️ Mes Randos</div>
+        <nav>
+            <a href="#" class="active">Carte</a>
+            <a href="mailto:tonemail@gmail.com">Contact</a>
+        </nav>
+    </header>
+
+    <div id="container">
+        
+        <div id="sidebar">
+            <h2>Mes Sorties</h2>
+            
+            <div style="padding: 0 20px 10px 20px;">
+                <input type="text" id="search-input" placeholder="🔍 Rechercher une rando..." />
+            </div>
+
+            <div id="randonnees-list">
+                </div>
+        </div>
+
+        <div id="map"></div>
+
+        <div id="info-panel" class="hidden">
+            <button id="close-btn">&times;</button>
+            <h2 id="rando-title">Titre</h2>
+            
+            <div class="meta-info">
+                <span id="rando-dist">-- km</span> | 
+                <span id="rando-elev">-- m</span>
+            </div>
+            
+            <p id="rando-desc">Description...</p>
+            
+            <div class="chart-container" style="position: relative; height:200px; width:100%; margin-bottom: 20px;">
+                <canvas id="elevationChart"></canvas>
+            </div>
+
+            <div id="rando-photos"></div>
+        </div>
+
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/gpx.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol/dist/L.Control.Locate.min.js" charset="utf-8"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fslightbox/3.0.9/index.min.js"></script>
+
+    <script src="data.js"></script>
+
+    <script src="script.js"></script>
+</body>
+</html>
