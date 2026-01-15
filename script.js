@@ -144,9 +144,29 @@ function msToTime(duration) {
 function afficherDetails(data, gpxLayer) {
     const panel = document.getElementById('info-panel');
     
-    document.getElementById('rando-title').innerText = data.title;
-    document.getElementById('rando-desc').innerText = data.description;
-    
+    // On vide le panel et on recrée la structure propre avec le padding
+    panel.innerHTML = `
+        <div class="panel-header">
+            <h2 id="rando-title">${data.title}</h2>
+            <button id="close-btn">&times;</button>
+        </div>
+        <div class="panel-content">
+            <div id="stats-container"></div>
+            <p id="rando-desc">${data.description}</p>
+            <div class="chart-container">
+                <canvas id="elevationChart"></canvas>
+            </div>
+            <div id="rando-photos"></div>
+        </div>
+    `;
+
+    // Réattacher l'événement fermeture
+    document.getElementById('close-btn').addEventListener('click', () => {
+        panel.classList.add('hidden');
+        document.querySelectorAll('.rando-item').forEach(i => i.classList.remove('active'));
+    });
+
+    // --- CALCUL DES STATS ---
     const dist = (gpxLayer.get_distance() / 1000).toFixed(1); 
     const elev = gpxLayer.get_elevation_gain().toFixed(0);    
     const durationMs = gpxLayer.get_moving_time(); 
@@ -167,24 +187,14 @@ function afficherDetails(data, gpxLayer) {
             <div class="stat-item">
                 <span class="stat-icon">🚶</span>
                 <span class="stat-value">${durationStr}</span>
-                <span class="stat-label">Temps marche</span>
+                <span class="stat-label">Temps</span>
             </div>
         </div>
     `;
+    document.getElementById('stats-container').innerHTML = statsHTML;
 
-    let metaDiv = document.querySelector('#info-panel .meta-info');
-    if(!metaDiv) {
-        metaDiv = document.createElement('div');
-        metaDiv.className = 'meta-info';
-        document.getElementById('rando-title').after(metaDiv);
-    }
-    metaDiv.innerHTML = statsHTML;
-    metaDiv.style.border = "none";
-    metaDiv.style.padding = "0";
-
+    // --- PHOTOS ---
     const photoContainer = document.getElementById('rando-photos');
-    photoContainer.innerHTML = ""; 
-    
     if(data.photos && data.photos.length > 0) {
         data.photos.forEach(photoUrl => {
             const photoBox = document.createElement('div');
@@ -195,7 +205,6 @@ function afficherDetails(data, gpxLayer) {
             const img = document.createElement('img');
             img.src = photoUrl;
             img.alt = data.title;
-            img.onerror = function() { photoBox.style.display='none'; };
             link.appendChild(img);
             photoBox.appendChild(link);
             photoContainer.appendChild(photoBox);
@@ -203,6 +212,7 @@ function afficherDetails(data, gpxLayer) {
         if (typeof refreshFsLightbox === 'function') refreshFsLightbox();
     }
 
+    // --- GRAPHIQUE ---
     const rawData = gpxLayer.get_elevation_data(); 
     const labels = [];
     const elevations = [];
@@ -220,25 +230,26 @@ function afficherDetails(data, gpxLayer) {
         data: {
             labels: labels,
             datasets: [{
-                label: 'Altitude (m)',
+                label: 'Altitude',
                 data: elevations,
                 borderColor: '#e67e22',
-                backgroundColor: 'rgba(230, 126, 34, 0.2)',
+                backgroundColor: 'rgba(230, 126, 34, 0.1)',
                 fill: true,
                 pointRadius: 0,
-                tension: 0.1
+                tension: 0.3
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                x: { display: true, title: { display: true, text: 'Distance (km)' } },
-                y: { display: true, title: { display: true, text: 'Altitude (m)' } }
+                x: { display: false }, /* On cache l'axe X pour gagner de la place sur mobile */
+                y: { display: true, ticks: { maxTicksLimit: 5 } }
             },
             plugins: { legend: { display: false } }
         }
     });
+
     panel.classList.remove('hidden');
 }
 
