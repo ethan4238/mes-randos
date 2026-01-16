@@ -57,40 +57,55 @@ L.control.locate({ position: 'topleft', strings: { title: "Me localiser" } }).ad
 
 let myElevationChart = null;
 
+// --- GESTION DES FAVORIS (LOCAL STORAGE) ---
+function getFavoris() {
+    return JSON.parse(localStorage.getItem('mes_favoris_randos')) || [];
+}
+
+function toggleFavori(index, event) {
+    if(event) event.stopPropagation(); // Empêche d'ouvrir la fiche quand on clique sur le cœur
+    
+    let favoris = getFavoris();
+    const btn = document.getElementById(`fav-btn-${index}`);
+    
+    if (favoris.includes(index)) {
+        // Retirer des favoris
+        favoris = favoris.filter(id => id !== index);
+        if(btn) {
+            btn.classList.remove('active');
+            btn.innerHTML = '🤍'; // Cœur vide
+        }
+    } else {
+        // Ajouter aux favoris
+        favoris.push(index);
+        if(btn) {
+            btn.classList.add('active');
+            btn.innerHTML = '❤️'; // Cœur plein
+        }
+    }
+    
+    localStorage.setItem('mes_favoris_randos', JSON.stringify(favoris));
+}
+
+
 // --- COULEURS DYNAMIQUES ---
 function getDiffColor(d) {
-    if(!d) return '#f59e0b'; // Orange par défaut
-    if(d === 'Facile') return '#10b981';   // Vert
-    if(d === 'Moyenne') return '#f59e0b';  // Orange
-    if(d === 'Difficile') return '#ef4444';// Rouge
-    if(d === 'Expert') return '#000000';   // Noir
+    if(!d) return '#f59e0b'; 
+    if(d === 'Facile') return '#10b981';   
+    if(d === 'Moyenne') return '#f59e0b';  
+    if(d === 'Difficile') return '#ef4444';
+    if(d === 'Expert') return '#000000';   
     return '#f59e0b';
 }
 
-// --- NOUVEAU : FONCTION PARTAGE ---
+// --- PARTAGE ---
 async function partagerRando(titre) {
-    const url = window.location.href; // L'URL actuelle
+    const url = window.location.href; 
     const text = `Regarde cette rando : ${titre} ! 🏔️`;
-
-    // Si le navigateur supporte le partage natif (Mobile)
     if (navigator.share) {
-        try {
-            await navigator.share({
-                title: titre,
-                text: text,
-                url: url
-            });
-            console.log('Partage réussi');
-        } catch (err) {
-            console.log('Partage annulé', err);
-        }
+        try { await navigator.share({ title: titre, text: text, url: url }); } catch (err) {}
     } else {
-        // Fallback pour PC : Copie dans le presse-papier
-        navigator.clipboard.writeText(`${text} ${url}`).then(() => {
-            alert('Lien copié dans le presse-papier ! 📋');
-        }).catch(err => {
-            console.error('Erreur copie', err);
-        });
+        navigator.clipboard.writeText(`${text} ${url}`).then(() => alert('Lien copié ! 📋'));
     }
 }
 
@@ -101,32 +116,22 @@ fetch('randos.json')
         const mesRandos = jsonData.items;
         if (mesRandos) {
             mesRandos.forEach((data, index) => {
-                // 1. SÉCURITÉ FORMAT PHOTOS
                 let safePhotos = [];
                 if (data.photos) {
-                    if (Array.isArray(data.photos)) {
-                        safePhotos = data.photos;
-                    } else if (typeof data.photos === 'string') {
-                        safePhotos = [data.photos];
-                    }
+                    if (Array.isArray(data.photos)) safePhotos = data.photos;
+                    else if (typeof data.photos === 'string') safePhotos = [data.photos];
                 }
                 data.safePhotos = safePhotos;
 
-                // 2. COULEUR DE LA TRACE
                 const trackColor = getDiffColor(data.difficulty);
 
-                // 3. CRÉATION DE LA COUCHE GPX
+                // GPX Layer
                 const gpxLayer = new L.GPX(data.gpx, {
                     async: true,
                     marker_options: {
                         startIconUrl: 'icones/depart.png', endIconUrl: 'icones/arrivee.png', shadowUrl: null, iconSize: [32, 32], iconAnchor: [16, 32]
                     },
-                    polyline_options: { 
-                        color: trackColor, 
-                        opacity: 0.8, 
-                        weight: 4,
-                        lineCap: 'round'
-                    }
+                    polyline_options: { color: trackColor, opacity: 0.8, weight: 4, lineCap: 'round' }
                 }).on('loaded', function(e) {
                     const dist = (e.target.get_distance() / 1000).toFixed(1);
                     const elDist = document.getElementById(`dist-${index}`);
@@ -145,12 +150,14 @@ fetch('randos.json')
                     updateActiveItem(index);
                 }).addTo(map);
 
-                // 4. CRÉATION DE L'ÉLÉMENT DE LISTE
+                // --- CRÉATION LISTE AVEC COEUR ---
                 const list = document.getElementById('randonnees-list');
                 if (list) {
                     const item = document.createElement('div');
                     item.className = 'rando-item';
                     item.id = `item-${index}`;
+                    item.setAttribute('data-diff', data.difficulty); // Pour le filtre
+                    item.setAttribute('data-id', index); // Pour le filtre favoris
                     
                     let thumbUrl = 'https://via.placeholder.com/70?text=No+Img';
                     if (safePhotos.length > 0) {
@@ -160,15 +167,21 @@ fetch('randos.json')
                     
                     const diff = data.difficulty || "Moyenne";
                     const diffColor = getDiffColor(diff);
+                    
+                    // Vérif si déjà favori
+                    const isFav = getFavoris().includes(index);
+                    const heartIcon = isFav ? '❤️' : '🤍';
+                    const activeClass = isFav ? 'active' : '';
 
                     item.innerHTML = `
-                        <img src="${thumbUrl}" class="list-thumb" loading="lazy" onerror="this.src='https://via.placeholder.com/70?text=Erreur'" alt="${data.title}">
+                        <img src="${thumbUrl}" class="list-thumb" loading="lazy" alt="${data.title}">
                         <div class="list-content">
                             <h3>${data.title}</h3>
                             <p style="margin-bottom: 2px;">Distance : <span id="dist-${index}">...</span></p>
                             <p style="font-size: 0.75rem; color: #999;">📅 <span id="date-${index}">--/--/----</span></p>
                             <span class="diff-badge" style="background-color: ${diffColor};">${diff}</span>
                         </div>
+                        <button id="fav-btn-${index}" class="fav-btn-list ${activeClass}" onclick="toggleFavori(${index}, event)">${heartIcon}</button>
                     `;
                     
                     item.addEventListener('click', () => {
@@ -203,17 +216,37 @@ function updateActiveItem(idx) {
     if(sel) { sel.classList.add('active'); sel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
 }
 
-function filtrerRandos(niveau) {
+function filtrerRandos(filtre) {
+    // Gestion boutons actifs
     document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
+    // On trouve le bouton cliqué
+    const buttons = document.querySelectorAll('.filter-btn');
+    // Simple boucle pour mettre 'active' sur le bon bouton (basique)
+    for(let b of buttons) {
+        if(b.textContent.includes(filtre === 'all' ? 'Tout' : (filtre === 'favoris' ? 'Favoris' : filtre))) {
+            b.classList.add('active');
+        }
+    }
+    // Si on clique sur le bouton rouge Favoris explicitement
+    if(filtre === 'favoris') {
+         document.querySelector('button[onclick="filtrerRandos(\'favoris\')"]').classList.add('active');
+    }
 
     const items = document.querySelectorAll('.rando-item');
+    const favoris = getFavoris();
+
     items.forEach(item => {
-        const badge = item.querySelector('.diff-badge').innerText;
-        if (niveau === 'all' || badge === niveau) {
+        const diff = item.getAttribute('data-diff');
+        const id = parseInt(item.getAttribute('data-id'));
+        
+        if (filtre === 'all') {
             item.style.display = 'flex';
+        } else if (filtre === 'favoris') {
+            // Affiche seulement si l'ID est dans le tableau des favoris
+            item.style.display = favoris.includes(id) ? 'flex' : 'none';
         } else {
-            item.style.display = 'none';
+            // Filtre par difficulté
+            item.style.display = (diff === filtre) ? 'flex' : 'none';
         }
     });
 }
@@ -231,11 +264,14 @@ function afficherDetails(data, gpxLayer) {
         const displayDate = data.calculatedDate || "Date inconnue";
         const diff = data.difficulty || "Moyenne";
         const diffColor = getDiffColor(diff);
-
-        // On nettoie les guillemets pour le partage JS
         const cleanTitle = data.title.replace(/'/g, "\\'");
 
+        // MODIFICATION ICI : AJOUT DE LA POIGNÉE (DRAG HANDLE) + HEADER
         panel.innerHTML = `
+            <div class="drag-handle" id="drag-info">
+                <div class="drag-bar"></div>
+            </div>
+
             <div class="panel-header">
                 <h2 style="margin:0; font-size:1.2rem; color:#2c3e50;">${data.title}</h2>
                 <button id="close-panel-btn" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
@@ -261,19 +297,14 @@ function afficherDetails(data, gpxLayer) {
             </div>
         `;
 
-        // Événements boutons
         document.getElementById('close-panel-btn').onclick = () => {
             panel.classList.add('hidden');
             document.querySelectorAll('.rando-item').forEach(i => i.classList.remove('active'));
             gpxLayer.setStyle({ weight: 4, opacity: 0.8 });
         };
 
-        // Activation du clic partage via JS (plus sûr)
-        document.getElementById('share-btn-action').onclick = () => {
-            partagerRando(data.title);
-        };
+        document.getElementById('share-btn-action').onclick = () => { partagerRando(data.title); };
 
-        // Stats
         const dist = (gpxLayer.get_distance() / 1000).toFixed(1); 
         const elev = gpxLayer.get_elevation_gain().toFixed(0);    
         const time = msToTime(gpxLayer.get_moving_time());
@@ -310,7 +341,10 @@ function afficherDetails(data, gpxLayer) {
             options: { responsive: true, maintainAspectRatio: false, scales: { x: {display:false} }, plugins: {legend:{display:false}} }
         });
 
+        // MODIFICATION ICI : ON REND LE PANNEAU DRAGGABLE AVANT DE L'AFFICHER
+        makeDraggable('info-panel', 'drag-info');
         panel.classList.remove('hidden');
+        
     } catch (e) {
         console.error("Erreur affichage détails : ", e);
     }
@@ -339,3 +373,75 @@ if (backToTopBtn) {
         if(activeSection) activeSection.scrollTo({ top: 0, behavior: 'smooth' });
     });
 }
+
+// ==========================================
+// GESTION DU GLISSEMENT (DRAG) SUR MOBILE
+// ==========================================
+
+function makeDraggable(elementId, handleId) {
+    const element = document.getElementById(elementId);
+    const handle = document.getElementById(handleId);
+    
+    // On ne fait ça que sur mobile
+    if (!element || !handle || window.innerWidth > 768) return;
+
+    let startY = 0;
+    let startHeight = 0;
+    let isDragging = false;
+
+    // Quand on pose le doigt sur la poignée
+    handle.addEventListener('touchstart', (e) => {
+        isDragging = true;
+        startY = e.touches[0].clientY;
+        startHeight = element.offsetHeight;
+        element.style.transition = 'none'; // On coupe l'animation pour que ça suive le doigt instantanément
+    }, { passive: false });
+
+    // Quand on bouge le doigt
+    document.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        
+        const currentY = e.touches[0].clientY;
+        const delta = currentY - startY; // De combien on a bougé
+        
+        // Nouvelle hauteur = Hauteur de départ - déplacement (car on tire vers le bas)
+        const newHeight = startHeight - delta;
+
+        // Limites (Min 15vh, Max 85vh)
+        const minH = window.innerHeight * 0.15;
+        const maxH = window.innerHeight * 0.85;
+
+        if (newHeight > minH && newHeight < maxH) {
+            element.style.height = `${newHeight}px`;
+        }
+    }, { passive: false });
+
+    // Quand on lâche le doigt
+    document.addEventListener('touchend', () => {
+        if (!isDragging) return;
+        isDragging = false;
+        
+        // On remet l'animation douce
+        element.style.transition = 'height 0.3s ease-out';
+        
+        // AIMANTATION (SNAP) : On décide si on va en haut, au milieu ou en bas
+        const currentHeight = element.offsetHeight;
+        const screenH = window.innerHeight;
+        
+        if (currentHeight < screenH * 0.30) {
+            // Si on est bas -> On ferme presque (15vh)
+            element.style.height = '15vh';
+        } else if (currentHeight > screenH * 0.75) {
+            // Si on est très haut -> On ouvre en grand (85vh)
+            element.style.height = '85vh';
+        } else {
+            // Sinon -> On revient au milieu (60vh)
+            element.style.height = '60vh';
+        }
+    });
+}
+
+// Initialisation au chargement
+document.addEventListener('DOMContentLoaded', () => {
+    makeDraggable('sidebar', 'drag-sidebar');
+});

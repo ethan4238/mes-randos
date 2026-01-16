@@ -2,17 +2,22 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Ethan Randonnées - L'Appel des Sommets</title>
-    
-    <link rel="icon" type="image/png" href="icones/montagne.png">
 
+    <meta property="og:title" content="Ethan Randonnées - L'Appel des Sommets">
+    <meta property="og:description" content="Découvrez mes meilleures randonnées, traces GPS et photos en montagne.">
+    <meta property="og:image" content="https://votre-site.netlify.app/photos/banniere.jpg">
+    <meta property="og:url" content="https://votre-site.netlify.app/">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <link rel="icon" type="image/png" href="icones/montagne.png">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="apple-touch-icon" href="icones/icon-192.png">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
@@ -47,9 +52,7 @@
         <div class="cinematic-container">
             <video autoplay muted loop playsinline class="cinematic-video">
                 <source src="videos/intro-desktop.mov" type="video/mp4" media="(min-width: 769px)">
-                
                 <source src="videos/intro-mobile.mov" type="video/mp4">
-
                 Votre navigateur ne supporte pas la balise vidéo.
             </video>
             
@@ -58,9 +61,10 @@
                     "La montagne nous offre le décor,<br>
                     à nous de créer l'histoire."
                 </blockquote>
-                <div class="citation-author">— Ethan</div>
+                <div class="citation-author">Ethan</div>
             </div>
         </div>
+
         <div class="features">
             <div class="feature-box">
                 <h3>🗺️ Traces GPS</h3>
@@ -79,28 +83,27 @@
         <footer class="site-footer">
             <div class="footer-content">
                 <div class="footer-logo">🏔️ Ethan Randonnées</div>
-                
                 <p class="footer-text">Suis-moi sur les réseaux :</p>
                 <div class="footer-socials">
-                    <a href="https://www.instagram.com/ethan4238/" target="_blank" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
-                    <a href="https://www.tiktok.com/@ethan42380" target="_blank" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
-                    <a href="https://www.strava.com/athletes/132170603" target="_blank" title="Strava"><i class="fa-brands fa-strava"></i></a>
+                    <a href="https://www.instagram.com/ethan4238/" target="_blank" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="https://www.tiktok.com/@ethan42380" target="_blank" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                    <a href="https://www.strava.com/athletes/132170603" target="_blank" aria-label="Strava"><i class="fa-brands fa-strava"></i></a>
                 </div>
-
                 <div class="footer-links">
                     <a href="#" onclick="showSection('home')">Accueil</a>
                     <a href="#" onclick="showSection('app-container')">Carte</a>
                     <a href="#" onclick="showSection('about')">À Propos</a>
                 </div>
-                <div class="copyright">
-                    © 2026 Ethan Randonnées - Tous droits réservés.
-                </div>
+                <div class="copyright">© 2026 Ethan Randonnées - Tous droits réservés.</div>
             </div>
         </footer>
     </section>
 
     <section id="app-container" class="page-section hidden">
         <div id="sidebar">
+            <div class="drag-handle" id="drag-sidebar">
+                <div class="drag-bar"></div>
+            </div>
             <h2>Mes Sorties</h2>
             
             <div class="search-container">
@@ -108,6 +111,7 @@
             </div>
 
             <div class="filter-buttons">
+                <button class="filter-btn" onclick="filtrerRandos('favoris')" style="border-color: #ef4444; color: #ef4444;">❤️ Favoris</button>
                 <button class="filter-btn active" onclick="filtrerRandos('all')">Tout</button>
                 <button class="filter-btn" onclick="filtrerRandos('Facile')"><span style="color:#10b981;">●</span> Facile</button>
                 <button class="filter-btn" onclick="filtrerRandos('Moyenne')"><span style="color:#f59e0b;">●</span> Moyenne</button>
@@ -116,45 +120,34 @@
             </div>
 
             <div id="randonnees-list"></div>
-            
             <div class="sidebar-footer">© 2026 - Ethan42380 - Fait avec passion 🏔️</div>
         </div>
 
         <div id="map"></div>
-
         <div id="info-panel" class="hidden"></div>
     </section>
 
     <section id="about" class="page-section hidden">
         <div class="about-container">
-            
             <h2 class="about-main-title">Qui suis-je ?</h2>
 
             <div class="about-row">
                 <div class="about-image">
-                    <img src="photos/profil.jpg" alt="Ethan dans la neige" onerror="this.src='https://via.placeholder.com/500x600?text=Photo+Neige'">
+                    <img src="photos/profil.jpg" alt="Ethan dans la neige" loading="lazy" onerror="this.src='https://via.placeholder.com/500x600?text=Photo+Neige'">
                 </div>
                 <div class="about-text">
-                    <p>
-                        Je m’appelle <strong>Ethan</strong>, passionné de <strong>randonnée</strong> depuis toujours et amoureux des montagnes. Originaire de <strong>Grenoble</strong>, j’ai grandi au pied des sommets, à explorer les sentiers et à capturer chaque instant de mes aventures. À travers ce site, je partage mes découvertes, mes coups de cœur et mes conseils pour que chacun puisse s’évader en pleine nature.
-                    </p>
-                    <p>
-                        Avec ma <strong>GoPro</strong> toujours à portée de main, je capture non seulement des <strong>photos de paysages</strong> à couper le souffle, mais aussi des <strong>vidéos immersives</strong> qui te plongent directement au cœur de l’action. Que ce soit un <strong>passage vertigineux</strong> en haute montagne ou un moment de calme face à un <strong>coucher de soleil</strong>, je fais en sorte de partager ces expériences de manière authentique et dynamique. Mon objectif est de te faire ressentir l’aventure comme si tu y étais, pour te donner envie de chausser tes bottes et de partir <strong>explorer</strong> à ton tour !
-                    </p>
+                    <p>Je m’appelle <strong>Ethan</strong>, passionné de <strong>randonnée</strong> depuis toujours et amoureux des montagnes. Originaire de <strong>Grenoble</strong>, j’ai grandi au pied des sommets.</p>
+                    <p>Avec ma <strong>GoPro</strong>, je capture des photos et vidéos immersives pour te faire vivre l'aventure comme si tu y étais !</p>
                 </div>
             </div>
 
             <div class="about-row reverse-mobile">
                 <div class="about-text">
-                    <p>
-                        Sur ce site, je partage mes aventures et tout ce que j’ai appris au fil des sentiers. Tu trouveras ici non seulement des <strong>idées de randonnées</strong>, mais des <strong>topos</strong> détaillés pour t’accompagner dans la préparation de tes propres excursions. Que tu sois débutant ou déjà à l’aise en montagne, je te propose des itinéraires variés, avec toutes les informations dont tu auras besoin : le <strong>dénivelé</strong>, la <strong>distance</strong>, le <strong>temps estimé</strong> de la randonnée, et même les meilleures <strong>périodes</strong> pour partir. Ces détails te permettront de choisir les randos qui correspondent à ton niveau et à tes envies.
-                    </p>
-                    <p>
-                        Mais ce n’est pas tout ! En plus de ces informations techniques, je te donnerai des astuces pour maximiser tes chances de croiser la <strong>faune locale</strong>, comme les <strong>bouquetins</strong> et les <strong>chamois</strong>, et je t’indiquerai les points de vue à ne pas manquer, où tu pourras peut-être observer un <strong>coucher de soleil</strong> incroyable. L’idée, c’est de te donner toutes les clés pour vivre une expérience complète et inoubliable en pleine nature. Tu pourras ainsi te lancer sereinement dans chaque aventure, en sachant à quoi t’attendre à chaque étape du parcours.
-                    </p>
+                    <p>Sur ce site, tu trouveras des <strong>topos détaillés</strong> (dénivelé, distance, durée) pour préparer tes excursions, que tu sois débutant ou expert.</p>
+                    <p>Je partage aussi mes astuces pour observer la <strong>faune locale</strong> (bouquetins, chamois) et profiter des meilleurs couchers de soleil.</p>
                 </div>
                 <div class="about-image">
-                    <img src="photos/propos2.jpeg" alt="Ethan au sommet" onerror="this.src='https://via.placeholder.com/500x600?text=Photo+Sommet'">
+                    <img src="photos/propos2.jpeg" alt="Ethan au sommet" loading="lazy" onerror="this.src='https://via.placeholder.com/500x600?text=Photo+Sommet'">
                 </div>
             </div>
 
@@ -163,28 +156,23 @@
                 <a href="#" class="social-btn">Strava</a>
                 <a href="mailto:tonemail@gmail.com" class="social-btn">Me Contacter</a>
             </div>
-
         </div>
 
         <footer class="site-footer">
             <div class="footer-content">
                 <div class="footer-logo">🏔️ Ethan Randonnées</div>
-                
                 <p class="footer-text">Suis-moi sur les réseaux :</p>
                 <div class="footer-socials">
-                    <a href="https://www.instagram.com/ethan4238/" target="_blank" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
-                    <a href="https://www.tiktok.com/@ethan42380" target="_blank" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
-                    <a href="https://www.strava.com/athletes/132170603" target="_blank" title="Strava"><i class="fa-brands fa-strava"></i></a>
+                    <a href="https://www.instagram.com/ethan4238/" target="_blank" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="https://www.tiktok.com/@ethan42380" target="_blank" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                    <a href="https://www.strava.com/athletes/132170603" target="_blank" aria-label="Strava"><i class="fa-brands fa-strava"></i></a>
                 </div>
-
                 <div class="footer-links">
                     <a href="#" onclick="showSection('home')">Accueil</a>
                     <a href="#" onclick="showSection('app-container')">Carte</a>
                     <a href="#" onclick="showSection('about')">À Propos</a>
                 </div>
-                <div class="copyright">
-                    © 2026 Ethan Randonnées - Tous droits réservés.
-                </div>
+                <div class="copyright">© 2026 Ethan Randonnées - Tous droits réservés.</div>
             </div>
         </footer>
     </section>
@@ -201,19 +189,17 @@
     <script src="script.js"></script>
     
     <script>
+      // Netlify Identity
       if (window.netlifyIdentity) {
         window.netlifyIdentity.on("init", user => {
-          if (!user) {
-            window.netlifyIdentity.on("login", () => { document.location.href = "/admin/"; });
-          }
+          if (!user) { window.netlifyIdentity.on("login", () => { document.location.href = "/admin/"; }); }
         });
       }
-    </script>
-    <script>
+      // PWA Service Worker
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('Service Worker enregistré !', reg))
+            .then(reg => console.log('Service Worker OK'))
             .catch(err => console.error('Erreur SW :', err));
         });
       }
