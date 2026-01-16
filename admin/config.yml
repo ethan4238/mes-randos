@@ -1,11 +1,18 @@
 backend:
   name: git-gateway
-  branch: main # Vérifiez bien que c'est "main" ou "master" sur GitHub
+  branch: main # Vérifiez que c'est bien "main" ou "master" sur GitHub
 
-media_folder: "uploads"
-public_folder: "uploads"
+# --- CONFIGURATION CLOUDINARY (VOS CODES) ---
+media_library:
+  name: cloudinary
+  config:
+    cloud_name: "dkbulsjyo"
+    api_key: "551519669678153"
+    default_transformations:
+      - [width: 1600, quality: "auto", fetch_format: "auto"]
+      # ^ Cela force toutes les photos à être redimensionnées à 1600px max
 
-# Langue de l'interface
+# Langue
 locale: "fr"
 
 collections:
@@ -22,6 +29,7 @@ collections:
             name: "items"
             widget: "list"
             collapsed: false
+            minimize_collapsed: true
             fields:
               # 1. Le Titre
               - label: "Titre de la sortie"
@@ -37,10 +45,13 @@ collections:
                 default: "Moyenne"
                 required: false
 
-              # 3. Description
-              - label: "Description détaillée"
+              # 3. Description (Format Riche)
+              - label: "Récit de l'aventure"
                 name: "description"
-                widget: "text"
+                widget: "markdown"
+                buttons: ["bold", "italic", "link", "bulleted-list"]
+                editor_components: []
+                modes: ["rich_text"]
                 required: true
 
               # 4. Fichier GPX
@@ -51,10 +62,11 @@ collections:
                 required: true
                 hint: "Le site lira automatiquement la date et la distance depuis ce fichier."
 
-              # 5. Photos (VERSION MULTIPLE CORRIGÉE)
+              # 5. Photos (VIA CLOUDINARY)
               - label: "Galerie Photos"
                 name: "photos"
                 widget: "image" 
                 allow_multiple: true
                 choose_url: false
-                hint: "📸 Sélectionnez toutes vos photos d'un coup ! La première servira de miniature."
+                required: false
+                hint: "📸 Cliquez pour ouvrir Cloudinary, glissez vos photos, et cliquez sur 'Insert'."
