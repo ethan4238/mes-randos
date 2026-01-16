@@ -33,6 +33,36 @@
         }
       ],
       "difficulty": "Facile"
+    },
+    {
+      "difficulty": "Difficile",
+      "title": "Bas de la Grande Moucherolle",
+      "gpx": "https://res.cloudinary.com/dkbulsjyo/raw/upload/q_auto/f_auto/v1768559517/suuntoapp-Hiking-2025-09-27T04-03-27Z-track_fsemgf.gpx",
+      "description": "Une randonnée dans le massif du Vercors, avec une vue sur toutes les crêtes. Un endroit parfait pour admirer une mer de nuage"
+    },
+    {
+      "difficulty": "Facile",
+      "title": "Lac du Lauvitel",
+      "gpx": "https://res.cloudinary.com/dkbulsjyo/raw/upload/q_auto/f_auto/v1768559576/suuntoapp-Hiking-2025-09-19T07-22-30Z-track_bitzkn.gpx",
+      "description": "L'un des plus beau lac des Alpes. Une randonnée accessible"
+    },
+    {
+      "difficulty": "Moyenne",
+      "title": "Plateau des lacs - Lac Fourchu",
+      "gpx": "https://res.cloudinary.com/dkbulsjyo/raw/upload/q_auto/f_auto/v1768559731/suuntoapp-Hiking-2025-08-15T14-04-05Z-route_k0lb0i.gpx",
+      "description": "Le plateau des lacs regroupe 7 lacs et permet d'avoir un spot parfait pour le bivouac"
+    },
+    {
+      "difficulty": "Facile",
+      "title": "Lac de St Guérin - Lac des fées",
+      "gpx": "https://res.cloudinary.com/dkbulsjyo/raw/upload/q_auto/f_auto/v1768559778/suuntoapp-TrailRunning-2025-08-01T14-53-18Z-track_uaa0ck.gpx",
+      "description": "L'un des plus beau lac de Savoie. La randonnée permet de partir du lac de St Guérin j'jusqu'au lac des fées"
+    },
+    {
+      "difficulty": "Expert",
+      "title": "Le Néron",
+      "gpx": "https://res.cloudinary.com/dkbulsjyo/raw/upload/q_auto/f_auto/v1768559823/suuntoapp-Hiking-2025-05-29T07-12-06Z-track_j5oxs3.gpx",
+      "description": "Une ascension vertigineuse avec de l'escalade et des pentes très raides. Arrivé en haut, nous avons une vue à 360° sur Grenoble et les alpes."
     }
   ]
 }
