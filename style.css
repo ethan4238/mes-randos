@@ -327,9 +327,8 @@ header nav a.active { color: var(--accent); background: rgba(249, 115, 22, 0.1);
 #rando-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .photo-box img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--radius-s); cursor: zoom-in; transition: transform 0.3s; }
 .photo-box:hover img { transform: scale(1.03); }
-
 /* =========================================
-   9. RESPONSIVE (MOBILE OPTIMISÉ)
+   9. RESPONSIVE (MOBILE OPTIMISÉ - FIXE FINAL)
    ========================================= */
 @media (max-width: 768px) {
     /* HEADER : On simplifie */
@@ -339,52 +338,61 @@ header nav a.active { color: var(--accent); background: rgba(249, 115, 22, 0.1);
 
     #app-container { flex-direction: column-reverse; }
     
-    /* 1. LA LISTE (SIDEBAR) PREND PLUS DE PLACE */
+    /* 1. LA LISTE (SIDEBAR) - PREND 65% DE L'ÉCRAN */
     #sidebar { 
         width: 100%; min-width: 100%; 
-        height: 60vh; /* On passe de 45vh à 60vh (plus grand) */
+        height: 65vh; /* On augmente la hauteur pour mieux voir la liste */
         border-radius: 20px 20px 0 0; 
         box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
-        z-index: 2000;
-        padding-top: 10px; /* Un peu d'espace en haut */
+        z-index: 1500; /* Z-index moyen */
+        padding-top: 10px;
+        position: relative;
+        background: var(--bg-page);
     }
 
-    /* 2. ON COMPACTE LE TITRE ET LA RECHERCHE */
+    /* Titres et Recherche plus compacts */
     #sidebar h2 { 
-        font-size: 1.1rem; /* Titre plus petit */
-        padding: 5px 20px 10px 20px; /* Moins de marge */
+        font-size: 1.1rem; 
+        padding: 5px 20px 5px 20px; 
         margin: 0;
     }
     
-    .search-container { 
-        padding: 0 20px 10px 20px; /* Recherche collée au titre */
+    .search-container { padding: 5px 20px 5px 20px; }
+    #search-input { padding: 10px 15px; font-size: 0.9rem; } 
+    .filter-buttons { padding-bottom: 5px; margin-bottom: 0; }
+
+    /* La zone de liste scrollable */
+    #randonnees-list { 
+        padding: 0 20px 80px 20px; /* Gros padding en bas pour scroller jusqu'au bout */
     }
-    #search-input { padding: 10px 15px; font-size: 0.9rem; } /* Barre plus fine */
 
-    .filter-buttons { padding-bottom: 10px; margin-bottom: 0; }
-
-    /* La liste a maintenant de la place pour respirer */
-    #randonnees-list { padding: 0 20px 20px 20px; }
-
-    /* 3. LA CARTE EST PLUS PETITE MAIS RESTE VISIBLE */
+    /* 2. LA CARTE - PREND 35% DE L'ÉCRAN */
     #map { 
-        height: 40vh; /* On réduit la carte pour laisser la place à la liste */
+        height: 35vh; /* Suffisant pour se repérer */
+        z-index: 1;
     }
     
-    /* Info panel prend tout l'écran quand il est ouvert */
+    /* 3. LE PANNEAU DÉTAILS - PASSE PAR DESSUS LA LISTE */
     #info-panel { 
-        width: 100%; height: 80vh; 
+        width: 100%; 
+        height: 65vh; /* Exactement la même hauteur que la sidebar */
         top: auto; bottom: 0; left: 0; right: 0; 
-        border-radius: 25px 25px 0 0;
+        border-radius: 20px 20px 0 0;
+        z-index: 2000; /* SUPER IMPORTANT : Plus élevé que le sidebar (1500) */
+        box-shadow: 0 -10px 30px rgba(0,0,0,0.2);
+        transform: translateY(0); /* Position ouverte par défaut */
+        transition: transform 0.3s ease-out;
     }
-    #info-panel.hidden { transform: translateY(100%); }
+    
+    /* Quand caché, on le descend de 100% */
+    #info-panel.hidden { transform: translateY(105%); }
     
     /* Ajustement About sur mobile */
     .about-row { flex-direction: column; gap: 30px; margin-bottom: 50px; }
     .about-row.reverse-mobile { flex-direction: column-reverse; }
     .about-main-title { font-size: 1.8rem; }
+    .cinematic-container { height: 70vh; max-height: 650px; }
 }
-
 /* =========================================
    10. PIED DE PAGE (FOOTER)
    ========================================= */
