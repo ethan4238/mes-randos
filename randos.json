@@ -4,14 +4,14 @@
       "title": "Mont Blanc du Tacul",
       "description": "Ascension du Mont Blanc du Tacul. Une course magnifique en haute montagne.",
       "gpx": "gpx/Mont-Blanc-du-Tacul.gpx",
-      "photos": "https://res.cloudinary.com/dkbulsjyo/image/upload/q_auto/f_auto/v1768552640/Mont-Blanc-du-Tacul_xepsfv.jpg",
+      "photos": [],
       "difficulty": "Expert"
     },
     {
       "title": "Mont Coin",
       "description": "Le Mont Coin un sommet permettant de voir le lever du soleil sur le Mont Blanc",
       "gpx": "gpx/Mont-Coin.gpx",
-      "photos": "https://res.cloudinary.com/dkbulsjyo/image/upload/q_auto/f_auto/v1768552730/Mont-Coin_v96ri7.jpg",
+      "photos": [],
       "difficulty": "Facile"
     }
   ]
