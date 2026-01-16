@@ -177,6 +177,11 @@ header nav a.active { color: var(--accent); background: rgba(249, 115, 22, 0.1);
     margin-top: 10px;
 }
 
+/* AJOUT DU TURET AVANT LE NOM POUR LA SYMÉTRIE */
+.citation-author::before {
+    content: "— "; /* Le tiret et un espace */
+}
+
 /* RESPONSIVE VIDEO MOBILE */
 @media (max-width: 768px) {
     .cinematic-container {
@@ -327,6 +332,7 @@ header nav a.active { color: var(--accent); background: rgba(249, 115, 22, 0.1);
 #rando-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .photo-box img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--radius-s); cursor: zoom-in; transition: transform 0.3s; }
 .photo-box:hover img { transform: scale(1.03); }
+
 /* =========================================
    9. RESPONSIVE (MOBILE - DRAGGABLE / SLIDABLE)
    ========================================= */
@@ -352,21 +358,27 @@ header nav a.active { color: var(--accent); background: rgba(249, 115, 22, 0.1);
         z-index: 1; 
     }
 
-    /* 2. LE STYLE DE LA POIGNÉE (DRAG HANDLE) */
+    /* 2. LE STYLE DE LA POIGNÉE (DRAG HANDLE) - CORRIGÉ */
     .drag-handle {
         width: 100%;
-        height: 25px;
+        height: 40px; /* Plus haut pour être facile à attraper */
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: grab;
-        touch-action: none; /* Empêche le scroll du navigateur quand on touche la poignée */
-        background: white;
+        
+        /* C'EST LA LIGNE MAGIQUE : Elle dit au navigateur "Pas de scroll ici" */
+        touch-action: none; 
+        
+        background: var(--bg-page); /* Même couleur que le fond */
         border-radius: 20px 20px 0 0;
+        margin-bottom: -1px; /* Évite petit jour blanc */
+        z-index: 1000; /* Toujours au dessus */
     }
+    
     .drag-bar {
-        width: 40px;
-        height: 5px;
+        width: 50px;       /* Plus large */
+        height: 6px;       /* Plus épais */
         background-color: #cbd5e1;
         border-radius: 10px;
     }
@@ -420,6 +432,7 @@ header nav a.active { color: var(--accent); background: rgba(249, 115, 22, 0.1);
     .about-row.reverse-mobile { flex-direction: column-reverse; }
     .cinematic-container { height: 70vh; max-height: 650px; }
 }
+
 /* =========================================
    10. PIED DE PAGE (FOOTER)
    ========================================= */
@@ -566,3 +579,65 @@ header nav a.active { color: var(--accent); background: rgba(249, 115, 22, 0.1);
     justify-content: space-between; /* Pour écarter le contenu du cœur */
 }
 .list-content { flex-grow: 1; } /* Le texte prend toute la place dispo */
+/* =========================================
+   NOUVEAU STYLE MENU BURGER (HEADER)
+   ========================================= */
+
+/* Par défaut (Ordi) : Le bouton burger est caché */
+.menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--primary);
+    cursor: pointer;
+}
+
+/* =========================================
+   AJUSTEMENTS RESPONSIVE (MOBILE)
+   ========================================= */
+@media (max-width: 768px) {
+    
+    /* 1. Header Mobile */
+    header { 
+        justify-content: space-between; 
+        padding: 0 20px; 
+    }
+
+    /* On affiche le bouton burger */
+    .menu-toggle { display: block; }
+
+    /* 2. Le Menu devient un panneau déroulant */
+    #main-nav {
+        position: absolute;
+        top: var(--header-height); /* Juste en dessous du header */
+        left: 0;
+        width: 100%;
+        background: rgba(255, 255, 255, 0.98); /* Fond blanc quasi opaque */
+        backdrop-filter: blur(10px);
+        flex-direction: column; /* Liens les uns sous les autres */
+        align-items: center;
+        padding: 20px 0;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        
+        /* Animation d'ouverture */
+        transform: translateY(-150%); /* Caché vers le haut */
+        transition: transform 0.3s ease-in-out;
+        z-index: -1; /* Derrière le header pour l'effet de glisse */
+    }
+
+    /* Classe ajoutée par JS pour ouvrir le menu */
+    #main-nav.open {
+        transform: translateY(0); /* On le fait descendre */
+    }
+
+    /* Style des liens dans le menu mobile */
+    header nav a {
+        margin: 15px 0;
+        font-size: 1.1rem;
+        display: block;
+        width: 100%;
+        text-align: center;
+    }
+}

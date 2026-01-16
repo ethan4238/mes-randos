@@ -33,7 +33,12 @@
 
     <header>
         <div class="logo">🏔️ Ethan Randonnées</div>
-        <nav>
+        
+        <button class="menu-toggle" aria-label="Ouvrir le menu">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+
+        <nav id="main-nav">
             <a href="#home" class="nav-link active" data-target="home">Accueil</a>
             <a href="#map" class="nav-link" data-target="app-container">Carte</a>
             <a href="#about" class="nav-link" data-target="about">À Propos</a>
@@ -149,12 +154,6 @@
                 <div class="about-image">
                     <img src="photos/propos2.jpeg" alt="Ethan au sommet" loading="lazy" onerror="this.src='https://via.placeholder.com/500x600?text=Photo+Sommet'">
                 </div>
-            </div>
-
-            <div class="socials-container">
-                <a href="#" class="social-btn">Instagram</a>
-                <a href="#" class="social-btn">Strava</a>
-                <a href="mailto:tonemail@gmail.com" class="social-btn">Me Contacter</a>
             </div>
         </div>
 

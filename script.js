@@ -375,73 +375,114 @@ if (backToTopBtn) {
 }
 
 // ==========================================
-// GESTION DU GLISSEMENT (DRAG) SUR MOBILE
+// GESTION DU GLISSEMENT (DRAG) - VERSION ROBUSTE
 // ==========================================
 
-function makeDraggable(elementId, handleId) {
+function activerDragMobile(elementId, handleId) {
     const element = document.getElementById(elementId);
     const handle = document.getElementById(handleId);
-    
-    // On ne fait ça que sur mobile
-    if (!element || !handle || window.innerWidth > 768) return;
+
+    // Sécurité : si les éléments n'existent pas ou si on est sur PC, on arrête.
+    if (!element || !handle) return;
 
     let startY = 0;
     let startHeight = 0;
-    let isDragging = false;
+    const screenH = window.innerHeight;
 
-    // Quand on pose le doigt sur la poignée
+    // 1. QUAND ON POSE LE DOIGT
     handle.addEventListener('touchstart', (e) => {
-        isDragging = true;
+        // Empêche le scroll ou le refresh
+        e.preventDefault(); 
+        
         startY = e.touches[0].clientY;
         startHeight = element.offsetHeight;
-        element.style.transition = 'none'; // On coupe l'animation pour que ça suive le doigt instantanément
+        
+        // On enlève l'animation pour que ça réagisse instantanément au doigt
+        element.style.transition = 'none';
     }, { passive: false });
 
-    // Quand on bouge le doigt
-    document.addEventListener('touchmove', (e) => {
-        if (!isDragging) return;
+    // 2. QUAND ON BOUGE LE DOIGT
+    handle.addEventListener('touchmove', (e) => {
+        e.preventDefault(); // INDISPENSABLE
         
         const currentY = e.touches[0].clientY;
-        const delta = currentY - startY; // De combien on a bougé
+        const delta = currentY - startY; // Si positif = on descend, négatif = on monte
         
-        // Nouvelle hauteur = Hauteur de départ - déplacement (car on tire vers le bas)
-        const newHeight = startHeight - delta;
+        // Calcul : Hauteur de départ MOINS la descente
+        let newHeight = startHeight - delta;
 
-        // Limites (Min 15vh, Max 85vh)
-        const minH = window.innerHeight * 0.15;
-        const maxH = window.innerHeight * 0.85;
+        // Limites strictes
+        const minH = screenH * 0.10; // 10% de l'écran minimum
+        const maxH = screenH * 0.90; // 90% de l'écran maximum
 
-        if (newHeight > minH && newHeight < maxH) {
-            element.style.height = `${newHeight}px`;
-        }
+        if (newHeight < minH) newHeight = minH;
+        if (newHeight > maxH) newHeight = maxH;
+
+        element.style.height = `${newHeight}px`;
     }, { passive: false });
 
-    // Quand on lâche le doigt
-    document.addEventListener('touchend', () => {
-        if (!isDragging) return;
-        isDragging = false;
+    // 3. QUAND ON LÂCHE LE DOIGT (AIMANTATION)
+    handle.addEventListener('touchend', () => {
+        // On remet l'animation fluide
+        element.style.transition = 'height 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
         
-        // On remet l'animation douce
-        element.style.transition = 'height 0.3s ease-out';
-        
-        // AIMANTATION (SNAP) : On décide si on va en haut, au milieu ou en bas
         const currentHeight = element.offsetHeight;
-        const screenH = window.innerHeight;
         
-        if (currentHeight < screenH * 0.30) {
-            // Si on est bas -> On ferme presque (15vh)
-            element.style.height = '15vh';
-        } else if (currentHeight > screenH * 0.75) {
-            // Si on est très haut -> On ouvre en grand (85vh)
+        // Logique d'aimantation (Snap)
+        if (currentHeight < screenH * 0.25) {
+            // Si on est en bas -> On ferme presque (12vh)
+            element.style.height = '12vh'; 
+        } else if (currentHeight > screenH * 0.70) {
+            // Si on est en haut -> On ouvre grand (85vh)
             element.style.height = '85vh';
         } else {
-            // Sinon -> On revient au milieu (60vh)
+            // Sinon -> On se met au milieu (60vh)
             element.style.height = '60vh';
         }
     });
 }
 
-// Initialisation au chargement
+// Lancer le script au chargement
 document.addEventListener('DOMContentLoaded', () => {
-    makeDraggable('sidebar', 'drag-sidebar');
+    // Activer sur la liste principale
+    activerDragMobile('sidebar', 'drag-sidebar');
+    
+    // Activer sur le panneau détails (sera fait aussi dans afficherDetails mais au cas où)
+    activerDragMobile('info-panel', 'drag-info');
+});
+
+// ==========================================
+// GESTION DU MENU BURGER MOBILE
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    const menuToggle = document.querySelector('.menu-toggle');
+    const nav = document.getElementById('main-nav');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    if (menuToggle && nav) {
+        // Ouvrir / Fermer au clic sur le burger
+        menuToggle.addEventListener('click', () => {
+            nav.classList.toggle('open');
+            
+            // Change l'icône (Barres <-> Croix)
+            const icon = menuToggle.querySelector('i');
+            if (nav.classList.contains('open')) {
+                icon.classList.remove('fa-bars');
+                icon.classList.add('fa-xmark');
+            } else {
+                icon.classList.remove('fa-xmark');
+                icon.classList.add('fa-bars');
+            }
+        });
+
+        // Fermer le menu quand on clique sur un lien
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                nav.classList.remove('open');
+                const icon = menuToggle.querySelector('i');
+                icon.classList.remove('fa-xmark');
+                icon.classList.add('fa-bars');
+            });
+        });
+    }
 });
