@@ -63,6 +63,15 @@ L.control.locate({ position: 'topleft', strings: { title: "Me localiser" } }).ad
 
 let myElevationChart = null;
 
+// --- FONCTION POUR LA COULEUR DE DIFFICULTÉ ---
+function getDiffColor(d) {
+    if(!d) return '#f59e0b'; // Par défaut Orange (Moyenne)
+    if(d === 'Facile') return '#10b981'; // Vert
+    if(d === 'Difficile') return '#ef4444'; // Rouge
+    if(d === 'Expert') return '#111827'; // Noir
+    return '#f59e0b'; // Moyenne
+}
+
 // CHARGEMENT DONNÉES
 fetch('randos.json')
     .then(response => response.json())
@@ -78,20 +87,15 @@ fetch('randos.json')
                     },
                     polyline_options: { color: 'red', opacity: 0.8, weight: 4 }
                 }).on('loaded', function(e) {
-                    // 1. Calcul Distance
                     const dist = (e.target.get_distance() / 1000).toFixed(1);
                     const elDist = document.getElementById(`dist-${index}`);
                     if(elDist) elDist.innerText = `${dist} km`;
 
-                    // 2. Extraction DATE (NOUVEAU)
                     const rawDate = e.target.get_start_time();
                     if(rawDate) {
-                        // On formate la date en français (ex: 12 août 2024)
                         const dateStr = rawDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
                         const elDate = document.getElementById(`date-${index}`);
                         if(elDate) elDate.innerText = dateStr;
-                        
-                        // On stocke la date brute dans l'objet data pour l'utiliser dans le panel
                         data.calculatedDate = dateStr; 
                     }
 
@@ -109,14 +113,19 @@ fetch('randos.json')
                     item.id = `item-${index}`;
                     
                     const thumbUrl = (data.photos && data.photos.length > 0) ? data.photos[0] : 'https://via.placeholder.com/70?text=Montagne';
+                    
+                    // Récupération de la difficulté (ou "Moyenne" par défaut)
+                    const diff = data.difficulty || "Moyenne";
+                    const diffColor = getDiffColor(diff);
 
-                    // Ajout de la balise <span id="date-${index}"> pour recevoir la date
                     item.innerHTML = `
                         <img src="${thumbUrl}" class="list-thumb" alt="${data.title}">
                         <div class="list-content">
                             <h3>${data.title}</h3>
                             <p style="margin-bottom: 2px;">Distance : <span id="dist-${index}">...</span></p>
                             <p style="font-size: 0.75rem; color: #999;">📅 <span id="date-${index}">--/--/----</span></p>
+                            
+                            <span class="diff-badge" style="background-color: ${diffColor};">${diff}</span>
                         </div>
                     `;
                     
@@ -149,8 +158,11 @@ function msToTime(duration) {
 function afficherDetails(data, gpxLayer) {
     const panel = document.getElementById('info-panel');
     
-    // On récupère la date calculée ou on met un texte par défaut
     const displayDate = data.calculatedDate || "Date inconnue";
+    
+    // Difficulté pour le panel
+    const diff = data.difficulty || "Moyenne";
+    const diffColor = getDiffColor(diff);
 
     panel.innerHTML = `
         <div class="panel-header">
@@ -158,9 +170,13 @@ function afficherDetails(data, gpxLayer) {
             <button id="close-panel-btn" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
         </div>
         <div class="panel-content">
-            <p style="color:var(--primary-soft); font-weight:600; font-size:0.9rem; margin-bottom:15px;">
-                📅 Sortie du ${displayDate}
-            </p>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <p style="color:var(--primary-soft); font-weight:600; font-size:0.9rem; margin:0;">
+                    📅 Sortie du ${displayDate}
+                </p>
+                <span class="diff-badge" style="background-color: ${diffColor}; margin:0;">${diff}</span>
+            </div>
 
             <div id="stats-placeholder"></div>
             
