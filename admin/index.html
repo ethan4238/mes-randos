@@ -3,18 +3,66 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Randos</title>
+  <title>Admin - Ethan Randonnées</title>
+  
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 </head>
 <body>
+  
   <script src="https://unpkg.com/netlify-cms-media-library-cloudinary@^1.0.0/dist/index.js"></script>
   
   <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
 
   <script>
-    // On dit au CMS de charger le fichier CSS qui est dans le dossier parent (../)
-    CMS.registerPreviewStyle('../style.css');
-  </script>
+    // A. On charge vos polices modernes (Montserrat & Nunito) pour l'admin
+    CMS.registerPreviewStyle('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&family=Nunito+Sans:wght@400;600;700&display=swap');
+    
+    // B. On charge FontAwesome pour les icônes
+    CMS.registerPreviewStyle('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
 
+    // C. On connecte votre style.css PRINCIPAL (pour les couleurs, boutons, etc.)
+    CMS.registerPreviewStyle('../style.css');
+
+    // D. CSS Spécifique pour rendre la zone de droite (Preview) plus jolie
+    CMS.registerPreviewStyle(`
+      body {
+        font-family: 'Nunito Sans', sans-serif;
+        background-color: #f1f5f9; /* Le même gris clair que votre site */
+        color: #1e293b;
+        padding: 40px;
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      /* Style des titres dans la preview */
+      h1, h2, h3 { 
+        font-family: 'Montserrat', sans-serif; 
+        color: #0f172a; 
+        margin-top: 30px;
+      }
+
+      /* Style du texte standard */
+      p, li { 
+        line-height: 1.8; 
+        font-size: 1.05rem; 
+        color: #334155; 
+      }
+
+      /* Style des images insérées dans le texte */
+      img { 
+        max-width: 100%; 
+        border-radius: 16px; 
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); 
+        margin: 20px 0;
+      }
+
+      /* Style des liens */
+      a { 
+        color: #f97316; /* Votre Orange */
+        text-decoration: none; 
+        font-weight: 700; 
+      }
+    `, { raw: true });
+  </script>
 </body>
 </html>
