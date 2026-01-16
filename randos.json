@@ -10,7 +10,8 @@
         "uploads/mont-blanc-du-tacul5.jpeg",
         "uploads/mont-blanc-du-tacul4.jpeg",
         "uploads/mont-blanc-du-tacul2.jpg"
-      ]
+      ],
+      "difficulty": "Expert"
     },
     {
       "title": "Mont Coin",
@@ -18,7 +19,8 @@
       "gpx": "gpx/Mont-Coin.gpx",
       "photos": [
         "photos/Mont-Coin.jpeg"
-      ]
+      ],
+      "difficulty": "Facile"
     }
   ]
 }
