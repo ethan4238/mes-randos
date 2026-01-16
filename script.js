@@ -3,31 +3,25 @@ const navLinks = document.querySelectorAll('.nav-link');
 const sections = document.querySelectorAll('.page-section');
 
 function showSection(targetId) {
-    // 1. Cacher toutes les sections
     sections.forEach(sec => sec.classList.remove('active'));
     sections.forEach(sec => sec.classList.add('hidden')); 
 
-    // 2. Enlever active des liens
     navLinks.forEach(link => link.classList.remove('active'));
 
-    // 3. Montrer la section cible
     const targetSection = document.getElementById(targetId);
     if(targetSection) {
         targetSection.classList.add('active');
         targetSection.classList.remove('hidden');
     }
 
-    // 4. Mettre le lien en actif
     const activeLink = document.querySelector(`.nav-link[data-target="${targetId}"]`);
     if(activeLink) activeLink.classList.add('active');
 
-    // 5. Si on va sur la carte, on force le recalcul de la taille (Bug Leaflet classique)
     if(targetId === 'app-container' && map) {
         setTimeout(() => { map.invalidateSize(); }, 100);
     }
 }
 
-// Clics sur le menu
 navLinks.forEach(link => {
     link.addEventListener('click', (e) => {
         e.preventDefault();
@@ -36,23 +30,17 @@ navLinks.forEach(link => {
     });
 });
 
-// Bouton "Explorer" sur l'accueil
-function goToMap() {
-    showSection('app-container');
-}
+function goToMap() { showSection('app-container'); }
 
 
-// --- CODE EXISTANT (CARTE & RANDOS) ---
+// --- CODE CARTE & RANDOS ---
 
-// 1. Fonds de carte
 const topoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, attribution: '© OpenStreetMap' });
 const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: '© Esri' });
 
-// 2. Init Carte
 var map = L.map('map', { center: [45.8326, 6.8652], zoom: 10, layers: [topoLayer], zoomControl: false });
 L.control.zoom({ position: 'topleft' }).addTo(map);
 
-// 3. Switch Sat
 const switchControl = L.Control.extend({
     options: { position: 'topright' },
     onAdd: function(map) {
@@ -71,7 +59,6 @@ const switchControl = L.Control.extend({
 });
 map.addControl(new switchControl());
 
-// 4. Locate
 L.control.locate({ position: 'topleft', strings: { title: "Me localiser" } }).addTo(map);
 
 let myElevationChart = null;
@@ -83,7 +70,7 @@ fetch('randos.json')
         const mesRandos = jsonData.items;
         if (mesRandos) {
             mesRandos.forEach((data, index) => {
-                // Carte
+                // Création Carte
                 const gpxLayer = new L.GPX(data.gpx, {
                     async: true,
                     marker_options: {
@@ -100,13 +87,24 @@ fetch('randos.json')
                     updateActiveItem(index);
                 }).addTo(map);
 
-                // Liste
+                // --- CREATION DE LA LISTE AVEC IMAGE ---
                 const list = document.getElementById('randonnees-list');
                 if (list) {
                     const item = document.createElement('div');
                     item.className = 'rando-item';
                     item.id = `item-${index}`;
-                    item.innerHTML = `<h3>${data.title}</h3><p>Distance : <span id="dist-${index}">...</span></p>`;
+                    
+                    // On récupère la 1ère image, sinon une image par défaut
+                    const thumbUrl = (data.photos && data.photos.length > 0) ? data.photos[0] : 'https://via.placeholder.com/70?text=Montagne';
+
+                    item.innerHTML = `
+                        <img src="${thumbUrl}" class="list-thumb" alt="${data.title}">
+                        <div class="list-content">
+                            <h3>${data.title}</h3>
+                            <p>Distance : <span id="dist-${index}">...</span></p>
+                        </div>
+                    `;
+                    
                     item.addEventListener('click', () => {
                         map.fitBounds(gpxLayer.getBounds());
                         afficherDetails(data, gpxLayer);
@@ -119,8 +117,6 @@ fetch('randos.json')
     })
     .catch(err => console.error(err));
 
-
-// --- FONCTIONS UI ---
 
 function updateActiveItem(idx) {
     document.querySelectorAll('.rando-item').forEach(i => i.classList.remove('active'));
@@ -138,7 +134,6 @@ function msToTime(duration) {
 function afficherDetails(data, gpxLayer) {
     const panel = document.getElementById('info-panel');
     
-    // Structure HTML Panel
     panel.innerHTML = `
         <div class="panel-header">
             <h2 style="margin:0; font-size:1.2rem; color:#2c3e50;">${data.title}</h2>
@@ -146,24 +141,24 @@ function afficherDetails(data, gpxLayer) {
         </div>
         <div class="panel-content">
             <div id="stats-placeholder"></div>
+            
+            <a href="${data.gpx}" download class="download-btn">📥 Télécharger la trace GPX</a>
+            
             <p style="color:#666; line-height:1.5; margin: 15px 0;">${data.description}</p>
             <div class="chart-container"><canvas id="elevationChart"></canvas></div>
             <div id="rando-photos"></div>
         </div>
     `;
 
-    // Close Event
     document.getElementById('close-panel-btn').onclick = () => {
         panel.classList.add('hidden');
         document.querySelectorAll('.rando-item').forEach(i => i.classList.remove('active'));
     };
 
-    // Stats
     const dist = (gpxLayer.get_distance() / 1000).toFixed(1); 
     const elev = gpxLayer.get_elevation_gain().toFixed(0);    
     const time = msToTime(gpxLayer.get_moving_time());
     
-    // --- ICI ON AJOUTE LES ICÔNES ---
     document.getElementById('stats-placeholder').innerHTML = `
         <div class="stats-grid">
             <div class="stat-item">
@@ -184,7 +179,6 @@ function afficherDetails(data, gpxLayer) {
         </div>
     `;
 
-    // Photos
     const pContainer = document.getElementById('rando-photos');
     if(data.photos) {
         data.photos.forEach(url => {
@@ -195,7 +189,6 @@ function afficherDetails(data, gpxLayer) {
         if(typeof refreshFsLightbox === 'function') refreshFsLightbox();
     }
 
-    // Chart
     const raw = gpxLayer.get_elevation_data();
     const lbls=[], dataPoints=[];
     raw.forEach((p, i) => { if(i%10===0) { lbls.push(p[0].toFixed(1)); dataPoints.push(p[1]); }}); 
@@ -215,10 +208,32 @@ function afficherDetails(data, gpxLayer) {
     panel.classList.remove('hidden');
 }
 
-// Recherche
 document.getElementById('search-input').addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase();
     document.querySelectorAll('.rando-item').forEach(item => {
-        item.style.display = item.querySelector('h3').innerText.toLowerCase().includes(term) ? 'block' : 'none';
+        item.style.display = item.querySelector('h3').innerText.toLowerCase().includes(term) ? 'flex' : 'none'; // 'flex' important ici pour garder la mise en page
     });
 });
+
+// --- BOUTON RETOUR HAUT ---
+const backToTopBtn = document.getElementById('back-to-top');
+const scrollableSections = document.querySelectorAll('.page-section');
+
+if (backToTopBtn) {
+    scrollableSections.forEach(section => {
+        section.addEventListener('scroll', () => {
+            if (section.scrollTop > 300) {
+                backToTopBtn.classList.add('visible');
+            } else {
+                backToTopBtn.classList.remove('visible');
+            }
+        });
+    });
+
+    backToTopBtn.addEventListener('click', () => {
+        const activeSection = document.querySelector('.page-section.active');
+        if(activeSection) {
+            activeSection.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    });
+}
