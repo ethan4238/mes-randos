@@ -28,6 +28,7 @@ navLinks.forEach(link => {
 });
 function goToMap() { showSection('app-container'); }
 
+
 // --- CODE CARTE & RANDOS ---
 const topoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, attribution: '© OpenStreetMap' });
 const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: '© Esri' });
@@ -56,39 +57,49 @@ L.control.locate({ position: 'topleft', strings: { title: "Me localiser" } }).ad
 
 let myElevationChart = null;
 
+// --- COULEURS DYNAMIQUES ---
 function getDiffColor(d) {
-    if(!d) return '#f59e0b';
-    if(d === 'Facile') return '#10b981';
-    if(d === 'Difficile') return '#ef4444';
-    if(d === 'Expert') return '#111827';
+    if(!d) return '#f59e0b'; // Orange par défaut
+    if(d === 'Facile') return '#10b981';   // Vert
+    if(d === 'Moyenne') return '#f59e0b';  // Orange
+    if(d === 'Difficile') return '#ef4444';// Rouge
+    if(d === 'Expert') return '#000000';   // Noir
     return '#f59e0b';
 }
 
-// CHARGEMENT DONNÉES
+// --- CHARGEMENT DES DONNÉES ---
 fetch('randos.json')
     .then(response => response.json())
     .then(jsonData => {
         const mesRandos = jsonData.items;
         if (mesRandos) {
             mesRandos.forEach((data, index) => {
-                // SÉCURITÉ FORMAT PHOTOS : On s'assure que c'est toujours une liste
+                // 1. SÉCURITÉ FORMAT PHOTOS
                 let safePhotos = [];
                 if (data.photos) {
                     if (Array.isArray(data.photos)) {
-                        safePhotos = data.photos; // C'est déjà une liste, parfait
+                        safePhotos = data.photos;
                     } else if (typeof data.photos === 'string') {
-                        safePhotos = [data.photos]; // C'est un texte seul, on le met dans une liste
+                        safePhotos = [data.photos];
                     }
                 }
-                data.safePhotos = safePhotos; // On stocke la version propre
+                data.safePhotos = safePhotos;
 
-                // Création Carte
+                // 2. DÉFINITION DE LA COULEUR DE LA TRACE
+                const trackColor = getDiffColor(data.difficulty);
+
+                // 3. CRÉATION DE LA COUCHE GPX
                 const gpxLayer = new L.GPX(data.gpx, {
                     async: true,
                     marker_options: {
                         startIconUrl: 'icones/depart.png', endIconUrl: 'icones/arrivee.png', shadowUrl: null, iconSize: [32, 32], iconAnchor: [16, 32]
                     },
-                    polyline_options: { color: 'red', opacity: 0.8, weight: 4 }
+                    polyline_options: { 
+                        color: trackColor, // <-- Couleur dynamique ici
+                        opacity: 0.8, 
+                        weight: 4,
+                        lineCap: 'round'
+                    }
                 }).on('loaded', function(e) {
                     const dist = (e.target.get_distance() / 1000).toFixed(1);
                     const elDist = document.getElementById(`dist-${index}`);
@@ -107,17 +118,15 @@ fetch('randos.json')
                     updateActiveItem(index);
                 }).addTo(map);
 
-                // CREATION LISTE
+                // 4. CRÉATION DE L'ÉLÉMENT DE LISTE
                 const list = document.getElementById('randonnees-list');
                 if (list) {
                     const item = document.createElement('div');
                     item.className = 'rando-item';
                     item.id = `item-${index}`;
                     
-                    // Gestion miniature sécurisée
                     let thumbUrl = 'https://via.placeholder.com/70?text=No+Img';
                     if (safePhotos.length > 0) {
-                        // On prend la 1ère photo, qu'elle soit string ou objet
                         let p = safePhotos[0];
                         thumbUrl = (typeof p === 'string') ? p : (p.image || thumbUrl);
                     }
@@ -135,11 +144,25 @@ fetch('randos.json')
                         </div>
                     `;
                     
+                    // Clic pour ouvrir les détails
                     item.addEventListener('click', () => {
                         map.fitBounds(gpxLayer.getBounds());
                         afficherDetails(data, gpxLayer);
                         updateActiveItem(index);
                     });
+
+                    // --- NOUVEAU : EFFET DE SURVOL ---
+                    item.addEventListener('mouseenter', () => {
+                        gpxLayer.setStyle({ weight: 8, opacity: 1 }); // La ligne grossit
+                        gpxLayer.bringToFront();
+                    });
+                    item.addEventListener('mouseleave', () => {
+                        // Si ce n'est pas l'élément actif, on remet l'épaisseur normale
+                        if(!item.classList.contains('active')) {
+                            gpxLayer.setStyle({ weight: 4, opacity: 0.8 });
+                        }
+                    });
+
                     list.appendChild(item);
                 }
             });
@@ -148,10 +171,32 @@ fetch('randos.json')
     .catch(err => console.error("Erreur chargement:", err));
 
 
+// --- FONCTIONS UTILITAIRES ---
+
 function updateActiveItem(idx) {
     document.querySelectorAll('.rando-item').forEach(i => i.classList.remove('active'));
     const sel = document.getElementById(`item-${idx}`);
     if(sel) { sel.classList.add('active'); sel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+}
+
+// --- NOUVEAU : FONCTION DE FILTRAGE ---
+function filtrerRandos(niveau) {
+    // 1. Gestion des boutons (visuel)
+    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active'); // Le bouton cliqué devient actif
+
+    // 2. Filtrage de la liste
+    const items = document.querySelectorAll('.rando-item');
+    items.forEach(item => {
+        const badge = item.querySelector('.diff-badge').innerText;
+        
+        // Si "all" est demandé, ou si le badge correspond au niveau cliqué
+        if (niveau === 'all' || badge === niveau) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
 }
 
 function msToTime(duration) {
@@ -183,18 +228,20 @@ function afficherDetails(data, gpxLayer) {
                 
                 <a href="${data.gpx}" download class="download-btn">📥 Télécharger la trace GPX</a>
                 
-                <div style="color:#666; line-height:1.5; margin: 15px 0;">${marked.parse(data.description)}</div> <div class="chart-container"><canvas id="elevationChart"></canvas></div>
+                <div style="color:#666; line-height:1.5; margin: 15px 0;">${marked.parse(data.description)}</div>
+                
+                <div class="chart-container"><canvas id="elevationChart"></canvas></div>
                 <div id="rando-photos"></div>
             </div>
         `;
 
-        // Bouton fermer
         document.getElementById('close-panel-btn').onclick = () => {
             panel.classList.add('hidden');
             document.querySelectorAll('.rando-item').forEach(i => i.classList.remove('active'));
+            // Reset du style de la trace quand on ferme
+            gpxLayer.setStyle({ weight: 4, opacity: 0.8 });
         };
 
-        // Stats
         const dist = (gpxLayer.get_distance() / 1000).toFixed(1); 
         const elev = gpxLayer.get_elevation_gain().toFixed(0);    
         const time = msToTime(gpxLayer.get_moving_time());
@@ -207,11 +254,9 @@ function afficherDetails(data, gpxLayer) {
             </div>
         `;
 
-        // Affichage Photos (Version Robuste)
         const pContainer = document.getElementById('rando-photos');
         if(data.safePhotos && data.safePhotos.length > 0) {
             data.safePhotos.forEach(item => {
-                // On accepte soit un string direct, soit un objet avec .image
                 let url = (typeof item === 'string') ? item : (item.image || null);
                 
                 if(url) {
@@ -223,7 +268,6 @@ function afficherDetails(data, gpxLayer) {
             if(typeof refreshFsLightbox === 'function') refreshFsLightbox();
         }
 
-        // Graphique
         const raw = gpxLayer.get_elevation_data();
         const lbls=[], dataPoints=[];
         raw.forEach((p, i) => { if(i%10===0) { lbls.push(p[0].toFixed(1)); dataPoints.push(p[1]); }}); 
@@ -239,4 +283,30 @@ function afficherDetails(data, gpxLayer) {
     } catch (e) {
         console.error("Erreur affichage détails : ", e);
     }
+}
+
+// --- RECHERCHE TEXTE ---
+document.getElementById('search-input').addEventListener('input', (e) => {
+    const term = e.target.value.toLowerCase();
+    document.querySelectorAll('.rando-item').forEach(item => {
+        // Simple : si le titre contient le texte, on affiche.
+        // Note: La recherche "écrase" temporairement le filtre bouton si on tape quelque chose.
+        item.style.display = item.querySelector('h3').innerText.toLowerCase().includes(term) ? 'flex' : 'none';
+    });
+});
+
+// --- BOUTON RETOUR HAUT ---
+const backToTopBtn = document.getElementById('back-to-top');
+const scrollableSections = document.querySelectorAll('.page-section');
+if (backToTopBtn) {
+    scrollableSections.forEach(section => {
+        section.addEventListener('scroll', () => {
+            if (section.scrollTop > 300) backToTopBtn.classList.add('visible');
+            else backToTopBtn.classList.remove('visible');
+        });
+    });
+    backToTopBtn.addEventListener('click', () => {
+        const activeSection = document.querySelector('.page-section.active');
+        if(activeSection) activeSection.scrollTo({ top: 0, behavior: 'smooth' });
+    });
 }

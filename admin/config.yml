@@ -1,6 +1,6 @@
 backend:
   name: git-gateway
-  branch: main # Vérifiez que c'est bien "main" ou "master" sur GitHub
+  branch: main
 
 # --- CONFIGURATION CLOUDINARY ---
 media_library:
@@ -8,10 +8,8 @@ media_library:
   config:
     cloud_name: "dkbulsjyo"
     api_key: "551519669678153"
-    multiple: true # <--- C'EST LA LIGNE QUI MANQUAIT POUR DÉBLOQUER LA MULTI-SELECTION
     default_transformations:
       - [width: 1600, quality: "auto", fetch_format: "auto"]
-      # ^ Cela force toutes les photos à être redimensionnées à 1600px max
 
 # Langue
 locale: "fr"
@@ -46,7 +44,7 @@ collections:
                 default: "Moyenne"
                 required: false
 
-              # 3. Description (Format Riche)
+              # 3. Description
               - label: "Récit de l'aventure"
                 name: "description"
                 widget: "markdown"
@@ -61,13 +59,14 @@ collections:
                 widget: "file"
                 allowed_extensions: ["gpx"]
                 required: true
-                hint: "Le site lira automatiquement la date et la distance depuis ce fichier."
 
-              # 5. Photos (VIA CLOUDINARY)
+              # 5. Photos (VERSION LISTE - CASE PAR CASE)
               - label: "Galerie Photos"
                 name: "photos"
-                widget: "image" 
-                allow_multiple: true
-                choose_url: false
-                required: false
-                hint: "📸 Cliquez pour ouvrir Cloudinary, glissez vos photos, et cliquez sur 'Insert'."
+                widget: "list"  # <--- On passe en mode LISTE
+                collapsed: false
+                summary: "{{fields.image}}"
+                fields:
+                  - label: "Photo"
+                    name: "image"
+                    widget: "image" # <--- Chaque élément de la liste est une image unique

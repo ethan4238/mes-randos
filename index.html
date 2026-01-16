@@ -15,6 +15,7 @@
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol/dist/L.Control.Locate.min.css" />
+    
     <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
     
     <link rel="stylesheet" href="style.css" />
@@ -61,7 +62,7 @@
                 <div class="footer-socials">
                     <a href="https://www.instagram.com/ethan4238/" target="_blank" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
                     <a href="https://www.tiktok.com/@ethan42380" target="_blank" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
-                    <a href="https://www.strava.com/athletes/132170603?utm_source=ios_share&utm_medium=social&share_sig=E84EDE261731577638&_branch_match_id=1519950629094120526&_branch_referrer=H4sIAAAAAAAAA8soKSkottLXLy4pSixL1EssKNDLyczL1nd2DTTJCjCPKPNPsq8rSk1LLSrKzEuPTyrKLy9OLbJ1zijKz00FACM%2BkxY9AAAA" target="_blank" title="Strava"><i class="fa-brands fa-strava"></i></a>
+                    <a href="https://www.strava.com/athletes/132170603" target="_blank" title="Strava"><i class="fa-brands fa-strava"></i></a>
                 </div>
 
                 <div class="footer-links">
@@ -74,23 +75,32 @@
                 </div>
             </div>
         </footer>
-
     </section>
 
     <section id="app-container" class="page-section hidden">
         <div id="sidebar">
             <h2>Mes Sorties</h2>
+            
             <div class="search-container">
                 <input type="text" id="search-input" placeholder="🔍 Rechercher une rando..." />
             </div>
+
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="filtrerRandos('all')">Tout</button>
+                <button class="filter-btn" onclick="filtrerRandos('Facile')" title="Facile">🟢</button>
+                <button class="filter-btn" onclick="filtrerRandos('Moyenne')" title="Moyenne">🟠</button>
+                <button class="filter-btn" onclick="filtrerRandos('Difficile')" title="Difficile">🔴</button>
+                <button class="filter-btn" onclick="filtrerRandos('Expert')" title="Expert">⚫</button>
+            </div>
+
             <div id="randonnees-list"></div>
+            
             <div class="sidebar-footer">© 2026 - Ethan42380 - Fait avec passion 🏔️</div>
         </div>
 
         <div id="map"></div>
 
-        <div id="info-panel" class="hidden">
-            </div>
+        <div id="info-panel" class="hidden"></div>
     </section>
 
     <section id="about" class="page-section hidden">
@@ -142,7 +152,7 @@
                 <div class="footer-socials">
                     <a href="https://www.instagram.com/ethan4238/" target="_blank" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
                     <a href="https://www.tiktok.com/@ethan42380" target="_blank" title="TikTok"><i class="fa-brands fa-tiktok"></i></a>
-                    <a href="https://www.strava.com/athletes/132170603?utm_source=ios_share&utm_medium=social&share_sig=E84EDE261731577638&_branch_match_id=1519950629094120526&_branch_referrer=H4sIAAAAAAAAA8soKSkottLXLy4pSixL1EssKNDLyczL1nd2DTTJCjCPKPNPsq8rSk1LLSrKzEuPTyrKLy9OLbJ1zijKz00FACM%2BkxY9AAAA" target="_blank" title="Strava"><i class="fa-brands fa-strava"></i></a>
+                    <a href="https://www.strava.com/athletes/132170603" target="_blank" title="Strava"><i class="fa-brands fa-strava"></i></a>
                 </div>
 
                 <div class="footer-links">
@@ -155,7 +165,6 @@
                 </div>
             </div>
         </footer>
-
     </section>
 
     <button id="back-to-top" title="Retour en haut">⬆️</button>
@@ -166,6 +175,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fslightbox/3.0.9/index.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
     <script src="script.js"></script>
     
     <script>
