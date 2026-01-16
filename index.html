@@ -43,6 +43,24 @@
                 <button onclick="goToMap()" class="cta-button">EXPLORER LA CARTE</button>
             </div>
         </div>
+
+        <div class="cinematic-container">
+            <video autoplay muted loop playsinline class="cinematic-video">
+                <source src="videos/intro-desktop.mov" type="video/mp4" media="(min-width: 769px)">
+                
+                <source src="videos/intro-mobile.mov" type="video/mp4">
+
+                Votre navigateur ne supporte pas la balise vidéo.
+            </video>
+            
+            <div class="cinematic-overlay">
+                <blockquote>
+                    "La montagne nous offre le décor,<br>
+                    à nous de créer l'histoire."
+                </blockquote>
+                <div class="citation-author">— Ethan</div>
+            </div>
+        </div>
         <div class="features">
             <div class="feature-box">
                 <h3>🗺️ Traces GPS</h3>
@@ -200,6 +218,5 @@
         });
       }
     </script>
-</body>
 </body>
 </html>

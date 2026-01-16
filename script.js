@@ -67,6 +67,33 @@ function getDiffColor(d) {
     return '#f59e0b';
 }
 
+// --- NOUVEAU : FONCTION PARTAGE ---
+async function partagerRando(titre) {
+    const url = window.location.href; // L'URL actuelle
+    const text = `Regarde cette rando : ${titre} ! 🏔️`;
+
+    // Si le navigateur supporte le partage natif (Mobile)
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: titre,
+                text: text,
+                url: url
+            });
+            console.log('Partage réussi');
+        } catch (err) {
+            console.log('Partage annulé', err);
+        }
+    } else {
+        // Fallback pour PC : Copie dans le presse-papier
+        navigator.clipboard.writeText(`${text} ${url}`).then(() => {
+            alert('Lien copié dans le presse-papier ! 📋');
+        }).catch(err => {
+            console.error('Erreur copie', err);
+        });
+    }
+}
+
 // --- CHARGEMENT DES DONNÉES ---
 fetch('randos.json')
     .then(response => response.json())
@@ -85,7 +112,7 @@ fetch('randos.json')
                 }
                 data.safePhotos = safePhotos;
 
-                // 2. DÉFINITION DE LA COULEUR DE LA TRACE
+                // 2. COULEUR DE LA TRACE
                 const trackColor = getDiffColor(data.difficulty);
 
                 // 3. CRÉATION DE LA COUCHE GPX
@@ -95,7 +122,7 @@ fetch('randos.json')
                         startIconUrl: 'icones/depart.png', endIconUrl: 'icones/arrivee.png', shadowUrl: null, iconSize: [32, 32], iconAnchor: [16, 32]
                     },
                     polyline_options: { 
-                        color: trackColor, // <-- Couleur dynamique ici
+                        color: trackColor, 
                         opacity: 0.8, 
                         weight: 4,
                         lineCap: 'round'
@@ -144,20 +171,17 @@ fetch('randos.json')
                         </div>
                     `;
                     
-                    // Clic pour ouvrir les détails
                     item.addEventListener('click', () => {
                         map.fitBounds(gpxLayer.getBounds());
                         afficherDetails(data, gpxLayer);
                         updateActiveItem(index);
                     });
 
-                    // --- NOUVEAU : EFFET DE SURVOL ---
                     item.addEventListener('mouseenter', () => {
-                        gpxLayer.setStyle({ weight: 8, opacity: 1 }); // La ligne grossit
+                        gpxLayer.setStyle({ weight: 8, opacity: 1 });
                         gpxLayer.bringToFront();
                     });
                     item.addEventListener('mouseleave', () => {
-                        // Si ce n'est pas l'élément actif, on remet l'épaisseur normale
                         if(!item.classList.contains('active')) {
                             gpxLayer.setStyle({ weight: 4, opacity: 0.8 });
                         }
@@ -179,18 +203,13 @@ function updateActiveItem(idx) {
     if(sel) { sel.classList.add('active'); sel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
 }
 
-// --- NOUVEAU : FONCTION DE FILTRAGE ---
 function filtrerRandos(niveau) {
-    // 1. Gestion des boutons (visuel)
     document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active'); // Le bouton cliqué devient actif
+    event.target.classList.add('active');
 
-    // 2. Filtrage de la liste
     const items = document.querySelectorAll('.rando-item');
     items.forEach(item => {
         const badge = item.querySelector('.diff-badge').innerText;
-        
-        // Si "all" est demandé, ou si le badge correspond au niveau cliqué
         if (niveau === 'all' || badge === niveau) {
             item.style.display = 'flex';
         } else {
@@ -213,6 +232,9 @@ function afficherDetails(data, gpxLayer) {
         const diff = data.difficulty || "Moyenne";
         const diffColor = getDiffColor(diff);
 
+        // On nettoie les guillemets pour le partage JS
+        const cleanTitle = data.title.replace(/'/g, "\\'");
+
         panel.innerHTML = `
             <div class="panel-header">
                 <h2 style="margin:0; font-size:1.2rem; color:#2c3e50;">${data.title}</h2>
@@ -226,6 +248,10 @@ function afficherDetails(data, gpxLayer) {
 
                 <div id="stats-placeholder">Chargement stats...</div>
                 
+                <button id="share-btn-action" class="share-btn">
+                    📤 Partager à des amis
+                </button>
+
                 <a href="${data.gpx}" download class="download-btn">📥 Télécharger la trace GPX</a>
                 
                 <div style="color:#666; line-height:1.5; margin: 15px 0;">${marked.parse(data.description)}</div>
@@ -235,13 +261,19 @@ function afficherDetails(data, gpxLayer) {
             </div>
         `;
 
+        // Événements boutons
         document.getElementById('close-panel-btn').onclick = () => {
             panel.classList.add('hidden');
             document.querySelectorAll('.rando-item').forEach(i => i.classList.remove('active'));
-            // Reset du style de la trace quand on ferme
             gpxLayer.setStyle({ weight: 4, opacity: 0.8 });
         };
 
+        // Activation du clic partage via JS (plus sûr)
+        document.getElementById('share-btn-action').onclick = () => {
+            partagerRando(data.title);
+        };
+
+        // Stats
         const dist = (gpxLayer.get_distance() / 1000).toFixed(1); 
         const elev = gpxLayer.get_elevation_gain().toFixed(0);    
         const time = msToTime(gpxLayer.get_moving_time());
@@ -258,7 +290,6 @@ function afficherDetails(data, gpxLayer) {
         if(data.safePhotos && data.safePhotos.length > 0) {
             data.safePhotos.forEach(item => {
                 let url = (typeof item === 'string') ? item : (item.image || null);
-                
                 if(url) {
                     const div = document.createElement('div'); div.className='photo-box';
                     div.innerHTML = `<a data-fslightbox="gallery" href="${url}"><img src="${url}" onerror="this.style.display='none'"></a>`;
@@ -285,12 +316,10 @@ function afficherDetails(data, gpxLayer) {
     }
 }
 
-// --- RECHERCHE TEXTE ---
+// --- RECHERCHE ---
 document.getElementById('search-input').addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase();
     document.querySelectorAll('.rando-item').forEach(item => {
-        // Simple : si le titre contient le texte, on affiche.
-        // Note: La recherche "écrase" temporairement le filtre bouton si on tape quelque chose.
         item.style.display = item.querySelector('h3').innerText.toLowerCase().includes(term) ? 'flex' : 'none';
     });
 });
