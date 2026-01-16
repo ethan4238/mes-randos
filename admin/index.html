@@ -10,5 +10,11 @@
   <script src="https://unpkg.com/netlify-cms-media-library-cloudinary@^1.0.0/dist/index.js"></script>
   
   <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+
+  <script>
+    // On dit au CMS de charger le fichier CSS qui est dans le dossier parent (../)
+    CMS.registerPreviewStyle('../style.css');
+  </script>
+
 </body>
 </html>
