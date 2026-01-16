@@ -8,15 +8,15 @@
     <meta property="og:title" content="Ethan Randonnées - L'Appel des Sommets">
     <meta property="og:description" content="Découvrez mes meilleures randonnées, traces GPS et photos en montagne.">
     
-    <meta property="og:image" content="https://PSEUDO.github.io/NOM-DU-PROJET/photos/banniere.jpg">
+    <meta property="og:image" content="https://PSEUDO.github.io/NOM-DU-PROJET/photos/banniere.JPG">
     <meta property="og:url" content="https://PSEUDO.github.io/NOM-DU-PROJET/">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
 
     <link rel="icon" type="image/png" href="icones/montagne.png">
-    <link rel="apple-touch-icon" href="icones/icon-192.png">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f172a">
+    <link rel="apple-touch-icon" href="icones/icon-192.png">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -107,11 +107,9 @@
 
     <section id="app-container" class="page-section hidden">
         <div id="sidebar">
-            
             <div class="mobile-toggle-bar" onclick="toggleMobilePanel('sidebar')">
                 <i class="fa-solid fa-chevron-down"></i>
             </div>
-
             <h2>Mes Sorties</h2>
             
             <div class="search-container">
@@ -163,7 +161,7 @@
                     </p>
                 </div>
                 <div class="about-image">
-                    <img src="photos/propos2.jpeg" alt="Ethan au sommet" loading="lazy" onerror="this.src='https://via.placeholder.com/500x600?text=Photo+Sommet'">
+                    <img src="photos/propos1.JPG" alt="Ethan au sommet" loading="lazy" onerror="this.src='https://via.placeholder.com/500x600?text=Photo+Sommet'">
                 </div>
             </div>
         </div>
@@ -199,13 +197,11 @@
     <script src="script.js"></script>
     
     <script>
-      // Netlify Identity
       if (window.netlifyIdentity) {
         window.netlifyIdentity.on("init", user => {
           if (!user) { window.netlifyIdentity.on("login", () => { document.location.href = "/admin/"; }); }
         });
       }
-      // PWA Service Worker
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('./sw.js')
