@@ -282,10 +282,90 @@ header nav a.active { color: var(--accent); background: rgba(249, 115, 22, 0.1);
 }
 
 /* =========================================
-   10. PIED DE PAGE (FOOTER)
+   10. PIED DE PAGE (FOOTER) - STYLE CLASSIQUE
    ========================================= */
-.site-footer { background: var(--primary); color: white; padding: 60px 20px; }
-.footer-logo { font-size: 1.5rem; font-weight: 800; margin-bottom: 10px; }
-.footer-links a { color: rgba(255,255,255,0.7); text-decoration: none; font-weight: 600; }
+.site-footer {
+    background-color: var(--primary); /* Fond Bleu Nuit */
+    color: white; 
+    padding: 60px 20px 30px 20px; 
+    margin-top: 0;
+    position: relative;
+    z-index: 10;
+}
+
+.footer-content {
+    max-width: 1000px; 
+    margin: 0 auto; 
+    text-align: center; /* On force le centrage */
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; /* On aligne tout au centre */
+    gap: 20px;
+}
+
+.footer-logo { 
+    font-family: 'Montserrat', sans-serif; 
+    font-weight: 800; 
+    font-size: 1.5rem; 
+    letter-spacing: 1px; 
+    margin-bottom: 5px;
+    color: white; /* Important pour qu'il soit visible */
+}
+
+.footer-text { 
+    font-size: 1.1rem; 
+    margin-bottom: 10px; 
+    font-weight: 600; 
+    color: rgba(255,255,255,0.9); 
+}
+
+/* Réseaux sociaux centrés et blancs */
+.footer-socials { 
+    display: flex; 
+    justify-content: center; 
+    gap: 25px; 
+    margin-bottom: 10px; 
+}
+.footer-socials a { 
+    color: white !important; /* On force le blanc */
+    font-size: 2rem; 
+    transition: 0.3s; 
+    text-decoration: none;
+}
+.footer-socials a:hover { 
+    color: var(--accent) !important; 
+    transform: translateY(-5px); 
+}
+
+/* Liens centrés */
+.footer-links { 
+    display: flex; 
+    justify-content: center;
+    flex-wrap: wrap; 
+    gap: 30px; 
+    margin: 20px 0; 
+}
+.footer-links a { 
+    color: rgba(255,255,255,0.8); 
+    text-decoration: none; 
+    font-weight: 700; 
+    font-size: 0.9rem; 
+    text-transform: uppercase; 
+    transition: 0.3s; 
+}
 .footer-links a:hover { color: white; }
-.about-container { max-width: 1000px; margin: 40px auto; padding: 0 20px 80px 20px; }
+
+.copyright {
+    margin-top: 40px; 
+    padding-top: 20px; 
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    width: 100%; 
+    text-align: center;
+    font-size: 0.8rem; 
+    color: rgba(255, 255, 255, 0.5);
+}
+
+@media (max-width: 600px) {
+    .site-footer { padding: 40px 20px; }
+    .footer-links { flex-direction: column; gap: 15px; }
+}
