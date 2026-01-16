@@ -89,24 +89,31 @@ header nav a.active { color: var(--accent); background: rgba(249, 115, 22, 0.1);
 }
 .page-section.active { display: block; opacity: 1; }
 #app-container.active { display: flex; overflow: hidden; }
-
 /* =========================================
-   4. ACCUEIL (HERO)
+   4. ACCUEIL (HERO) - CORRIGÉ
    ========================================= */
 .hero {
     height: 100%;
-    /* Attention au .JPG majuscule ici 👇 */
+    /* 1. L'image avec .JPG majuscule */
     background: linear-gradient(rgba(15, 23, 42, 0.3), rgba(15, 23, 42, 0.5)), url('photos/banniere.JPG');
     background-size: cover; 
     background-position: center;
-    /* ... suite du code ... */
+    
+    /* 2. Les lignes magiques pour CENTRER le texte (qui avaient disparu) */
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center;
+    text-align: center; 
+    color: white;
 }
+
+/* Assurez-vous aussi que ces styles sont bien là juste en dessous */
 .hero h1 { 
     color: white; font-size: 3.5rem; text-transform: uppercase; 
     text-shadow: 0 10px 30px rgba(0,0,0,0.3); margin-bottom: 15px;
 }
 .hero p { font-size: 1.2rem; font-weight: 600; margin-bottom: 40px; opacity: 0.9; }
-
 .cta-button {
     padding: 16px 40px; background: var(--accent); color: white; border: none;
     font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
