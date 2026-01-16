@@ -5,7 +5,6 @@ const sections = document.querySelectorAll('.page-section');
 function showSection(targetId) {
     sections.forEach(sec => sec.classList.remove('active'));
     sections.forEach(sec => sec.classList.add('hidden')); 
-
     navLinks.forEach(link => link.classList.remove('active'));
 
     const targetSection = document.getElementById(targetId);
@@ -13,7 +12,6 @@ function showSection(targetId) {
         targetSection.classList.add('active');
         targetSection.classList.remove('hidden');
     }
-
     const activeLink = document.querySelector(`.nav-link[data-target="${targetId}"]`);
     if(activeLink) activeLink.classList.add('active');
 
@@ -25,16 +23,12 @@ function showSection(targetId) {
 navLinks.forEach(link => {
     link.addEventListener('click', (e) => {
         e.preventDefault();
-        const target = link.getAttribute('data-target');
-        showSection(target);
+        showSection(link.getAttribute('data-target'));
     });
 });
-
 function goToMap() { showSection('app-container'); }
 
-
 // --- CODE CARTE & RANDOS ---
-
 const topoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, attribution: '© OpenStreetMap' });
 const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: '© Esri' });
 
@@ -58,12 +52,10 @@ const switchControl = L.Control.extend({
     }
 });
 map.addControl(new switchControl());
-
 L.control.locate({ position: 'topleft', strings: { title: "Me localiser" } }).addTo(map);
 
 let myElevationChart = null;
 
-// --- FONCTION COULEUR DIFFICULTÉ ---
 function getDiffColor(d) {
     if(!d) return '#f59e0b';
     if(d === 'Facile') return '#10b981';
@@ -79,6 +71,17 @@ fetch('randos.json')
         const mesRandos = jsonData.items;
         if (mesRandos) {
             mesRandos.forEach((data, index) => {
+                // SÉCURITÉ FORMAT PHOTOS : On s'assure que c'est toujours une liste
+                let safePhotos = [];
+                if (data.photos) {
+                    if (Array.isArray(data.photos)) {
+                        safePhotos = data.photos; // C'est déjà une liste, parfait
+                    } else if (typeof data.photos === 'string') {
+                        safePhotos = [data.photos]; // C'est un texte seul, on le met dans une liste
+                    }
+                }
+                data.safePhotos = safePhotos; // On stocke la version propre
+
                 // Création Carte
                 const gpxLayer = new L.GPX(data.gpx, {
                     async: true,
@@ -98,32 +101,32 @@ fetch('randos.json')
                         if(elDate) elDate.innerText = dateStr;
                         data.calculatedDate = dateStr; 
                     }
-
                 }).on('click', function(e) {
                     L.DomEvent.stopPropagation(e);
                     afficherDetails(data, gpxLayer);
                     updateActiveItem(index);
                 }).addTo(map);
 
-                // --- CREATION DE LA LISTE ---
+                // CREATION LISTE
                 const list = document.getElementById('randonnees-list');
                 if (list) {
                     const item = document.createElement('div');
                     item.className = 'rando-item';
                     item.id = `item-${index}`;
                     
-                    // Sécurité pour l'image miniature
-                    let thumbUrl = 'https://via.placeholder.com/70?text=Montagne';
-                    if (data.photos && data.photos.length > 0) {
-                        // Le nouveau format admin renvoie parfois des strings direct, parfois non. On s'assure que c'est une string.
-                        thumbUrl = typeof data.photos[0] === 'string' ? data.photos[0] : data.photos[0].image;
+                    // Gestion miniature sécurisée
+                    let thumbUrl = 'https://via.placeholder.com/70?text=No+Img';
+                    if (safePhotos.length > 0) {
+                        // On prend la 1ère photo, qu'elle soit string ou objet
+                        let p = safePhotos[0];
+                        thumbUrl = (typeof p === 'string') ? p : (p.image || thumbUrl);
                     }
                     
                     const diff = data.difficulty || "Moyenne";
                     const diffColor = getDiffColor(diff);
 
                     item.innerHTML = `
-                        <img src="${thumbUrl}" class="list-thumb" alt="${data.title}">
+                        <img src="${thumbUrl}" class="list-thumb" loading="lazy" onerror="this.src='https://via.placeholder.com/70?text=Erreur'" alt="${data.title}">
                         <div class="list-content">
                             <h3>${data.title}</h3>
                             <p style="margin-bottom: 2px;">Distance : <span id="dist-${index}">...</span></p>
@@ -142,7 +145,7 @@ fetch('randos.json')
             });
         }
     })
-    .catch(err => console.error(err));
+    .catch(err => console.error("Erreur chargement:", err));
 
 
 function updateActiveItem(idx) {
@@ -159,99 +162,81 @@ function msToTime(duration) {
 }
 
 function afficherDetails(data, gpxLayer) {
-    const panel = document.getElementById('info-panel');
-    const displayDate = data.calculatedDate || "Date inconnue";
-    const diff = data.difficulty || "Moyenne";
-    const diffColor = getDiffColor(diff);
+    try {
+        const panel = document.getElementById('info-panel');
+        const displayDate = data.calculatedDate || "Date inconnue";
+        const diff = data.difficulty || "Moyenne";
+        const diffColor = getDiffColor(diff);
 
-    panel.innerHTML = `
-        <div class="panel-header">
-            <h2 style="margin:0; font-size:1.2rem; color:#2c3e50;">${data.title}</h2>
-            <button id="close-panel-btn" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
-        </div>
-        <div class="panel-content">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <p style="color:var(--primary-soft); font-weight:600; font-size:0.9rem; margin:0;">
-                    📅 Sortie du ${displayDate}
-                </p>
-                <span class="diff-badge" style="background-color: ${diffColor}; margin:0;">${diff}</span>
+        panel.innerHTML = `
+            <div class="panel-header">
+                <h2 style="margin:0; font-size:1.2rem; color:#2c3e50;">${data.title}</h2>
+                <button id="close-panel-btn" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
             </div>
+            <div class="panel-content">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <p style="color:var(--primary-soft); font-weight:600; font-size:0.9rem; margin:0;">📅 Sortie du ${displayDate}</p>
+                    <span class="diff-badge" style="background-color: ${diffColor}; margin:0;">${diff}</span>
+                </div>
 
-            <div id="stats-placeholder"></div>
-            
-            <a href="${data.gpx}" download class="download-btn">📥 Télécharger la trace GPX</a>
-            
-            <p style="color:#666; line-height:1.5; margin: 15px 0;">${data.description}</p>
-            <div class="chart-container"><canvas id="elevationChart"></canvas></div>
-            <div id="rando-photos"></div>
-        </div>
-    `;
+                <div id="stats-placeholder">Chargement stats...</div>
+                
+                <a href="${data.gpx}" download class="download-btn">📥 Télécharger la trace GPX</a>
+                
+                <div style="color:#666; line-height:1.5; margin: 15px 0;">${marked.parse(data.description)}</div> <div class="chart-container"><canvas id="elevationChart"></canvas></div>
+                <div id="rando-photos"></div>
+            </div>
+        `;
 
-    document.getElementById('close-panel-btn').onclick = () => {
-        panel.classList.add('hidden');
-        document.querySelectorAll('.rando-item').forEach(i => i.classList.remove('active'));
-    };
+        // Bouton fermer
+        document.getElementById('close-panel-btn').onclick = () => {
+            panel.classList.add('hidden');
+            document.querySelectorAll('.rando-item').forEach(i => i.classList.remove('active'));
+        };
 
-    const dist = (gpxLayer.get_distance() / 1000).toFixed(1); 
-    const elev = gpxLayer.get_elevation_gain().toFixed(0);    
-    const time = msToTime(gpxLayer.get_moving_time());
-    
-    document.getElementById('stats-placeholder').innerHTML = `
-        <div class="stats-grid">
-            <div class="stat-item"><span class="stat-icon">📏</span><span class="stat-value">${dist} km</span><span class="stat-label">Distance</span></div>
-            <div class="stat-item"><span class="stat-icon">🏔️</span><span class="stat-value">${elev} m</span><span class="stat-label">Dénivelé</span></div>
-            <div class="stat-item"><span class="stat-icon">⏱️</span><span class="stat-value">${time}</span><span class="stat-label">Temps</span></div>
-        </div>
-    `;
+        // Stats
+        const dist = (gpxLayer.get_distance() / 1000).toFixed(1); 
+        const elev = gpxLayer.get_elevation_gain().toFixed(0);    
+        const time = msToTime(gpxLayer.get_moving_time());
+        
+        document.getElementById('stats-placeholder').innerHTML = `
+            <div class="stats-grid">
+                <div class="stat-item"><span class="stat-icon">📏</span><span class="stat-value">${dist} km</span><span class="stat-label">Distance</span></div>
+                <div class="stat-item"><span class="stat-icon">🏔️</span><span class="stat-value">${elev} m</span><span class="stat-label">Dénivelé</span></div>
+                <div class="stat-item"><span class="stat-icon">⏱️</span><span class="stat-value">${time}</span><span class="stat-label">Temps</span></div>
+            </div>
+        `;
 
-    const pContainer = document.getElementById('rando-photos');
-    if(data.photos) {
-        data.photos.forEach(photoItem => {
-            // C'EST CETTE LIGNE QUI EST IMPORTANTE :
-            // Elle gère le fait que l'admin envoie maintenant une simple liste de liens
-            const url = typeof photoItem === 'string' ? photoItem : photoItem.image;
-            
-            if(url) {
-                const div = document.createElement('div'); div.className='photo-box';
-                div.innerHTML = `<a data-fslightbox="gallery" href="${url}"><img src="${url}"></a>`;
-                pContainer.appendChild(div);
-            }
+        // Affichage Photos (Version Robuste)
+        const pContainer = document.getElementById('rando-photos');
+        if(data.safePhotos && data.safePhotos.length > 0) {
+            data.safePhotos.forEach(item => {
+                // On accepte soit un string direct, soit un objet avec .image
+                let url = (typeof item === 'string') ? item : (item.image || null);
+                
+                if(url) {
+                    const div = document.createElement('div'); div.className='photo-box';
+                    div.innerHTML = `<a data-fslightbox="gallery" href="${url}"><img src="${url}" onerror="this.style.display='none'"></a>`;
+                    pContainer.appendChild(div);
+                }
+            });
+            if(typeof refreshFsLightbox === 'function') refreshFsLightbox();
+        }
+
+        // Graphique
+        const raw = gpxLayer.get_elevation_data();
+        const lbls=[], dataPoints=[];
+        raw.forEach((p, i) => { if(i%10===0) { lbls.push(p[0].toFixed(1)); dataPoints.push(p[1]); }}); 
+
+        if(myElevationChart) myElevationChart.destroy();
+        myElevationChart = new Chart(document.getElementById('elevationChart'), {
+            type: 'line',
+            data: { labels: lbls, datasets: [{ label: 'Alt', data: dataPoints, borderColor: '#e67e22', backgroundColor: 'rgba(230,126,34,0.1)', fill: true, pointRadius: 0 }] },
+            options: { responsive: true, maintainAspectRatio: false, scales: { x: {display:false} }, plugins: {legend:{display:false}} }
         });
-        if(typeof refreshFsLightbox === 'function') refreshFsLightbox();
+
+        panel.classList.remove('hidden');
+    } catch (e) {
+        console.error("Erreur affichage détails : ", e);
     }
-
-    const raw = gpxLayer.get_elevation_data();
-    const lbls=[], dataPoints=[];
-    raw.forEach((p, i) => { if(i%10===0) { lbls.push(p[0].toFixed(1)); dataPoints.push(p[1]); }}); 
-
-    if(myElevationChart) myElevationChart.destroy();
-    myElevationChart = new Chart(document.getElementById('elevationChart'), {
-        type: 'line',
-        data: { labels: lbls, datasets: [{ label: 'Alt', data: dataPoints, borderColor: '#e67e22', backgroundColor: 'rgba(230,126,34,0.1)', fill: true, pointRadius: 0 }] },
-        options: { responsive: true, maintainAspectRatio: false, scales: { x: {display:false} }, plugins: {legend:{display:false}} }
-    });
-
-    panel.classList.remove('hidden');
-}
-
-document.getElementById('search-input').addEventListener('input', (e) => {
-    const term = e.target.value.toLowerCase();
-    document.querySelectorAll('.rando-item').forEach(item => {
-        item.style.display = item.querySelector('h3').innerText.toLowerCase().includes(term) ? 'flex' : 'none';
-    });
-});
-
-const backToTopBtn = document.getElementById('back-to-top');
-const scrollableSections = document.querySelectorAll('.page-section');
-if (backToTopBtn) {
-    scrollableSections.forEach(section => {
-        section.addEventListener('scroll', () => {
-            if (section.scrollTop > 300) backToTopBtn.classList.add('visible');
-            else backToTopBtn.classList.remove('visible');
-        });
-    });
-    backToTopBtn.addEventListener('click', () => {
-        const activeSection = document.querySelector('.page-section.active');
-        if(activeSection) activeSection.scrollTo({ top: 0, behavior: 'smooth' });
-    });
 }
