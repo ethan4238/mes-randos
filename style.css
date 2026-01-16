@@ -592,52 +592,99 @@ header nav a.active { color: var(--accent); background: rgba(249, 115, 22, 0.1);
     color: var(--primary);
     cursor: pointer;
 }
-
 /* =========================================
-   AJUSTEMENTS RESPONSIVE (MOBILE)
+   9. RESPONSIVE (MOBILE - VERSION CLIC)
    ========================================= */
 @media (max-width: 768px) {
-    
-    /* 1. Header Mobile */
-    header { 
-        justify-content: space-between; 
-        padding: 0 20px; 
+    /* HEADER COMPACT */
+    header { justify-content: space-between; padding: 0 15px; }
+    header .logo { position: static; transform: none; font-size: 1rem; }
+    header nav a { margin-left: 5px; font-size: 0.7rem; padding: 5px;}
+
+    #app-container { 
+        display: block; 
+        position: relative;
+        height: calc(100vh - var(--header-height));
+        overflow: hidden;
     }
 
-    /* On affiche le bouton burger */
-    .menu-toggle { display: block; }
+    /* 1. LA CARTE PREND TOUT L'ÉCRAN */
+    #map { 
+        width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; 
+    }
 
-    /* 2. Le Menu devient un panneau déroulant */
-    #main-nav {
-        position: absolute;
-        top: var(--header-height); /* Juste en dessous du header */
-        left: 0;
+    /* 2. STYLE DU BOUTON DE CONTROLE (POIGNÉE) */
+    .mobile-toggle-bar {
         width: 100%;
-        background: rgba(255, 255, 255, 0.98); /* Fond blanc quasi opaque */
-        backdrop-filter: blur(10px);
-        flex-direction: column; /* Liens les uns sous les autres */
+        height: 40px; /* Zone cliquable confortable */
+        background: white;
+        border-radius: 20px 20px 0 0;
+        display: flex;
         align-items: center;
-        padding: 20px 0;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-        border-bottom: 1px solid rgba(0,0,0,0.05);
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        z-index: 10;
+        color: var(--primary-soft);
+        font-size: 1.2rem;
+        transition: background 0.2s;
+    }
+    .mobile-toggle-bar:hover { background: #f8fafc; }
+
+    /* 3. SIDEBAR (LISTE) */
+    #sidebar { 
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        width: 100%; 
         
-        /* Animation d'ouverture */
-        transform: translateY(-150%); /* Caché vers le haut */
-        transition: transform 0.3s ease-in-out;
-        z-index: -1; /* Derrière le header pour l'effet de glisse */
+        /* HAUTEUR PAR DÉFAUT (OUVERT) */
+        height: 65vh; 
+        
+        background: var(--bg-page);
+        border-radius: 20px 20px 0 0; 
+        box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
+        z-index: 100;
+        
+        display: flex; flex-direction: column;
+        transition: height 0.4s cubic-bezier(0.25, 1, 0.5, 1); /* Animation fluide */
     }
 
-    /* Classe ajoutée par JS pour ouvrir le menu */
-    #main-nav.open {
-        transform: translateY(0); /* On le fait descendre */
+    /* CLASSE POUR RÉDUIRE LE PANNEAU */
+    #sidebar.minimized {
+        height: 60px; /* Juste la hauteur du bouton */
+        overflow: hidden;
     }
 
-    /* Style des liens dans le menu mobile */
-    header nav a {
-        margin: 15px 0;
-        font-size: 1.1rem;
-        display: block;
-        width: 100%;
-        text-align: center;
+    #sidebar h2 { font-size: 1.1rem; padding: 0 20px; margin: 0; }
+    .search-container { padding: 10px 20px; }
+    #randonnees-list { padding: 0 20px 80px 20px; }
+
+    /* 4. INFO PANEL (DÉTAILS) */
+    #info-panel { 
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        width: 100%; 
+        
+        /* HAUTEUR PAR DÉFAUT (OUVERT) */
+        height: 65vh;
+        
+        border-radius: 20px 20px 0 0;
+        z-index: 200; /* Au-dessus de la liste */
+        transform: translateY(0);
+        transition: transform 0.3s ease, height 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        display: flex; flex-direction: column;
     }
+    
+    #info-panel.minimized {
+        height: 60px; /* Réduit */
+        overflow: hidden;
+    }
+
+    /* Pour cacher complètement le panneau info */
+    #info-panel.hidden { transform: translateY(110%); }
+    
+    /* Autres ajustements */
+    .about-row { flex-direction: column; gap: 30px; margin-bottom: 50px; }
+    .about-row.reverse-mobile { flex-direction: column-reverse; }
+    .cinematic-container { height: 70vh; max-height: 650px; }
 }

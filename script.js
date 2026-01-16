@@ -266,10 +266,10 @@ function afficherDetails(data, gpxLayer) {
         const diffColor = getDiffColor(diff);
         const cleanTitle = data.title.replace(/'/g, "\\'");
 
-        // MODIFICATION ICI : AJOUT DE LA POIGNÉE (DRAG HANDLE) + HEADER
+        // MODIFICATION ICI : AJOUT DU BOUTON TOGGLE (Flèche) + HEADER
         panel.innerHTML = `
-            <div class="drag-handle" id="drag-info">
-                <div class="drag-bar"></div>
+            <div class="mobile-toggle-bar" onclick="toggleMobilePanel('info-panel')">
+                <i class="fa-solid fa-chevron-down"></i>
             </div>
 
             <div class="panel-header">
@@ -299,6 +299,8 @@ function afficherDetails(data, gpxLayer) {
 
         document.getElementById('close-panel-btn').onclick = () => {
             panel.classList.add('hidden');
+            // On s'assure que le panneau est maximisé (pas réduit) pour la prochaine fois
+            panel.classList.remove('minimized');
             document.querySelectorAll('.rando-item').forEach(i => i.classList.remove('active'));
             gpxLayer.setStyle({ weight: 4, opacity: 0.8 });
         };
@@ -341,8 +343,8 @@ function afficherDetails(data, gpxLayer) {
             options: { responsive: true, maintainAspectRatio: false, scales: { x: {display:false} }, plugins: {legend:{display:false}} }
         });
 
-        // MODIFICATION ICI : ON REND LE PANNEAU DRAGGABLE AVANT DE L'AFFICHER
-        makeDraggable('info-panel', 'drag-info');
+        // On reset l'état du panneau
+        panel.classList.remove('minimized');
         panel.classList.remove('hidden');
         
     } catch (e) {
@@ -375,81 +377,27 @@ if (backToTopBtn) {
 }
 
 // ==========================================
-// GESTION DU GLISSEMENT (DRAG) - VERSION ROBUSTE
+// GESTION MOBILE : MINIMISER / MAXIMISER (TOGGLE)
 // ==========================================
+function toggleMobilePanel(panelId) {
+    // On ne fait ça que sur mobile
+    if (window.innerWidth > 768) return;
 
-function activerDragMobile(elementId, handleId) {
-    const element = document.getElementById(elementId);
-    const handle = document.getElementById(handleId);
-
-    // Sécurité : si les éléments n'existent pas ou si on est sur PC, on arrête.
-    if (!element || !handle) return;
-
-    let startY = 0;
-    let startHeight = 0;
-    const screenH = window.innerHeight;
-
-    // 1. QUAND ON POSE LE DOIGT
-    handle.addEventListener('touchstart', (e) => {
-        // Empêche le scroll ou le refresh
-        e.preventDefault(); 
-        
-        startY = e.touches[0].clientY;
-        startHeight = element.offsetHeight;
-        
-        // On enlève l'animation pour que ça réagisse instantanément au doigt
-        element.style.transition = 'none';
-    }, { passive: false });
-
-    // 2. QUAND ON BOUGE LE DOIGT
-    handle.addEventListener('touchmove', (e) => {
-        e.preventDefault(); // INDISPENSABLE
-        
-        const currentY = e.touches[0].clientY;
-        const delta = currentY - startY; // Si positif = on descend, négatif = on monte
-        
-        // Calcul : Hauteur de départ MOINS la descente
-        let newHeight = startHeight - delta;
-
-        // Limites strictes
-        const minH = screenH * 0.10; // 10% de l'écran minimum
-        const maxH = screenH * 0.90; // 90% de l'écran maximum
-
-        if (newHeight < minH) newHeight = minH;
-        if (newHeight > maxH) newHeight = maxH;
-
-        element.style.height = `${newHeight}px`;
-    }, { passive: false });
-
-    // 3. QUAND ON LÂCHE LE DOIGT (AIMANTATION)
-    handle.addEventListener('touchend', () => {
-        // On remet l'animation fluide
-        element.style.transition = 'height 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
-        
-        const currentHeight = element.offsetHeight;
-        
-        // Logique d'aimantation (Snap)
-        if (currentHeight < screenH * 0.25) {
-            // Si on est en bas -> On ferme presque (12vh)
-            element.style.height = '12vh'; 
-        } else if (currentHeight > screenH * 0.70) {
-            // Si on est en haut -> On ouvre grand (85vh)
-            element.style.height = '85vh';
-        } else {
-            // Sinon -> On se met au milieu (60vh)
-            element.style.height = '60vh';
-        }
-    });
-}
-
-// Lancer le script au chargement
-document.addEventListener('DOMContentLoaded', () => {
-    // Activer sur la liste principale
-    activerDragMobile('sidebar', 'drag-sidebar');
+    const panel = document.getElementById(panelId);
+    const icon = panel.querySelector('.mobile-toggle-bar i');
     
-    // Activer sur le panneau détails (sera fait aussi dans afficherDetails mais au cas où)
-    activerDragMobile('info-panel', 'drag-info');
-});
+    // On ajoute/enlève la classe "minimized"
+    panel.classList.toggle('minimized');
+
+    // On change l'icône (Flèche haut ou bas)
+    if (panel.classList.contains('minimized')) {
+        // Si réduit -> Montrer flèche haut
+        if(icon) { icon.classList.remove('fa-chevron-down'); icon.classList.add('fa-chevron-up'); }
+    } else {
+        // Si ouvert -> Montrer flèche bas
+        if(icon) { icon.classList.remove('fa-chevron-up'); icon.classList.add('fa-chevron-down'); }
+    }
+}
 
 // ==========================================
 // GESTION DU MENU BURGER MOBILE
