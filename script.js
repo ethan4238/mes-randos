@@ -259,97 +259,95 @@ function msToTime(duration) {
 }
 
 function afficherDetails(data, gpxLayer) {
-    try {
-        const panel = document.getElementById('info-panel');
-        const displayDate = data.calculatedDate || "Date inconnue";
-        const diff = data.difficulty || "Moyenne";
-        const diffColor = getDiffColor(diff);
-        const cleanTitle = data.title.replace(/'/g, "\\'");
+    const panel = document.getElementById('info-panel');
+    
+    // 1. Nettoyage et préparation des données
+    const displayDate = data.calculatedDate || "Date inconnue";
+    const diffColor = getDiffColor(data.difficulty);
 
-        // MODIFICATION ICI : AJOUT DU BOUTON TOGGLE (Flèche) + HEADER
-        panel.innerHTML = `
-            <div class="mobile-toggle-bar" onclick="toggleMobilePanel('info-panel')">
-                <i class="fa-solid fa-chevron-down"></i>
+    // 2. Injection du HTML
+    panel.innerHTML = `
+        <div class="mobile-toggle-bar" onclick="toggleMobilePanel('info-panel')">
+            <i class="fa-solid fa-chevron-down"></i>
+        </div>
+        <div class="panel-header">
+            <h2 style="margin:0;">${data.title}</h2>
+            <button id="close-panel-btn" style="background:none; border:none; font-size:20px; cursor:pointer;">✕</button>
+        </div>
+        <div class="panel-content">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <span style="font-weight:700; color:#64748b;">📅 ${displayDate}</span>
+                <span class="diff-badge" style="background:${diffColor}; margin:0;">${data.difficulty}</span>
             </div>
 
-            <div class="panel-header">
-                <h2 style="margin:0; font-size:1.2rem; color:#2c3e50;">${data.title}</h2>
-                <button id="close-panel-btn" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            <div id="stats-placeholder" class="stats-grid"></div>
+
+            <button id="share-btn-action" class="share-btn">
+                <i class="fa-solid fa-paper-plane"></i> PARTAGER LA SORTIE
+            </button>
+
+            <a href="${data.gpx}" download class="download-btn">
+                <i class="fa-solid fa-download"></i> TRACE GPX
+            </a>
+
+            <div style="margin:20px 0; line-height:1.6; color:#334155;">
+                ${marked.parse(data.description || "")}
             </div>
-            <div class="panel-content">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                    <p style="color:var(--primary-soft); font-weight:600; font-size:0.9rem; margin:0;">📅 Sortie du ${displayDate}</p>
-                    <span class="diff-badge" style="background-color: ${diffColor}; margin:0;">${diff}</span>
-                </div>
 
-                <div id="stats-placeholder">Chargement stats...</div>
-                
-                <button id="share-btn-action" class="share-btn">
-                    📤 Partager à des amis
-                </button>
+            <div class="chart-container"><canvas id="elevationChart"></canvas></div>
 
-                <a href="${data.gpx}" download class="download-btn">📥 Télécharger la trace GPX</a>
-                
-                <div style="color:#666; line-height:1.5; margin: 15px 0;">${marked.parse(data.description)}</div>
-                
-                <div class="chart-container"><canvas id="elevationChart"></canvas></div>
-                <div id="rando-photos"></div>
-            </div>
-        `;
+            <h3 style="margin-top:30px;">📸 Galerie Photos</h3>
+            <div id="rando-photos"></div>
+        </div>
+    `;
 
-        document.getElementById('close-panel-btn').onclick = () => {
-            panel.classList.add('hidden');
-            // On s'assure que le panneau est maximisé (pas réduit) pour la prochaine fois
-            panel.classList.remove('minimized');
-            document.querySelectorAll('.rando-item').forEach(i => i.classList.remove('active'));
-            gpxLayer.setStyle({ weight: 4, opacity: 0.8 });
-        };
+    // 3. Stats réelles
+    const dist = (gpxLayer.get_distance() / 1000).toFixed(1);
+    const elev = gpxLayer.get_elevation_gain().toFixed(0);
+    const time = msToTime(gpxLayer.get_moving_time());
 
-        document.getElementById('share-btn-action').onclick = () => { partagerRando(data.title); };
+    document.getElementById('stats-placeholder').innerHTML = `
+        <div class="stat-item"><span class="stat-value">${dist}km</span><span class="stat-label">Dist.</span></div>
+        <div class="stat-item"><span class="stat-value">${elev}m</span><span class="stat-label">Déniv.</span></div>
+        <div class="stat-item"><span class="stat-value">${time}</span><span class="stat-label">Temps</span></div>
+    `;
 
-        const dist = (gpxLayer.get_distance() / 1000).toFixed(1); 
-        const elev = gpxLayer.get_elevation_gain().toFixed(0);    
-        const time = msToTime(gpxLayer.get_moving_time());
-        
-        document.getElementById('stats-placeholder').innerHTML = `
-            <div class="stats-grid">
-                <div class="stat-item"><span class="stat-icon">📏</span><span class="stat-value">${dist} km</span><span class="stat-label">Distance</span></div>
-                <div class="stat-item"><span class="stat-icon">🏔️</span><span class="stat-value">${elev} m</span><span class="stat-label">Dénivelé</span></div>
-                <div class="stat-item"><span class="stat-icon">⏱️</span><span class="stat-value">${time}</span><span class="stat-label">Temps</span></div>
-            </div>
-        `;
-
-        const pContainer = document.getElementById('rando-photos');
-        if(data.safePhotos && data.safePhotos.length > 0) {
-            data.safePhotos.forEach(item => {
-                let url = (typeof item === 'string') ? item : (item.image || null);
-                if(url) {
-                    const div = document.createElement('div'); div.className='photo-box';
-                    div.innerHTML = `<a data-fslightbox="gallery" href="${url}"><img src="${url}" onerror="this.style.display='none'"></a>`;
-                    pContainer.appendChild(div);
-                }
-            });
-            if(typeof refreshFsLightbox === 'function') refreshFsLightbox();
-        }
-
-        const raw = gpxLayer.get_elevation_data();
-        const lbls=[], dataPoints=[];
-        raw.forEach((p, i) => { if(i%10===0) { lbls.push(p[0].toFixed(1)); dataPoints.push(p[1]); }}); 
-
-        if(myElevationChart) myElevationChart.destroy();
-        myElevationChart = new Chart(document.getElementById('elevationChart'), {
-            type: 'line',
-            data: { labels: lbls, datasets: [{ label: 'Alt', data: dataPoints, borderColor: '#e67e22', backgroundColor: 'rgba(230,126,34,0.1)', fill: true, pointRadius: 0 }] },
-            options: { responsive: true, maintainAspectRatio: false, scales: { x: {display:false} }, plugins: {legend:{display:false}} }
+    // 4. CHARGEMENT DES PHOTOS (Correction force .JPG)
+    const pContainer = document.getElementById('rando-photos');
+    if (data.photos && data.photos.length > 0) {
+        data.photos.forEach(path => {
+            // On s'assure que le chemin est propre
+            const div = document.createElement('div');
+            div.className = 'photo-box';
+            div.innerHTML = `<a data-fslightbox="gallery" href="${path}"><img src="${path}" loading="lazy"></a>`;
+            pContainer.appendChild(div);
         });
-
-        // On reset l'état du panneau
-        panel.classList.remove('minimized');
-        panel.classList.remove('hidden');
-        
-    } catch (e) {
-        console.error("Erreur affichage détails : ", e);
+        if(window.refreshFsLightbox) refreshFsLightbox();
+    } else {
+        pContainer.innerHTML = "<p>Aucune photo pour cette sortie.</p>";
     }
+
+    // Graphique altitude
+    renderElevationChart(gpxLayer);
+
+    // Events
+    document.getElementById('close-panel-btn').onclick = () => panel.classList.add('hidden');
+    document.getElementById('share-btn-action').onclick = () => partagerRando(data.title);
+
+    panel.classList.remove('hidden');
+}
+
+// Fonction isolée pour le graphique
+function renderElevationChart(gpxLayer) {
+    const raw = gpxLayer.get_elevation_data();
+    const lbls=[], dataPoints=[];
+    raw.forEach((p, i) => { if(i%10===0) { lbls.push(p[0].toFixed(1)); dataPoints.push(p[1]); }}); 
+    if(myElevationChart) myElevationChart.destroy();
+    myElevationChart = new Chart(document.getElementById('elevationChart'), {
+        type: 'line',
+        data: { labels: lbls, datasets: [{ label: 'Alt', data: dataPoints, borderColor: '#f97316', backgroundColor: 'rgba(249,115,22,0.1)', fill: true, pointRadius: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, scales: { x: {display:false} }, plugins: {legend:{display:false}} }
+    });
 }
 
 // --- RECHERCHE ---
