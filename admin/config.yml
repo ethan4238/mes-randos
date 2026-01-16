@@ -2,12 +2,13 @@ backend:
   name: git-gateway
   branch: main # Vérifiez que c'est bien "main" ou "master" sur GitHub
 
-# --- CONFIGURATION CLOUDINARY (VOS CODES) ---
+# --- CONFIGURATION CLOUDINARY ---
 media_library:
   name: cloudinary
   config:
     cloud_name: "dkbulsjyo"
     api_key: "551519669678153"
+    multiple: true # <--- C'EST LA LIGNE QUI MANQUAIT POUR DÉBLOQUER LA MULTI-SELECTION
     default_transformations:
       - [width: 1600, quality: "auto", fetch_format: "auto"]
       # ^ Cela force toutes les photos à être redimensionnées à 1600px max
