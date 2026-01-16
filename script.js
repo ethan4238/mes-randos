@@ -63,13 +63,13 @@ L.control.locate({ position: 'topleft', strings: { title: "Me localiser" } }).ad
 
 let myElevationChart = null;
 
-// --- FONCTION POUR LA COULEUR DE DIFFICULTÉ ---
+// --- FONCTION COULEUR DIFFICULTÉ ---
 function getDiffColor(d) {
-    if(!d) return '#f59e0b'; // Par défaut Orange (Moyenne)
-    if(d === 'Facile') return '#10b981'; // Vert
-    if(d === 'Difficile') return '#ef4444'; // Rouge
-    if(d === 'Expert') return '#111827'; // Noir
-    return '#f59e0b'; // Moyenne
+    if(!d) return '#f59e0b';
+    if(d === 'Facile') return '#10b981';
+    if(d === 'Difficile') return '#ef4444';
+    if(d === 'Expert') return '#111827';
+    return '#f59e0b';
 }
 
 // CHARGEMENT DONNÉES
@@ -112,9 +112,13 @@ fetch('randos.json')
                     item.className = 'rando-item';
                     item.id = `item-${index}`;
                     
-                    const thumbUrl = (data.photos && data.photos.length > 0) ? data.photos[0] : 'https://via.placeholder.com/70?text=Montagne';
+                    // Sécurité pour l'image miniature
+                    let thumbUrl = 'https://via.placeholder.com/70?text=Montagne';
+                    if (data.photos && data.photos.length > 0) {
+                        // Le nouveau format admin renvoie parfois des strings direct, parfois non. On s'assure que c'est une string.
+                        thumbUrl = typeof data.photos[0] === 'string' ? data.photos[0] : data.photos[0].image;
+                    }
                     
-                    // Récupération de la difficulté (ou "Moyenne" par défaut)
                     const diff = data.difficulty || "Moyenne";
                     const diffColor = getDiffColor(diff);
 
@@ -124,7 +128,6 @@ fetch('randos.json')
                             <h3>${data.title}</h3>
                             <p style="margin-bottom: 2px;">Distance : <span id="dist-${index}">...</span></p>
                             <p style="font-size: 0.75rem; color: #999;">📅 <span id="date-${index}">--/--/----</span></p>
-                            
                             <span class="diff-badge" style="background-color: ${diffColor};">${diff}</span>
                         </div>
                     `;
@@ -157,10 +160,7 @@ function msToTime(duration) {
 
 function afficherDetails(data, gpxLayer) {
     const panel = document.getElementById('info-panel');
-    
     const displayDate = data.calculatedDate || "Date inconnue";
-    
-    // Difficulté pour le panel
     const diff = data.difficulty || "Moyenne";
     const diffColor = getDiffColor(diff);
 
@@ -170,7 +170,6 @@ function afficherDetails(data, gpxLayer) {
             <button id="close-panel-btn" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
         </div>
         <div class="panel-content">
-            
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <p style="color:var(--primary-soft); font-weight:600; font-size:0.9rem; margin:0;">
                     📅 Sortie du ${displayDate}
@@ -199,30 +198,23 @@ function afficherDetails(data, gpxLayer) {
     
     document.getElementById('stats-placeholder').innerHTML = `
         <div class="stats-grid">
-            <div class="stat-item">
-                <span class="stat-icon">📏</span>
-                <span class="stat-value">${dist} km</span>
-                <span class="stat-label">Distance</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-icon">🏔️</span>
-                <span class="stat-value">${elev} m</span>
-                <span class="stat-label">Dénivelé</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-icon">⏱️</span>
-                <span class="stat-value">${time}</span>
-                <span class="stat-label">Temps</span>
-            </div>
+            <div class="stat-item"><span class="stat-icon">📏</span><span class="stat-value">${dist} km</span><span class="stat-label">Distance</span></div>
+            <div class="stat-item"><span class="stat-icon">🏔️</span><span class="stat-value">${elev} m</span><span class="stat-label">Dénivelé</span></div>
+            <div class="stat-item"><span class="stat-icon">⏱️</span><span class="stat-value">${time}</span><span class="stat-label">Temps</span></div>
         </div>
     `;
 
     const pContainer = document.getElementById('rando-photos');
     if(data.photos) {
-        data.photos.forEach(url => {
-            const div = document.createElement('div'); div.className='photo-box';
-            div.innerHTML = `<a data-fslightbox="gallery" href="${url}"><img src="${url}"></a>`;
-            pContainer.appendChild(div);
+        data.photos.forEach(photoItem => {
+            // Compatibilité : si c'est juste une string (nouveau format), on l'utilise. Sinon on cherche .image (ancien format)
+            const url = typeof photoItem === 'string' ? photoItem : photoItem.image;
+            
+            if(url) {
+                const div = document.createElement('div'); div.className='photo-box';
+                div.innerHTML = `<a data-fslightbox="gallery" href="${url}"><img src="${url}"></a>`;
+                pContainer.appendChild(div);
+            }
         });
         if(typeof refreshFsLightbox === 'function') refreshFsLightbox();
     }
@@ -234,12 +226,7 @@ function afficherDetails(data, gpxLayer) {
     if(myElevationChart) myElevationChart.destroy();
     myElevationChart = new Chart(document.getElementById('elevationChart'), {
         type: 'line',
-        data: {
-            labels: lbls,
-            datasets: [{
-                label: 'Alt', data: dataPoints, borderColor: '#e67e22', backgroundColor: 'rgba(230,126,34,0.1)', fill: true, pointRadius: 0
-            }]
-        },
+        data: { labels: lbls, datasets: [{ label: 'Alt', data: dataPoints, borderColor: '#e67e22', backgroundColor: 'rgba(230,126,34,0.1)', fill: true, pointRadius: 0 }] },
         options: { responsive: true, maintainAspectRatio: false, scales: { x: {display:false} }, plugins: {legend:{display:false}} }
     });
 
@@ -255,22 +242,15 @@ document.getElementById('search-input').addEventListener('input', (e) => {
 
 const backToTopBtn = document.getElementById('back-to-top');
 const scrollableSections = document.querySelectorAll('.page-section');
-
 if (backToTopBtn) {
     scrollableSections.forEach(section => {
         section.addEventListener('scroll', () => {
-            if (section.scrollTop > 300) {
-                backToTopBtn.classList.add('visible');
-            } else {
-                backToTopBtn.classList.remove('visible');
-            }
+            if (section.scrollTop > 300) backToTopBtn.classList.add('visible');
+            else backToTopBtn.classList.remove('visible');
         });
     });
-
     backToTopBtn.addEventListener('click', () => {
         const activeSection = document.querySelector('.page-section.active');
-        if(activeSection) {
-            activeSection.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+        if(activeSection) activeSection.scrollTo({ top: 0, behavior: 'smooth' });
     });
 }

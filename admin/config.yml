@@ -1,12 +1,17 @@
 backend:
   name: git-gateway
-  branch: main # Vérifie que c'est bien "main" sur ton GitHub
+  branch: main # Vérifiez que c'est bien "main" (ou "master")
 
 media_folder: "uploads"
 public_folder: "uploads"
 
 # Langue de l'interface
 locale: "fr"
+
+# Permet d'uploader plusieurs fichiers d'un coup dans la bibliothèque
+media_library:
+  config:
+    multiple: true
 
 collections:
   - name: "data"
@@ -16,7 +21,6 @@ collections:
         label: "Mes Randonnées"
         label_singular: "Randonnée"
         file: "randos.json"
-        # On affiche juste le titre dans la liste (la date sera sur le site)
         summary: "{{fields.title}}" 
         fields:
           - label: "Liste des randonnées"
@@ -30,7 +34,7 @@ collections:
                 widget: "string"
                 required: true
 
-              # 2. Difficulté (On garde ça, c'est utile !)
+              # 2. Difficulté
               - label: "Niveau de difficulté"
                 name: "difficulty"
                 widget: "select"
@@ -52,10 +56,10 @@ collections:
                 required: true
                 hint: "Le site lira automatiquement la date et la distance depuis ce fichier."
 
-              # 5. Photos
+              # 5. Photos (VERSION MULTI-SELECTION RAPIDE)
               - label: "Galerie Photos"
                 name: "photos"
-                widget: "list"
-                summary: "{{fields.image}}"
-                field: {label: "Image", name: "image", widget: "image", choose_url: false}
-                hint: "⚠️ La 1ère photo servira de miniature."
+                widget: "file" 
+                allow_multiple: true
+                choose_url: false
+                hint: "📸 Sélectionnez toutes vos photos d'un coup ! La première servira de miniature."
