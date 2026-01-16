@@ -78,30 +78,45 @@ fetch('randos.json')
                     },
                     polyline_options: { color: 'red', opacity: 0.8, weight: 4 }
                 }).on('loaded', function(e) {
+                    // 1. Calcul Distance
                     const dist = (e.target.get_distance() / 1000).toFixed(1);
-                    const el = document.getElementById(`dist-${index}`);
-                    if(el) el.innerText = `${dist} km`;
+                    const elDist = document.getElementById(`dist-${index}`);
+                    if(elDist) elDist.innerText = `${dist} km`;
+
+                    // 2. Extraction DATE (NOUVEAU)
+                    const rawDate = e.target.get_start_time();
+                    if(rawDate) {
+                        // On formate la date en français (ex: 12 août 2024)
+                        const dateStr = rawDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+                        const elDate = document.getElementById(`date-${index}`);
+                        if(elDate) elDate.innerText = dateStr;
+                        
+                        // On stocke la date brute dans l'objet data pour l'utiliser dans le panel
+                        data.calculatedDate = dateStr; 
+                    }
+
                 }).on('click', function(e) {
                     L.DomEvent.stopPropagation(e);
                     afficherDetails(data, gpxLayer);
                     updateActiveItem(index);
                 }).addTo(map);
 
-                // --- CREATION DE LA LISTE AVEC IMAGE ---
+                // --- CREATION DE LA LISTE ---
                 const list = document.getElementById('randonnees-list');
                 if (list) {
                     const item = document.createElement('div');
                     item.className = 'rando-item';
                     item.id = `item-${index}`;
                     
-                    // On récupère la 1ère image, sinon une image par défaut
                     const thumbUrl = (data.photos && data.photos.length > 0) ? data.photos[0] : 'https://via.placeholder.com/70?text=Montagne';
 
+                    // Ajout de la balise <span id="date-${index}"> pour recevoir la date
                     item.innerHTML = `
                         <img src="${thumbUrl}" class="list-thumb" alt="${data.title}">
                         <div class="list-content">
                             <h3>${data.title}</h3>
-                            <p>Distance : <span id="dist-${index}">...</span></p>
+                            <p style="margin-bottom: 2px;">Distance : <span id="dist-${index}">...</span></p>
+                            <p style="font-size: 0.75rem; color: #999;">📅 <span id="date-${index}">--/--/----</span></p>
                         </div>
                     `;
                     
@@ -134,12 +149,19 @@ function msToTime(duration) {
 function afficherDetails(data, gpxLayer) {
     const panel = document.getElementById('info-panel');
     
+    // On récupère la date calculée ou on met un texte par défaut
+    const displayDate = data.calculatedDate || "Date inconnue";
+
     panel.innerHTML = `
         <div class="panel-header">
             <h2 style="margin:0; font-size:1.2rem; color:#2c3e50;">${data.title}</h2>
             <button id="close-panel-btn" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
         </div>
         <div class="panel-content">
+            <p style="color:var(--primary-soft); font-weight:600; font-size:0.9rem; margin-bottom:15px;">
+                📅 Sortie du ${displayDate}
+            </p>
+
             <div id="stats-placeholder"></div>
             
             <a href="${data.gpx}" download class="download-btn">📥 Télécharger la trace GPX</a>
@@ -211,11 +233,10 @@ function afficherDetails(data, gpxLayer) {
 document.getElementById('search-input').addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase();
     document.querySelectorAll('.rando-item').forEach(item => {
-        item.style.display = item.querySelector('h3').innerText.toLowerCase().includes(term) ? 'flex' : 'none'; // 'flex' important ici pour garder la mise en page
+        item.style.display = item.querySelector('h3').innerText.toLowerCase().includes(term) ? 'flex' : 'none';
     });
 });
 
-// --- BOUTON RETOUR HAUT ---
 const backToTopBtn = document.getElementById('back-to-top');
 const scrollableSections = document.querySelectorAll('.page-section');
 

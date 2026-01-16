@@ -1,11 +1,11 @@
 backend:
   name: git-gateway
-  branch: main # Vérifiez bien que c'est "main" ou "master" sur GitHub
+  branch: main # Vérifie que c'est bien "main" sur ton GitHub
 
 media_folder: "uploads"
 public_folder: "uploads"
 
-# Langue de l'interface (si le navigateur est en FR, ça devrait suivre, mais on force les labels)
+# Langue de l'interface
 locale: "fr"
 
 collections:
@@ -14,14 +14,15 @@ collections:
     files:
       - name: "randos"
         label: "Mes Randonnées"
-        label_singular: "Randonnée" # Pour le bouton "Nouvelle Randonnée"
+        label_singular: "Randonnée"
         file: "randos.json"
+        # On affiche juste le titre dans la liste (la date sera sur le site)
+        summary: "{{fields.title}}" 
         fields:
           - label: "Liste des randonnées"
             name: "items"
             widget: "list"
-            collapsed: false # Ouvre la liste par défaut (plus pratique)
-            summary: "{{fields.title}} - {{fields.date}}" # Affiche le Titre et la Date dans la liste pliée !
+            collapsed: false
             fields:
               # 1. Le Titre
               - label: "Titre de la sortie"
@@ -29,16 +30,7 @@ collections:
                 widget: "string"
                 required: true
 
-              # 2. La Date (Nouveau !)
-              - label: "Date de la sortie"
-                name: "date"
-                widget: "datetime"
-                format: "YYYY-MM-DD"
-                date_format: "DD/MM/YYYY"
-                time_format: false
-                default: ""
-
-              # 3. Difficulté (Nouveau ! Menu déroulant)
+              # 2. Difficulté (On garde ça, c'est utile !)
               - label: "Niveau de difficulté"
                 name: "difficulty"
                 widget: "select"
@@ -46,28 +38,24 @@ collections:
                 default: "Moyenne"
                 required: false
 
-              # 4. Description
+              # 3. Description
               - label: "Description détaillée"
                 name: "description"
                 widget: "text"
                 required: true
 
-              # 5. Fichier GPX
+              # 4. Fichier GPX
               - label: "Fichier GPX"
                 name: "gpx"
                 widget: "file"
                 allowed_extensions: ["gpx"]
                 required: true
-                hint: "Téléchargez le fichier .gpx exporté de votre montre ou Strava."
+                hint: "Le site lira automatiquement la date et la distance depuis ce fichier."
 
-              # 6. Photos
+              # 5. Photos
               - label: "Galerie Photos"
                 name: "photos"
                 widget: "list"
                 summary: "{{fields.image}}"
-                fields:
-                  - label: "Image"
-                    name: "image"
-                    widget: "image"
-                    choose_url: false # Force l'upload pour éviter les erreurs
-                hint: "⚠️ IMPORTANT : La toute première photo de la liste servira de miniature dans la liste à gauche !"
+                field: {label: "Image", name: "image", widget: "image", choose_url: false}
+                hint: "⚠️ La 1ère photo servira de miniature."
