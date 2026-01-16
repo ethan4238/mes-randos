@@ -1,17 +1,12 @@
 backend:
   name: git-gateway
-  branch: main # Vérifiez que c'est bien "main" (ou "master")
+  branch: main # Vérifiez bien que c'est "main" ou "master" sur GitHub
 
 media_folder: "uploads"
 public_folder: "uploads"
 
 # Langue de l'interface
 locale: "fr"
-
-# Permet d'uploader plusieurs fichiers d'un coup dans la bibliothèque
-media_library:
-  config:
-    multiple: true
 
 collections:
   - name: "data"
@@ -56,10 +51,10 @@ collections:
                 required: true
                 hint: "Le site lira automatiquement la date et la distance depuis ce fichier."
 
-              # 5. Photos (VERSION MULTI-SELECTION RAPIDE)
+              # 5. Photos (VERSION MULTIPLE CORRIGÉE)
               - label: "Galerie Photos"
                 name: "photos"
-                widget: "file" 
+                widget: "image" 
                 allow_multiple: true
                 choose_url: false
                 hint: "📸 Sélectionnez toutes vos photos d'un coup ! La première servira de miniature."

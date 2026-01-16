@@ -207,7 +207,8 @@ function afficherDetails(data, gpxLayer) {
     const pContainer = document.getElementById('rando-photos');
     if(data.photos) {
         data.photos.forEach(photoItem => {
-            // Compatibilité : si c'est juste une string (nouveau format), on l'utilise. Sinon on cherche .image (ancien format)
+            // C'EST CETTE LIGNE QUI EST IMPORTANTE :
+            // Elle gère le fait que l'admin envoie maintenant une simple liste de liens
             const url = typeof photoItem === 'string' ? photoItem : photoItem.image;
             
             if(url) {
