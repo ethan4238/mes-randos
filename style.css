@@ -103,32 +103,137 @@ header nav a.active { color: var(--accent); background: rgba(249, 115, 22, 0.1);
 .cta-button:hover { transform: translateY(-3px); background: var(--accent-hover); }
 
 /* =========================================
-   5. CARTE & SIDEBAR (MES SORTIES)
+   5. VIDÉO & FEATURES (DESIGN 3 COLONNES)
    ========================================= */
-#app-container.active { display: flex; overflow: hidden; }
 
-#sidebar { 
-    width: 400px; height: 100%; background: white; 
-    display: flex; flex-direction: column; border-right: 1px solid #eee; 
-    z-index: 100;
+/* --- VIDÉO & CITATION --- */
+.cinematic-container {
+    position: relative;
+    width: 100%;
+    height: 500px;
+    overflow: hidden;
+    background: #0f172a;
 }
 
-#sidebar h2 { padding: 20px 25px; font-size: 1.4rem; }
+.cinematic-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.8; /* Légèrement assombri pour lire le texte */
+}
 
-.search-container { padding: 0 25px 15px; }
-#search-input { width: 100%; padding: 14px 20px; border-radius: 50px; border: 1px solid #eee; outline: none; background: #f8fafc; }
+.cinematic-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.3); /* Filtre noir transparent */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
 
-.filter-buttons { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 25px 20px; }
-.filter-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid #eee; background: white; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: 0.2s; }
-.filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+.cinematic-overlay blockquote {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: white;
+    text-align: center;
+    line-height: 1.3;
+    text-transform: uppercase;
+    text-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    margin-bottom: 15px;
+    max-width: 800px;
+    border: none; /* Enlève la barre latérale par défaut */
+}
 
-#randonnees-list { flex-grow: 1; overflow-y: auto; padding: 10px 25px; }
-.rando-item { display: flex; align-items: center; gap: 15px; padding: 12px; background: #fff; border: 1px solid #eee; border-radius: 12px; margin-bottom: 16px; cursor: pointer; transition: 0.3s; }
-.rando-item:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
-.rando-item.active { border: 2px solid var(--accent); background: #fff7ed; }
-.list-thumb { width: 75px; height: 75px; border-radius: 10px; object-fit: cover; background: #eee; }
+.citation-author {
+    color: var(--accent); /* Orange */
+    font-weight: 700;
+    letter-spacing: 4px;
+    font-size: 1rem;
+    position: relative;
+    padding-top: 10px;
+}
+.citation-author::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 3px;
+    background: white;
+    margin: 0 auto 10px auto; /* Petite ligne blanche au dessus */
+}
 
-#map { flex-grow: 1; height: 100%; z-index: 1; }
+
+/* --- FEATURES (3 COLONNES JOLIES) --- */
+.features-section {
+    background: white;
+    padding: 80px 10%;
+    
+    /* LA MAGIE DES 3 COLONNES EST ICI 👇 */
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 40px; /* Espace entre les colonnes */
+    
+    position: relative;
+    z-index: 10;
+    margin-top: -50px; /* Chevauchement stylé sur la vidéo */
+}
+
+.feature-card {
+    background: white;
+    padding: 40px 30px;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08); /* Ombre douce */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid #f1f5f9;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px); /* Monte quand on passe la souris */
+    box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+}
+
+.icon-circle {
+    width: 70px;
+    height: 70px;
+    background: #fff7ed; /* Fond orange très clair */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin: 0 auto 20px auto;
+    border: 2px solid #ffedd5;
+}
+
+.feature-card h3 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    margin-bottom: 15px;
+    color: var(--primary);
+}
+
+.feature-card p {
+    color: var(--text-light);
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+/* --- RESPONSIVE MOBILE --- */
+@media (max-width: 900px) {
+    .features-section {
+        grid-template-columns: 1fr; /* Passe à 1 colonne sur mobile */
+        margin-top: 0;
+        padding: 60px 20px;
+        gap: 30px;
+    }
+    
+    .cinematic-overlay blockquote {
+        font-size: 1.5rem; /* Texte plus petit sur mobile */
+    }
+}
 
 /* =========================================
    6. PANNEAU INFOS (DÉTAILS)
