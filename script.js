@@ -5,23 +5,19 @@ const navLinks = document.querySelectorAll('.nav-link');
 const sections = document.querySelectorAll('.page-section');
 
 function showSection(targetId) {
-    // Masquer toutes les sections
     sections.forEach(sec => sec.classList.remove('active'));
     sections.forEach(sec => sec.classList.add('hidden')); 
     navLinks.forEach(link => link.classList.remove('active'));
 
-    // Afficher la section cible
     const targetSection = document.getElementById(targetId);
     if(targetSection) {
         targetSection.classList.add('active');
         targetSection.classList.remove('hidden');
     }
 
-    // Mettre à jour le menu actif
     const activeLink = document.querySelector(`.nav-link[data-target="${targetId}"]`);
     if(activeLink) activeLink.classList.add('active');
 
-    // Rafraîchir la carte si on va dessus
     if(targetId === 'app-container' && map) {
         setTimeout(() => { map.invalidateSize(); }, 200);
     }
@@ -44,7 +40,7 @@ const topoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png'
 const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: '© Esri' });
 
 var map = L.map('map', { 
-    center: [45.1885, 5.7245], // Centré sur Grenoble par défaut
+    center: [45.1885, 5.7245], 
     zoom: 10, 
     layers: [topoLayer], 
     zoomControl: false 
@@ -52,7 +48,6 @@ var map = L.map('map', {
 
 L.control.zoom({ position: 'topleft' }).addTo(map);
 
-// Bouton Switch Satellite/Plan
 const switchControl = L.Control.extend({
     options: { position: 'topright' },
     onAdd: function(map) {
@@ -92,17 +87,23 @@ fetch('randos.json')
         const mesRandos = jsonData.items;
         if (mesRandos) {
             mesRandos.forEach((data, index) => {
-                // Sécurisation des photos
+                
+                // --- CORRECTION POUR TON NOUVEAU JSON (CLOUDINARY) ---
                 let safePhotos = [];
                 if (data.photos) {
-                    if (Array.isArray(data.photos)) safePhotos = data.photos;
-                    else if (typeof data.photos === 'string') safePhotos = [data.photos];
+                    if (Array.isArray(data.photos)) {
+                        // On vérifie si c'est un objet {image: "url"} (nouveau format) ou juste une chaîne (ancien)
+                        safePhotos = data.photos.map(p => (typeof p === 'object' && p.image) ? p.image : p);
+                    } else if (typeof data.photos === 'string') {
+                        safePhotos = [data.photos];
+                    }
                 }
-                data.safePhotos = safePhotos;
+                data.safePhotos = safePhotos; // On stocke la liste propre d'URLs
+                // -----------------------------------------------------
 
                 const trackColor = getDiffColor(data.difficulty);
 
-                // Chargement du GPX
+                // Leaflet GPX gère les URLs Cloudinary sans problème
                 const gpxLayer = new L.GPX(data.gpx, {
                     async: true,
                     marker_options: {
@@ -110,9 +111,9 @@ fetch('randos.json')
                     },
                     polyline_options: { color: trackColor, opacity: 0.8, weight: 5, lineCap: 'round' }
                 }).on('loaded', function(e) {
-                    // Calculs automatiques
                     const dist = (e.target.get_distance() / 1000).toFixed(1);
-                    document.getElementById(`dist-${index}`).innerText = `${dist} km`;
+                    const elDist = document.getElementById(`dist-${index}`);
+                    if(elDist) elDist.innerText = `${dist} km`;
 
                     const rawDate = e.target.get_start_time();
                     if(rawDate) {
@@ -125,14 +126,13 @@ fetch('randos.json')
                     updateActiveItem(index);
                 }).addTo(map);
 
-                // Ajout à la liste latérale
-                addRandoToList(data, index, safePhotos);
+                addRandoToList(data, index, safePhotos, gpxLayer);
             });
         }
     })
     .catch(err => console.error("Erreur chargement:", err));
 
-function addRandoToList(data, index, photos) {
+function addRandoToList(data, index, photos, gpxLayer) {
     const list = document.getElementById('randonnees-list');
     if (!list) return;
 
@@ -142,9 +142,9 @@ function addRandoToList(data, index, photos) {
     item.setAttribute('data-diff', data.difficulty); 
     item.setAttribute('data-id', index); 
     
-    // Miniature (Première photo ou placeholder)
-    let thumbUrl = 'https://via.placeholder.com/70?text=Rando';
-    if (photos.length > 0) thumbUrl = photos[0];
+    // IMAGE PAR DÉFAUT si pas de photos
+    let thumbUrl = 'https://via.placeholder.com/80?text=Rando';
+    if (photos && photos.length > 0) thumbUrl = photos[0];
     
     const diff = data.difficulty || "Moyenne";
     const diffColor = getDiffColor(diff);
@@ -153,8 +153,8 @@ function addRandoToList(data, index, photos) {
     const activeClass = isFav ? 'active' : '';
 
     item.innerHTML = `
-        <img src="${thumbUrl}" class="list-thumb" loading="lazy" alt="${data.title}">
-        <div class="list-content" style="flex-grow:1;">
+        <img src="${thumbUrl}" class="list-thumb" loading="lazy" alt="${data.title}" onerror="this.src='https://via.placeholder.com/80?text=No+Img'">
+        <div class="list-content">
             <h3 style="margin:0; font-size:1rem; color:#0f172a;">${data.title}</h3>
             <p style="margin:2px 0; font-size:0.85rem; color:#64748b;">Distance : <span id="dist-${index}">...</span></p>
             <span class="diff-badge" style="background-color: ${diffColor}; padding:2px 8px; border-radius:10px; color:white; font-size:0.7rem;">${diff}</span>
@@ -163,10 +163,24 @@ function addRandoToList(data, index, photos) {
     `;
     
     item.addEventListener('click', () => {
-        // Simuler un clic sur le GPX pour ouvrir les détails
-        // Note: Idéalement on garde une réf au layer, mais ici on simplifie
         document.querySelectorAll('.rando-item').forEach(i => i.classList.remove('active'));
         item.classList.add('active');
+        
+        // Ouvre les détails
+        afficherDetails(data, gpxLayer);
+        
+        // Zoom sur la carte
+        if (gpxLayer && map) {
+            map.fitBounds(gpxLayer.getBounds());
+        }
+
+        // Mobile : ferme la liste
+        if (window.innerWidth < 768) {
+            const sidebar = document.getElementById('sidebar');
+            if(sidebar && !sidebar.classList.contains('minimized')) {
+                sidebar.classList.add('minimized');
+            }
+        }
     });
 
     list.appendChild(item);
@@ -174,14 +188,13 @@ function addRandoToList(data, index, photos) {
 
 
 // ==========================================
-// 4. PANNEAU DE DÉTAILS (LE COEUR DU SYSTÈME)
+// 4. PANNEAU DE DÉTAILS
 // ==========================================
 function afficherDetails(data, gpxLayer) {
     const panel = document.getElementById('info-panel');
     const displayDate = data.calculatedDate || "Date inconnue";
     const diffColor = getDiffColor(data.difficulty);
 
-    // Injection HTML
     panel.innerHTML = `
         <div class="mobile-toggle-bar" onclick="toggleMobilePanel('info-panel')">
             <i class="fa-solid fa-chevron-down"></i>
@@ -219,7 +232,6 @@ function afficherDetails(data, gpxLayer) {
         </div>
     `;
 
-    // Remplissage Stats
     const dist = (gpxLayer.get_distance() / 1000).toFixed(1); 
     const elev = gpxLayer.get_elevation_gain().toFixed(0);    
     const time = msToTime(gpxLayer.get_moving_time());
@@ -230,7 +242,6 @@ function afficherDetails(data, gpxLayer) {
         <div class="stat-item"><span class="stat-value">${time}</span><span class="stat-label">Temps</span></div>
     `;
 
-    // Remplissage Photos
     const pContainer = document.getElementById('rando-photos');
     if(data.safePhotos && data.safePhotos.length > 0) {
         data.safePhotos.forEach(url => {
@@ -244,7 +255,6 @@ function afficherDetails(data, gpxLayer) {
         pContainer.innerHTML = "<p style='color:#94a3b8; font-style:italic;'>Pas de photos pour cette sortie.</p>";
     }
 
-    // Graphique
     const raw = gpxLayer.get_elevation_data();
     const lbls=[], dataPoints=[];
     raw.forEach((p, i) => { if(i%10===0) { lbls.push(p[0].toFixed(1)); dataPoints.push(p[1]); }}); 
@@ -256,16 +266,13 @@ function afficherDetails(data, gpxLayer) {
         options: { responsive: true, maintainAspectRatio: false, scales: { x: {display:false}, y: {ticks:{font:{size:10}}} }, plugins: {legend:{display:false}} }
     });
 
-    // Actions Boutons
     document.getElementById('close-panel-btn').onclick = () => {
         panel.classList.add('hidden');
         document.querySelectorAll('.rando-item').forEach(i => i.classList.remove('active'));
     };
     document.getElementById('share-btn-action').onclick = () => partagerRando(data.title);
 
-    // Affichage final
     panel.classList.remove('hidden');
-    // Sur mobile, on ouvre le panneau s'il était minimisé
     panel.classList.remove('minimized');
 }
 
@@ -296,7 +303,6 @@ function msToTime(duration) {
     return (h < 10 ? "0"+h : h) + "h" + (min < 10 ? "0"+min : min);
 }
 
-// Gestion des Favoris
 function getFavoris() { return JSON.parse(localStorage.getItem('mes_favoris_randos')) || []; }
 
 function toggleFavori(index, event) {
@@ -314,10 +320,8 @@ function toggleFavori(index, event) {
     localStorage.setItem('mes_favoris_randos', JSON.stringify(favoris));
 }
 
-// Filtres
 function filtrerRandos(filtre) {
     document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-    // Active le bouton cliqué (logique simple)
     const btns = document.querySelectorAll('.filter-btn');
     btns.forEach(b => { if(b.textContent.includes(filtre === 'all' ? 'Tout' : filtre)) b.classList.add('active'); });
     if(filtre === 'favoris') document.querySelector('button[onclick="filtrerRandos(\'favoris\')"]').classList.add('active');
@@ -334,7 +338,6 @@ function filtrerRandos(filtre) {
     });
 }
 
-// Partage
 async function partagerRando(titre) {
     const url = window.location.href; 
     const text = `Regarde cette rando : ${titre} ! 🏔️`;
@@ -345,7 +348,6 @@ async function partagerRando(titre) {
     }
 }
 
-// Recherche
 document.getElementById('search-input').addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase();
     document.querySelectorAll('.rando-item').forEach(item => {
@@ -354,7 +356,6 @@ document.getElementById('search-input').addEventListener('input', (e) => {
     });
 });
 
-// Bouton Retour Haut
 const backToTopBtn = document.getElementById('back-to-top');
 const scrollableSections = document.querySelectorAll('.page-section');
 if (backToTopBtn) {
@@ -370,17 +371,13 @@ if (backToTopBtn) {
     });
 }
 
-// ==========================================
-// 6. GESTION MOBILE (SLIDE UP/DOWN)
-// ==========================================
 function toggleMobilePanel(panelId) {
-    if (window.innerWidth > 768) return; // Uniquement sur mobile
+    if (window.innerWidth > 768) return; 
     const panel = document.getElementById(panelId);
     if(panel) {
         panel.classList.toggle('minimized');
         const icon = panel.querySelector('.mobile-toggle-bar i');
         if(icon) {
-            // Change la flèche selon l'état
             if(panel.classList.contains('minimized')) {
                 icon.classList.remove('fa-chevron-down'); icon.classList.add('fa-chevron-up');
             } else {
@@ -390,7 +387,6 @@ function toggleMobilePanel(panelId) {
     }
 }
 
-// Menu Burger
 document.addEventListener('DOMContentLoaded', () => {
     const menuToggle = document.querySelector('.menu-toggle');
     const nav = document.getElementById('main-nav');

@@ -1,10 +1,11 @@
 backend:
   name: git-gateway
-  branch: main
+  branch: main # Ou "master", vérifie ton github
 
 # --- CONFIGURATION CLOUDINARY ---
 media_library:
   name: cloudinary
+  output_filename_only: false # IMPORTANT : Pour avoir l'URL complète (https://...)
   config:
     cloud_name: "dkbulsjyo"
     api_key: "551519669678153"
@@ -60,13 +61,14 @@ collections:
                 allowed_extensions: ["gpx"]
                 required: true
 
-              # 5. Photos (VERSION LISTE - CASE PAR CASE)
+              # 5. Photos (LISTE D'IMAGES CLOUDINARY)
               - label: "Galerie Photos"
                 name: "photos"
-                widget: "list"  # <--- On passe en mode LISTE
+                widget: "list"
                 collapsed: false
                 summary: "{{fields.image}}"
                 fields:
                   - label: "Photo"
                     name: "image"
-                    widget: "image" # <--- Chaque élément de la liste est une image unique
+                    widget: "image"
+                    choose_url: false # Force l'upload via Cloudinary

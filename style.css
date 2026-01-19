@@ -10,18 +10,14 @@
     --success: #10b981;
     --text-main: #1e293b;
     --text-light: #64748b;
-    --bg-page: #f1f5f9;
+    --bg-page: #f8fafc;
     --white: #ffffff;
+    --header-height: 70px;
     --radius-l: 24px;
     --radius-m: 16px;
-    --radius-s: 12px;
-    --header-height: 70px;
-    --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
 }
 
-/* =========================================
-   2. STYLES DE BASE
-   ========================================= */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body, html { 
@@ -29,228 +25,147 @@ body, html {
     font-family: 'Nunito Sans', sans-serif;
     background-color: var(--bg-page);
     color: var(--text-main);
-    overflow: hidden; 
+    overflow: hidden; /* Important pour l'app "Carte" */
 }
 
-h1, h2, h3 { font-family: 'Montserrat', sans-serif; color: var(--primary); margin: 0; }
-
 /* =========================================
-   3. EN-TÊTE (HEADER)
+   2. HEADER & NAVIGATION
    ========================================= */
 header {
     height: var(--header-height);
-    background: rgba(255, 255, 255, 0.95); 
-    backdrop-filter: blur(12px);           
-    display: flex; align-items: center; justify-content: space-between; 
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: space-between;
     padding: 0 40px;
     position: fixed; top: 0; left: 0; right: 0;
     z-index: 2000;
-    border-bottom: 1px solid rgba(0,0,0,0.05); 
+    border-bottom: 1px solid #e2e8f0;
 }
 
 header .logo { 
-    font-weight: 900; font-size: 1.2rem; text-transform: uppercase;
+    font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 1.2rem; 
+    text-transform: uppercase;
     background: linear-gradient(135deg, var(--primary), var(--accent));
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
 
-nav#main-nav { display: flex; gap: 15px; }
-
+nav#main-nav { display: flex; gap: 20px; }
 header nav a {
     text-decoration: none; color: var(--primary);
-    font-size: 0.85rem; font-weight: 700; text-transform: uppercase;
-    padding: 8px 12px; border-radius: 8px; transition: 0.3s;
+    font-size: 0.9rem; font-weight: 700; text-transform: uppercase;
+    padding: 8px 12px; transition: 0.3s;
 }
-
-header nav a.active { color: var(--accent); background: rgba(249, 115, 22, 0.1); }
-
+header nav a.active { color: var(--accent); }
 .menu-toggle { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; }
 
 /* =========================================
-   4. SECTION ACCUEIL (HERO)
+   3. SECTIONS (GÉNÉRAL)
    ========================================= */
 .page-section {
     position: absolute; top: var(--header-height); bottom: 0; left: 0; right: 0;
-    display: none; overflow-y: auto;
+    display: none; overflow-y: auto; /* Scroll normal pour Accueil/À Propos */
+    background: var(--bg-page);
 }
 .page-section.active { display: block; }
 
+/* Cas spécial pour la carte : pas de scroll global, on veut du plein écran */
+#app-container.active { display: flex; overflow: hidden; }
+
+/* =========================================
+   4. ACCUEIL (HERO & FEATURES)
+   ========================================= */
 .hero {
-    height: 100%; width: 100%;
+    min-height: 100vh; width: 100%;
     background: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.55)), url('photos/banniere.JPG');
     background-size: cover; background-position: center;
-    display: flex !important;
-    flex-direction: column;
-    align-items: center; justify-content: center;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
     text-align: center; color: white;
 }
-
-.hero-content { z-index: 10; padding: 0 20px; }
-
 .hero h1 { 
     font-size: 4rem; font-weight: 900; text-transform: uppercase; 
-    text-shadow: 0 10px 30px rgba(0,0,0,0.4); margin-bottom: 15px; color: white !important;
+    margin-bottom: 20px; text-shadow: 0 4px 15px rgba(0,0,0,0.5); color:white; 
 }
-
-.hero p { font-size: 1.2rem; font-weight: 600; margin-bottom: 40px; opacity: 0.95; }
-
-.cta-button {
-    padding: 18px 45px; background: var(--accent); color: white; border: none;
-    font-size: 1rem; font-weight: 800; text-transform: uppercase;
-    border-radius: 50px; cursor: pointer; box-shadow: 0 10px 20px rgba(249, 115, 22, 0.3);
-    transition: 0.3s;
+.hero p { font-size: 1.3rem; margin-bottom: 40px; font-weight: 600; opacity: 0.9; }
+.cta-button { 
+    padding: 18px 45px; background: var(--accent); color: white; border: none; 
+    font-size: 1rem; font-weight: 800; border-radius: 50px; cursor: pointer; 
+    transition: 0.3s; box-shadow: 0 10px 20px rgba(249, 115, 22, 0.3);
 }
 .cta-button:hover { transform: translateY(-3px); background: var(--accent-hover); }
 
-/* =========================================
-   5. VIDÉO & FEATURES (DESIGN 3 COLONNES)
-   ========================================= */
-
-/* --- VIDÉO & CITATION --- */
-.cinematic-container {
-    position: relative;
-    width: 100%;
-    height: 500px;
-    overflow: hidden;
-    background: #0f172a;
-}
-
-.cinematic-video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0.8; /* Légèrement assombri pour lire le texte */
-}
-
-.cinematic-overlay {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.3); /* Filtre noir transparent */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-}
-
-.cinematic-overlay blockquote {
-    font-family: 'Montserrat', sans-serif;
-    font-size: 2.2rem;
-    font-weight: 800;
-    color: white;
-    text-align: center;
-    line-height: 1.3;
-    text-transform: uppercase;
-    text-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    margin-bottom: 15px;
-    max-width: 800px;
-    border: none; /* Enlève la barre latérale par défaut */
-}
-
-.citation-author {
-    color: var(--accent); /* Orange */
-    font-weight: 700;
-    letter-spacing: 4px;
-    font-size: 1rem;
-    position: relative;
-    padding-top: 10px;
-}
-.citation-author::before {
-    content: '';
-    display: block;
-    width: 40px;
-    height: 3px;
-    background: white;
-    margin: 0 auto 10px auto; /* Petite ligne blanche au dessus */
-}
-
-
-/* --- FEATURES (3 COLONNES JOLIES) --- */
+/* --- FEATURES (3 COLONNES) --- */
 .features-section {
-    background: white;
-    padding: 80px 10%;
-    
-    /* LA MAGIE DES 3 COLONNES EST ICI 👇 */
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); 
-    gap: 40px; /* Espace entre les colonnes */
-    
-    position: relative;
-    z-index: 10;
-    margin-top: -50px; /* Chevauchement stylé sur la vidéo */
+    background: white; padding: 80px 10%;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px;
+    margin-top: -50px; position: relative; z-index: 10;
 }
-
-.feature-card {
-    background: white;
-    padding: 40px 30px;
-    border-radius: 20px;
-    text-align: center;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08); /* Ombre douce */
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    border: 1px solid #f1f5f9;
+.feature-card { 
+    text-align: center; padding: 40px 30px; border-radius: 20px; 
+    background: #fff; box-shadow: var(--shadow-md); transition: 0.3s;
 }
-
-.feature-card:hover {
-    transform: translateY(-10px); /* Monte quand on passe la souris */
-    box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+.feature-card:hover { transform: translateY(-10px); }
+.icon-circle { 
+    width: 70px; height: 70px; background: #fff7ed; border-radius: 50%; 
+    display: flex; align-items: center; justify-content: center; 
+    font-size: 2rem; margin: 0 auto 20px; border: 2px solid #ffedd5;
 }
-
-.icon-circle {
-    width: 70px;
-    height: 70px;
-    background: #fff7ed; /* Fond orange très clair */
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2rem;
-    margin: 0 auto 20px auto;
-    border: 2px solid #ffedd5;
-}
-
-.feature-card h3 {
-    font-size: 1.25rem;
-    font-weight: 800;
-    margin-bottom: 15px;
-    color: var(--primary);
-}
-
-.feature-card p {
-    color: var(--text-light);
-    line-height: 1.6;
-    font-size: 0.95rem;
-}
-
-/* --- RESPONSIVE MOBILE --- */
-@media (max-width: 900px) {
-    .features-section {
-        grid-template-columns: 1fr; /* Passe à 1 colonne sur mobile */
-        margin-top: 0;
-        padding: 60px 20px;
-        gap: 30px;
-    }
-    
-    .cinematic-overlay blockquote {
-        font-size: 1.5rem; /* Texte plus petit sur mobile */
-    }
-}
+.feature-card h3 { font-size: 1.25rem; font-weight: 800; margin-bottom: 15px; color: var(--primary); }
+.feature-card p { color: var(--text-light); line-height: 1.6; }
 
 /* =========================================
-   6. PANNEAU INFOS (DÉTAILS)
+   5. APP CARTE (LAYOUT & SIDEBAR)
+   ========================================= */
+#sidebar { 
+    width: 420px; min-width: 420px; height: 100%; 
+    background: white; border-right: 1px solid #e2e8f0; 
+    display: flex; flex-direction: column; z-index: 100;
+}
+#map { flex-grow: 1; height: 100%; z-index: 1; background: #ddd; }
+
+#sidebar h2 { padding: 20px 25px; font-size: 1.4rem; border-bottom: 1px solid #f1f5f9; }
+.search-container { padding: 15px 25px; }
+#search-input { width: 100%; padding: 14px 20px; border-radius: 50px; border: 1px solid #e2e8f0; outline: none; background: #f8fafc; }
+
+.filter-buttons { padding: 0 25px 20px; display: flex; gap: 8px; flex-wrap: wrap; }
+.filter-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid #e2e8f0; background: white; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
+.filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+#randonnees-list { flex-grow: 1; overflow-y: auto; padding: 10px 25px; }
+
+/* --- STYLE DES FICHES RANDOS (LISTE) --- */
+.rando-item {
+    display: flex; align-items: center; gap: 15px;
+    padding: 12px; margin-bottom: 16px;
+    background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+    cursor: pointer; transition: 0.2s;
+}
+.rando-item:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+.rando-item.active { border: 2px solid var(--accent); background: #fff7ed; }
+
+.list-thumb { 
+    width: 75px; height: 75px; border-radius: 10px; object-fit: cover; 
+    background: #e2e8f0; flex-shrink: 0; 
+}
+.list-content { flex-grow: 1; }
+.list-content h3 { font-size: 1rem; font-weight: 700; margin-bottom: 4px; color: var(--primary); }
+.list-content p { font-size: 0.85rem; color: var(--text-light); margin: 0; }
+.diff-badge { display: inline-block; padding: 3px 10px; border-radius: 10px; color: white; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; margin-top: 6px; }
+
+/* =========================================
+   6. PANNEAU DÉTAILS (CORRIGÉ)
    ========================================= */
 #info-panel {
     position: absolute; top: 20px; right: 20px; bottom: 20px; width: 420px;
-    background: white; border-radius: var(--radius-l);
+    background: white; border-radius: var(--radius-l); 
     box-shadow: 0 15px 50px rgba(0,0,0,0.2);
     z-index: 1000; display: flex; flex-direction: column;
     transform: translateX(0); transition: 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-    border: 1px solid #eee; overflow: hidden;
+    border: 1px solid #e2e8f0;
 }
-#info-panel.hidden { transform: translateX(500px); display: none; }
+#info-panel.hidden { transform: translateX(120%); display: none; }
 
 .panel-header { padding: 20px 25px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
-.panel-header h2 { font-size: 1.3rem; font-weight: 800; color: var(--primary); max-width: 80%; }
-
+.panel-header h2 { font-size: 1.3rem; margin: 0; }
 .panel-content { padding: 20px; overflow-y: auto; flex-grow: 1; }
 
 .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
@@ -275,53 +190,71 @@ header nav a.active { color: var(--accent); background: rgba(249, 115, 22, 0.1);
 .chart-container { background: #fff; padding: 10px; border-radius: 12px; border: 1px solid #f1f5f9; margin: 20px 0; height: 180px; }
 
 /* =========================================
-   7. RESPONSIVE MOBILE
+   7. À PROPOS (CÔTE À CÔTE RESTAURÉ)
    ========================================= */
-@media (max-width: 768px) {
+.about-container { max-width: 1100px; margin: 40px auto; padding: 0 30px 80px; }
+.about-main-title { text-align: center; font-size: 2.5rem; margin-bottom: 60px; text-transform: uppercase; color: var(--primary); }
+
+.about-row { 
+    display: flex; align-items: stretch; gap: 60px; margin-bottom: 80px; 
+}
+.about-image { flex: 1; }
+.about-image img { 
+    width: 100%; height: 100%; object-fit: cover; border-radius: 20px; 
+    box-shadow: var(--shadow-md); 
+}
+.about-text { 
+    flex: 1; display: flex; flex-direction: column; justify-content: center; 
+}
+.about-text p { 
+    font-size: 1.05rem; line-height: 1.8; margin-bottom: 20px; 
+    color: var(--text-main); text-align: justify;
+}
+
+/* =========================================
+   8. RESPONSIVE MOBILE
+   ========================================= */
+@media (max-width: 900px) {
     header { padding: 0 20px; }
-    header .logo { position: static; transform: none; font-size: 1.1rem; }
     .menu-toggle { display: block; }
     
-    #main-nav {
-        position: absolute; top: var(--header-height); left: 0; width: 100%;
-        background: white; flex-direction: column; padding: 20px 0;
-        transform: translateY(-150%); transition: 0.4s; border-bottom: 1px solid #eee;
-        z-index: -1;
+    #main-nav { 
+        position: absolute; top: var(--header-height); left: 0; width: 100%; 
+        background: white; flex-direction: column; padding: 20px; gap: 10px;
+        transform: translateY(-150%); transition: 0.3s; z-index: -1;
+        border-bottom: 1px solid #eee;
     }
     #main-nav.open { transform: translateY(0); }
-    header nav a { margin: 10px 0; font-size: 1.1rem; text-align: center; display: block; }
-
-    .hero h1 { font-size: 2.2rem; }
-    #app-container { display: block; position: relative; height: calc(100vh - var(--header-height)); overflow: hidden; }
+    header nav a { text-align: center; display: block; width: 100%; }
     
-    #sidebar { 
-        position: absolute; bottom: 0; left: 0; right: 0; width: 100%; height: 60vh; 
-        transition: 0.4s; border-radius: 20px 20px 0 0; border-right: none;
-    }
-    #sidebar.minimized { height: 60px; overflow: hidden; }
+    .hero h1 { font-size: 2.5rem; }
+    .features-section { grid-template-columns: 1fr; padding: 60px 20px; margin-top: 0; }
 
+    /* Carte Mobile */
+    #app-container { display: block; position: relative; height: calc(100vh - var(--header-height)); } 
+    #sidebar { width: 100%; height: 60vh; position: absolute; bottom: 0; border-radius: 20px 20px 0 0; }
+    #sidebar.minimized { height: 60px; overflow: hidden; }
+    
     .mobile-toggle-bar { display: flex; height: 40px; align-items: center; justify-content: center; background: white; border-radius: 20px 20px 0 0; cursor: pointer; }
 
     #info-panel { 
-        position: absolute; top: auto; bottom: 0; left: 0; right: 0; 
-        width: 100%; height: 75vh; border-radius: 20px 20px 0 0; transform: translateY(0);
+        width: 100%; height: 75vh; top: auto; bottom: 0; right: 0; left: 0;
+        border-radius: 20px 20px 0 0; transform: translateY(0);
     }
     #info-panel.hidden { transform: translateY(110%); }
     #info-panel.minimized { height: 60px; overflow: hidden; }
 
+    /* À Propos Empilé */
     .about-row { flex-direction: column; gap: 30px; }
     .about-row.reverse-mobile { flex-direction: column-reverse; }
-    .cinematic-container { height: 70vh; }
 }
 
-/* =========================================
-   8. À PROPOS, FOOTER & DIVERS
-   ========================================= */
-.about-container { max-width: 1100px; margin: 40px auto; padding: 0 30px 80px 30px; }
-.about-row img { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; box-shadow: var(--shadow-md); }
-
-.cinematic-container { position: relative; width: 100%; height: 500px; overflow: hidden; background: #000; }
-.cinematic-video { width: 100%; height: 100%; object-fit: cover; }
+/* DIVERS */
+.cinematic-container { height: 500px; width: 100%; background: #000; position: relative; }
+.cinematic-video { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+.cinematic-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.cinematic-overlay blockquote { font-family: 'Montserrat', sans-serif; font-size: 2.2rem; font-weight: 800; color: white; text-align: center; text-transform: uppercase; text-shadow: 0 4px 15px rgba(0,0,0,0.5); max-width: 800px; border: none; }
+.citation-author { color: var(--accent); font-weight: 700; letter-spacing: 4px; margin-top: 15px; }
 
 .site-footer { background: var(--primary); color: white; padding: 60px 20px; text-align: center; }
 .footer-socials a { color: white; font-size: 2rem; margin: 0 15px; text-decoration: none; transition: 0.3s; }
@@ -329,6 +262,5 @@ header nav a.active { color: var(--accent); background: rgba(249, 115, 22, 0.1);
 
 #back-to-top { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: white; width: 45px; height: 45px; border-radius: 50%; border: none; cursor: pointer; display: none; align-items: center; justify-content: center; z-index: 3000; }
 #back-to-top.visible { display: flex; }
-
 .fav-btn-list { background: none; border: none; font-size: 1.2rem; color: #cbd5e1; cursor: pointer; margin-left: auto; transition: 0.2s; }
 .fav-btn-list.active { color: #ef4444; }
