@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Importation des Randos</title>
+    <style>
+        body { font-family: sans-serif; padding: 40px; background: #f1f5f9; text-align: center; }
+        .box { background: white; max-width: 600px; margin: 0 auto; padding: 30px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { color: #0f172a; }
+        button { background: #f97316; color: white; border: none; padding: 15px 30px; font-size: 1.2rem; font-weight: bold; border-radius: 50px; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #ea580c; transform: scale(1.05); }
+        #status { margin-top: 20px; text-align: left; background: #1e293b; color: #cbd5e1; padding: 20px; border-radius: 10px; font-family: monospace; display: none; }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+    </style>
+</head>
+<body>
+
+    <div class="box">
+        <h1>📦 Importer les anciennes randos</h1>
+        <p>Clique sur le bouton pour envoyer toutes tes anciennes randos vers Firebase d'un seul coup.</p>
+        <button onclick="lancerImport()">LANCER L'IMPORTATION</button>
+        <div id="status"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // --- 1. TES CLÉS FIREBASE (COLLE-LES ICI) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDDQ-SNampe1cwRgAXrGcd1Ta_aVJKOqGE",
+            authDomain: "ethan-randos.firebaseapp.com",
+            projectId: "ethan-randos",
+            storageBucket: "ethan-randos.firebasestorage.app",
+            messagingSenderId: "478245028007",
+            appId: "1:478245028007:web:401c3f0cd25dc0a1745b82",
+            measurementId: "G-2ZZ60TDVDP"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- 2. TES ANCIENNES DONNÉES ---
+        const anciennesRandos = [
+            {
+                "title": "Mont Blanc du Tacul",
+                "description": "Ascension du Mont Blanc du Tacul. Une course magnifique en haute montagne.",
+                "gpx": "gpx/Mont-Blanc-du-Tacul.gpx",
+                "difficulty": "Expert",
+                "photos": [
+                    { "image": "https://res.cloudinary.com/dkbulsjyo/image/upload/q_auto/f_auto/v1768552640/Mont-Blanc-du-Tacul_xepsfv.jpg" },
+                    { "image": "https://res.cloudinary.com/dkbulsjyo/image/upload/q_auto/f_auto/v1768552640/Mont-Blanc-du-Tacul3_ew5jhu.jpg" },
+                    { "image": "https://res.cloudinary.com/dkbulsjyo/image/upload/q_auto/f_auto/v1768552640/Mont-Blanc-du-Tacul4_zrk4fi.jpg" },
+                    { "image": "https://res.cloudinary.com/dkbulsjyo/image/upload/q_auto/f_auto/v1768552640/Mont-Blanc-du-Tacul6_qljb2f.jpg" },
+                    { "image": "https://res.cloudinary.com/dkbulsjyo/image/upload/q_auto/f_auto/v1768552640/Mont-Blanc-du-Tacul5_wnao3i.jpg" }
+                ]
+            },
+            {
+                "title": "Mont Coin",
+                "description": "Le Mont Coin un sommet permettant de voir le lever du soleil sur le Mont Blanc",
+                "gpx": "gpx/Mont-Coin.gpx",
+                "difficulty": "Facile",
+                "photos": [
+                    { "image": "https://res.cloudinary.com/dkbulsjyo/image/upload/q_auto/f_auto/v1768552730/Mont-Coin_v96ri7.jpg" }
+                ]
+            },
+            {
+                "title": "Bas de la Grande Moucherolle",
+                "difficulty": "Difficile",
+                "gpx": "https://res.cloudinary.com/dkbulsjyo/raw/upload/q_auto/f_auto/v1768559517/suuntoapp-Hiking-2025-09-27T04-03-27Z-track_fsemgf.gpx",
+                "description": "Une randonnée dans le massif du Vercors, avec une vue sur toutes les crêtes. Un endroit parfait pour admirer une mer de nuage",
+                "photos": []
+            },
+            {
+                "title": "Lac du Lauvitel",
+                "difficulty": "Facile",
+                "gpx": "https://res.cloudinary.com/dkbulsjyo/raw/upload/q_auto/f_auto/v1768559576/suuntoapp-Hiking-2025-09-19T07-22-30Z-track_bitzkn.gpx",
+                "description": "L'un des plus beau lac des Alpes. Une randonnée accessible",
+                "photos": []
+            },
+            {
+                "title": "Plateau des lacs - Lac Fourchu",
+                "difficulty": "Moyenne",
+                "gpx": "https://res.cloudinary.com/dkbulsjyo/raw/upload/q_auto/f_auto/v1768559731/suuntoapp-Hiking-2025-08-15T14-04-05Z-route_k0lb0i.gpx",
+                "description": "Le plateau des lacs regroupe 7 lacs et permet d'avoir un spot parfait pour le bivouac",
+                "photos": []
+            },
+            {
+                "title": "Lac de St Guérin - Lac des fées",
+                "difficulty": "Facile",
+                "gpx": "https://res.cloudinary.com/dkbulsjyo/raw/upload/q_auto/f_auto/v1768559778/suuntoapp-TrailRunning-2025-08-01T14-53-18Z-track_uaa0ck.gpx",
+                "description": "L'un des plus beau lac de Savoie. La randonnée permet de partir du lac de St Guérin j'jusqu'au lac des fées",
+                "photos": []
+            },
+            {
+                "title": "Le Néron",
+                "difficulty": "Expert",
+                "gpx": "https://res.cloudinary.com/dkbulsjyo/raw/upload/q_auto/f_auto/v1768559823/suuntoapp-Hiking-2025-05-29T07-12-06Z-track_j5oxs3.gpx",
+                "description": "Une ascension vertigineuse avec de l'escalade et des pentes très raides. Arrivé en haut, nous avons une vue à 360° sur Grenoble et les alpes.",
+                "photos": []
+            }
+        ];
+
+        window.lancerImport = async function() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.style.display = 'block';
+            statusDiv.innerHTML = "⏳ Démarrage de l'importation...<br>";
+
+            let compteur = 0;
+
+            for (const rando of anciennesRandos) {
+                try {
+                    // On ajoute la date du jour pour qu'elles apparaissent
+                    rando.dateAjout = new Date();
+                    
+                    await addDoc(collection(db, "randos"), rando);
+                    
+                    statusDiv.innerHTML += `<span class="success">✅ Ajouté : ${rando.title}</span><br>`;
+                    compteur++;
+                } catch (e) {
+                    statusDiv.innerHTML += `<span class="error">❌ Erreur sur ${rando.title} : ${e.message}</span><br>`;
+                }
+            }
+
+            statusDiv.innerHTML += `<br><strong>🎉 Terminé ! ${compteur} randonnées ajoutées.</strong>`;
+            statusDiv.innerHTML += `<br>Tu peux maintenant retourner sur l'accueil du site.`;
+        }
+    </script>
+</body>
+</html>
