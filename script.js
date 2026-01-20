@@ -59,45 +59,47 @@ window.goToMap = function() { showSection('app-container'); }
 
 
 // ==========================================
-// 3. CONFIGURATION DE LA CARTE (VERSION SEXY)
+// 3. CONFIGURATION DE LA CARTE (STYLE PRO)
 // ==========================================
-// Fond de carte "Voyager" (Très épuré et moderne)
-const cleanLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { 
+
+// 1. Fond de carte "Esri World Topo" (Relief, courbes de niveau, look Pro)
+const mainLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', { 
     maxZoom: 19, 
-    attribution: '© CartoDB' 
-});
-const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { 
-    maxZoom: 19, 
-    attribution: '© Esri' 
+    attribution: 'Tiles © Esri' 
 });
 
+// 2. Fond Satellite (Pour le switch)
+const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { 
+    maxZoom: 19, 
+    attribution: 'Tiles © Esri' 
+});
+
+// Création de la carte
 var map = L.map('map', { 
     center: [45.1885, 5.7245], 
-    zoom: 10, 
-    layers: [cleanLayer], // On démarre sur le fond clean
+    zoom: 11, // Zoom un peu plus près au démarrage
+    layers: [mainLayer], // On démarre sur le fond Topo Pro
     zoomControl: false 
 });
 
-// Zoom en bas à droite (plus moderne)
+// Zoom en bas à droite
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-// Bouton Switch Satellite (Design mis à jour)
+// Bouton Switch Satellite
 const switchControl = L.Control.extend({
     options: { position: 'topright' },
     onAdd: function(map) {
         const btn = L.DomUtil.create('button', 'map-switch-btn');
-        btn.innerHTML = '<i class="fa-solid fa-layer-group"></i>'; // Icône
+        btn.innerHTML = '<i class="fa-solid fa-layer-group"></i>';
         btn.title = "Changer le fond de carte";
-        
-        // Le style est géré dans le CSS, mais on force le curseur ici
         btn.style.cursor = "pointer";
         
         L.DomEvent.disableClickPropagation(btn);
         btn.onclick = function() {
-            if (map.hasLayer(cleanLayer)) {
-                map.removeLayer(cleanLayer); map.addLayer(satelliteLayer); 
+            if (map.hasLayer(mainLayer)) {
+                map.removeLayer(mainLayer); map.addLayer(satelliteLayer); 
             } else {
-                map.removeLayer(satelliteLayer); map.addLayer(cleanLayer); 
+                map.removeLayer(satelliteLayer); map.addLayer(mainLayer); 
             }
         };
         return btn;
@@ -107,8 +109,6 @@ map.addControl(new switchControl());
 L.control.locate({ position: 'topleft', strings: { title: "Me localiser" } }).addTo(map);
 
 let myElevationChart = null;
-
-
 // ==========================================
 // 4. CHARGEMENT DES DONNÉES (FIREBASE + SEXY MARKERS)
 // ==========================================
