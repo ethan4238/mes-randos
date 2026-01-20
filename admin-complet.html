@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration Complète</title>
+    <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700;800&display=swap');
+        
+        body { margin: 0; padding: 0; background: #f1f5f9; font-family: 'Nunito Sans', sans-serif; color: #0f172a; }
+        
+        /* Navigation (Onglets) */
+        .navbar { background: white; padding: 15px 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); display: flex; justify-content: center; gap: 10px; position: sticky; top: 0; z-index: 100; }
+        .nav-btn { background: none; border: none; padding: 10px 20px; font-weight: 700; color: #64748b; cursor: pointer; border-radius: 50px; transition: 0.3s; font-size: 1rem; }
+        .nav-btn:hover { background: #f8fafc; color: #0f172a; }
+        .nav-btn.active { background: #0f172a; color: white; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.3); }
+        .nav-btn i { margin-right: 8px; }
+
+        /* Conteneur Principal */
+        .container { max-width: 800px; margin: 30px auto; padding: 0 20px; }
+        .tab-content { display: none; background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        h2 { margin-top: 0; border-bottom: 2px solid #f1f5f9; padding-bottom: 15px; margin-bottom: 25px; }
+        
+        /* Formulaires */
+        label { display: block; font-weight: 700; margin-bottom: 8px; color: #334155; }
+        input, select, textarea { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 1rem; margin-bottom: 20px; box-sizing: border-box; font-family: inherit; }
+        textarea { height: 100px; resize: vertical; }
+
+        /* Boutons d'action */
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; font-size: 1.1rem; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 10px; color: white; }
+        .btn-green { background: #10b981; } .btn-green:hover { background: #059669; }
+        .btn-blue { background: #3b82f6; } .btn-blue:hover { background: #2563eb; }
+        .btn-orange { background: #f97316; } .btn-orange:hover { background: #ea580c; }
+        .btn-red { background: #ef4444; } .btn-red:hover { background: #dc2626; }
+
+        /* Gestion des Photos */
+        .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-top: 20px; }
+        .photo-card { position: relative; height: 100px; border-radius: 10px; overflow: hidden; border: 2px solid #e2e8f0; }
+        .photo-card img { width: 100%; height: 100%; object-fit: cover; }
+        .delete-photo-btn { position: absolute; top: 5px; right: 5px; background: rgba(239, 68, 68, 0.9); color: white; border: none; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; transition: 0.2s; }
+        .delete-photo-btn:hover { transform: scale(1.2); background: red; }
+
+        /* Messages */
+        .msg { padding: 15px; border-radius: 10px; margin-top: 20px; display: none; font-weight: bold; text-align: center; }
+        .msg-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .msg-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .loading { opacity: 0.6; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <button class="nav-btn active" onclick="switchTab('tab-add')"><i class="fa-solid fa-plus"></i> Ajouter</button>
+        <button class="nav-btn" onclick="switchTab('tab-photos')"><i class="fa-solid fa-images"></i> Photos</button>
+        <button class="nav-btn" onclick="switchTab('tab-delete')"><i class="fa-solid fa-trash"></i> Supprimer</button>
+    </div>
+
+    <div class="container">
+        
+        <div id="tab-add" class="tab-content active">
+            <h2><i class="fa-solid fa-mountain-sun"></i> Créer une nouvelle fiche</h2>
+            
+            <label>Titre</label>
+            <input type="text" id="add-title" placeholder="Ex: Mont Blanc">
+            
+            <label>Difficulté</label>
+            <select id="add-difficulty">
+                <option value="Facile">Facile</option>
+                <option value="Moyenne" selected>Moyenne</option>
+                <option value="Difficile">Difficile</option>
+                <option value="Expert">Expert</option>
+            </select>
+
+            <label>Description</label>
+            <textarea id="add-desc" placeholder="Description..."></textarea>
+
+            <label>Fichiers</label>
+            <button class="btn btn-green" onclick="openWidget('gpx', 'add')" style="margin-bottom:10px;">📂 Uploader GPX</button>
+            <div id="add-gpx-status" style="font-size:0.9rem; color:#10b981; margin-bottom:10px;"></div>
+            <input type="hidden" id="add-gpx-url">
+
+            <button class="btn btn-blue" onclick="openWidget('image', 'add')">📸 Ajouter Photos</button>
+            <div id="add-preview" class="photo-grid"></div>
+
+            <hr style="margin:30px 0; border:0; border-top:1px solid #e2e8f0;">
+            <button class="btn btn-orange" onclick="creerRando()">ENREGISTRER LA RANDO</button>
+        </div>
+
+
+        <div id="tab-photos" class="tab-content">
+            <h2><i class="fa-solid fa-camera-rotate"></i> Gestion des Photos</h2>
+            <p style="color:#64748b; font-size:0.9rem;">Ajoute ou supprime des images sur une fiche existante.</p>
+
+            <select id="select-edit-photos" onchange="chargerPhotosRando()">
+                <option value="">-- Choisir une randonnée --</option>
+            </select>
+
+            <div id="edit-area" style="display:none;">
+                <button class="btn btn-blue" onclick="openWidget('image', 'edit')">+ Ajouter des nouvelles photos</button>
+                
+                <h3>Galerie actuelle :</h3>
+                <div id="gallery-edit" class="photo-grid">Chargement...</div>
+                
+                <div id="save-bar" style="margin-top:20px; display:none;">
+                    <button class="btn btn-green" onclick="sauvegarderAjouts()">💾 Sauvegarder les nouvelles photos</button>
+                </div>
+            </div>
+        </div>
+
+
+        <div id="tab-delete" class="tab-content">
+            <h2 style="color:#ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> Supprimer une Rando</h2>
+            <p style="background:#fff1f2; color:#be123c; padding:15px; border-radius:10px;">Attention, cette action est irréversible.</p>
+
+            <select id="select-delete">
+                <option value="">-- Choisir la rando à supprimer --</option>
+            </select>
+
+            <button class="btn btn-red" onclick="supprimerRandoDefinitivement()">🗑️ TOUT SUPPRIMER</button>
+        </div>
+
+        <div id="global-msg" class="msg"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // --- 1. CONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDDQ-SNampe1cwRgAXrGcd1Ta_aVJKOqGE",
+            authDomain: "ethan-randos.firebaseapp.com",
+            projectId: "ethan-randos",
+            storageBucket: "ethan-randos.firebasestorage.app",
+            messagingSenderId: "478245028007",
+            appId: "1:478245028007:web:401c3f0cd25dc0a1745b82",
+            measurementId: "G-2ZZ60TDVDP"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const cloudName = "dkbulsjyo"; 
+        const uploadPreset = "ethan_upload"; // <--- METS TON PRESET ICI
+
+        // Variables globales
+        let newPhotosForAdd = []; // Pour l'onglet 1
+        let newPhotosForEdit = []; // Pour l'onglet 2
+
+        // --- 2. GESTION DES ONGLETS ---
+        window.switchTab = function(tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            
+            // Trouver le bouton correspondant (un peu barbare mais efficace)
+            if(tabId === 'tab-add') document.querySelector('button[onclick*="tab-add"]').classList.add('active');
+            if(tabId === 'tab-photos') {
+                document.querySelector('button[onclick*="tab-photos"]').classList.add('active');
+                chargerListesDeroulantes(); // On rafraichit la liste
+            }
+            if(tabId === 'tab-delete') {
+                document.querySelector('button[onclick*="tab-delete"]').classList.add('active');
+                chargerListesDeroulantes();
+            }
+        }
+
+        // --- 3. FONCTIONS UTILITAIRES ---
+        async function chargerListesDeroulantes() {
+            const selects = [document.getElementById('select-edit-photos'), document.getElementById('select-delete')];
+            
+            try {
+                const querySnapshot = await getDocs(collection(db, "randos"));
+                selects.forEach(sel => {
+                    sel.innerHTML = '<option value="">-- Choisir une randonnée --</option>';
+                    querySnapshot.forEach(doc => {
+                        const opt = document.createElement('option');
+                        opt.value = doc.id;
+                        opt.text = doc.data().title;
+                        sel.appendChild(opt);
+                    });
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        function showMsg(text, type='success') {
+            const div = document.getElementById('global-msg');
+            div.className = `msg ${type === 'success' ? 'msg-success' : 'msg-error'}`;
+            div.innerText = text;
+            div.style.display = 'block';
+            setTimeout(() => div.style.display = 'none', 4000);
+        }
+
+        // --- 4. CLOUDINARY WIDGET ---
+        window.openWidget = function(type, context) {
+            cloudinary.openUploadWidget({ 
+                cloudName, uploadPreset, 
+                sources: ['local', 'url'],
+                multiple: type === 'image'
+            }, (error, result) => {
+                if (!error && result && result.event === "success") {
+                    const url = result.info.secure_url;
+                    
+                    if (context === 'add') {
+                        if (type === 'image') {
+                            newPhotosForAdd.push({ image: url });
+                            document.getElementById('add-preview').innerHTML += `<div class="photo-card"><img src="${url}"></div>`;
+                        } else {
+                            document.getElementById('add-gpx-url').value = url;
+                            document.getElementById('add-gpx-status').innerText = "✅ GPX prêt";
+                        }
+                    } else if (context === 'edit') {
+                        newPhotosForEdit.push({ image: url });
+                        // Ajouter visuellement (temporaire)
+                        document.getElementById('gallery-edit').innerHTML += `
+                            <div class="photo-card" style="border-color:#3b82f6;">
+                                <img src="${url}">
+                                <span style="position:absolute; bottom:0; left:0; width:100%; background:#3b82f6; color:white; font-size:0.7rem; text-align:center;">NOUVEAU</span>
+                            </div>`;
+                        document.getElementById('save-bar').style.display = 'block';
+                    }
+                }
+            });
+        }
+
+        // ==========================================
+        // ONGLET 1 : CRÉER
+        // ==========================================
+        window.creerRando = async function() {
+            const title = document.getElementById('add-title').value;
+            const diff = document.getElementById('add-difficulty').value;
+            const desc = document.getElementById('add-desc').value;
+            const gpx = document.getElementById('add-gpx-url').value;
+
+            if(!title || !gpx) { showMsg("Titre et GPX obligatoires !", "error"); return; }
+
+            try {
+                await addDoc(collection(db, "randos"), {
+                    title, difficulty: diff, description: desc, gpx,
+                    photos: newPhotosForAdd,
+                    dateAjout: new Date()
+                });
+                showMsg("✅ Randonnée créée avec succès !");
+                setTimeout(() => location.reload(), 1500);
+            } catch(e) { showMsg("Erreur: " + e.message, "error"); }
+        }
+
+        // ==========================================
+        // ONGLET 2 : GÉRER PHOTOS (AJOUT + SUPPRESSION)
+        // ==========================================
+        window.chargerPhotosRando = async function() {
+            const id = document.getElementById('select-edit-photos').value;
+            const area = document.getElementById('edit-area');
+            const gallery = document.getElementById('gallery-edit');
+            newPhotosForEdit = []; // Reset
+            document.getElementById('save-bar').style.display = 'none';
+
+            if(!id) { area.style.display = 'none'; return; }
+            
+            area.style.display = 'block';
+            gallery.innerHTML = 'Chargement...';
+
+            const docSnap = await getDoc(doc(db, "randos", id));
+            if(docSnap.exists()) {
+                const photos = docSnap.data().photos || [];
+                gallery.innerHTML = '';
+                
+                if(photos.length === 0) gallery.innerHTML = '<p>Aucune photo.</p>';
+
+                photos.forEach(photoObj => {
+                    const url = photoObj.image || photoObj; // Compatibilité ancien format
+                    const div = document.createElement('div');
+                    div.className = 'photo-card';
+                    
+                    // L'image
+                    const img = document.createElement('img');
+                    img.src = url;
+                    
+                    // Le bouton supprimer
+                    const btn = document.createElement('button');
+                    btn.className = 'delete-photo-btn';
+                    btn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+                    btn.onclick = () => supprimerUnePhoto(id, photoObj); // On passe l'objet entier
+
+                    div.appendChild(img);
+                    div.appendChild(btn);
+                    gallery.appendChild(div);
+                });
+            }
+        }
+
+        window.supprimerUnePhoto = async function(randoId, photoObject) {
+            if(!confirm("Supprimer cette photo ?")) return;
+
+            try {
+                const randoRef = doc(db, "randos", randoId);
+                // arrayRemove supprime l'objet exact du tableau
+                await updateDoc(randoRef, {
+                    photos: arrayRemove(photoObject)
+                });
+                showMsg("Photo supprimée !");
+                chargerPhotosRando(); // Rafraichir l'affichage
+            } catch(e) { showMsg("Erreur: " + e.message, "error"); }
+        }
+
+        window.sauvegarderAjouts = async function() {
+            const id = document.getElementById('select-edit-photos').value;
+            if(!id || newPhotosForEdit.length === 0) return;
+
+            try {
+                const randoRef = doc(db, "randos", id);
+                await updateDoc(randoRef, {
+                    photos: arrayUnion(...newPhotosForEdit)
+                });
+                showMsg("Nouvelles photos enregistrées !");
+                chargerPhotosRando();
+            } catch(e) { showMsg("Erreur: " + e.message, "error"); }
+        }
+
+        // ==========================================
+        // ONGLET 3 : SUPPRIMER RANDO
+        // ==========================================
+        window.supprimerRandoDefinitivement = async function() {
+            const id = document.getElementById('select-delete').value;
+            if(!id) return;
+
+            if(confirm("⚠️ ES-TU SÛR ? C'est irréversible.")) {
+                try {
+                    await deleteDoc(doc(db, "randos", id));
+                    showMsg("Randonnée supprimée.");
+                    setTimeout(() => location.reload(), 1500);
+                } catch(e) { showMsg("Erreur: " + e.message, "error"); }
+            }
+        }
+
+    </script>
+</body>
+</html>
