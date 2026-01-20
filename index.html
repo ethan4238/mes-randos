@@ -7,7 +7,6 @@
 
     <meta property="og:title" content="Ethan Randonnées - L'Appel des Sommets">
     <meta property="og:description" content="Découvrez mes meilleures randonnées, traces GPS et photos en montagne.">
-    
     <meta property="og:image" content="https://PSEUDO.github.io/NOM-DU-PROJET/photos/banniere.JPG">
     <meta property="og:url" content="https://PSEUDO.github.io/NOM-DU-PROJET/">
     <meta property="og:type" content="website">
@@ -26,8 +25,6 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol/dist/L.Control.Locate.min.css" />
     
-    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -202,16 +199,11 @@
     <script type="module" src="script.js"></script>
     
     <script>
-      if (window.netlifyIdentity) {
-        window.netlifyIdentity.on("init", user => {
-          if (!user) { window.netlifyIdentity.on("login", () => { document.location.href = "/admin/"; }); }
-        });
-      }
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('./sw.js')
             .then(reg => console.log('Service Worker OK'))
-            .catch(err => console.error('Erreur SW :', err));
+            .catch(err => console.log('Service Worker Fail', err));
         });
       }
     </script>
