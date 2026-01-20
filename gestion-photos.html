@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gérer les Photos</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
+    <style>
+        body { padding: 40px; background: #f1f5f9; font-family: sans-serif; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 20px; }
+        select { width: 100%; padding: 15px; font-size: 1.1rem; border: 2px solid #cbd5e1; border-radius: 10px; margin-bottom: 20px; cursor: pointer; }
+        
+        .gallery { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+        .photo-wrapper { position: relative; width: 100px; height: 100px; }
+        .photo-wrapper img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; }
+        .badge-new { position: absolute; top: -5px; right: -5px; background: #10b981; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; }
+
+        .btn-add { background: #3b82f6; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
+        .btn-save { background: #f97316; color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 30px; font-size: 1.2rem; display: none; }
+        .btn-save:hover { background: #ea580c; }
+        
+        h3 { margin-top: 0; color: #334155; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📸 Ajouter des photos à une rando existante</h1>
+    
+    <label>Choisis la rando à modifier :</label>
+    <select id="rando-select">
+        <option value="">-- Chargement de la liste... --</option>
+    </select>
+
+    <div id="editor-area" style="display:none;">
+        <h3>Photos actuelles :</h3>
+        <div id="current-gallery" class="gallery"></div>
+
+        <hr style="margin: 30px 0; border: 0; border-top: 1px solid #e2e8f0;">
+
+        <h3>Ajouter des nouvelles :</h3>
+        <button class="btn-add" onclick="openWidget()">+ Uploader des nouvelles photos</button>
+        <div id="new-gallery" class="gallery"></div>
+
+        <button id="btn-save" class="btn-save" onclick="sauvegarderChangements()">ENREGISTRER LES MODIFICATIONS</button>
+        <p id="msg-success" style="color:green; font-weight:bold; text-align:center; display:none; margin-top:10px;">✅ Photos ajoutées avec succès !</p>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, getDocs, doc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // --- CONFIG FIREBASE ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyDDQ-SNampe1cwRgAXrGcd1Ta_aVJKOqGE",
+        authDomain: "ethan-randos.firebaseapp.com",
+        projectId: "ethan-randos",
+        storageBucket: "ethan-randos.firebasestorage.app",
+        messagingSenderId: "478245028007",
+        appId: "1:478245028007:web:401c3f0cd25dc0a1745b82",
+        measurementId: "G-2ZZ60TDVDP"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // --- CONFIG CLOUDINARY ---
+    const cloudName = "dkbulsjyo"; 
+    const uploadPreset = "TON_UPLOAD_PRESET"; // <--- METS TON PRESET ICI !
+    
+    let currentRandoId = null;
+    let newPhotosToAdd = [];
+
+    // 1. Charger la liste des randos au démarrage
+    async function init() {
+        const select = document.getElementById('rando-select');
+        select.innerHTML = '<option value="">-- Choisis une randonnée --</option>';
+        
+        try {
+            const querySnapshot = await getDocs(collection(db, "randos"));
+            querySnapshot.forEach((doc) => {
+                const opt = document.createElement('option');
+                opt.value = doc.id;
+                opt.textContent = doc.data().title;
+                // On stocke les données actuelles dans l'élément pour éviter de refaire une requête
+                opt.dataset.photos = JSON.stringify(doc.data().photos || []); 
+                select.appendChild(opt);
+            });
+        } catch (e) {
+            console.error("Erreur chargement liste :", e);
+            select.innerHTML = '<option>Erreur de chargement</option>';
+        }
+    }
+    init();
+
+    // 2. Quand on sélectionne une rando
+    document.getElementById('rando-select').addEventListener('change', (e) => {
+        const select = e.target;
+        currentRandoId = select.value;
+        const editor = document.getElementById('editor-area');
+        const gallery = document.getElementById('current-gallery');
+        const newGallery = document.getElementById('new-gallery');
+        const saveBtn = document.getElementById('btn-save');
+
+        if (!currentRandoId) {
+            editor.style.display = 'none';
+            return;
+        }
+
+        // Réinitialisation
+        newPhotosToAdd = [];
+        newGallery.innerHTML = '';
+        saveBtn.style.display = 'none';
+        editor.style.display = 'block';
+        gallery.innerHTML = '';
+
+        // Affichage des photos existantes
+        const selectedOption = select.options[select.selectedIndex];
+        let photos = [];
+        try { photos = JSON.parse(selectedOption.dataset.photos); } catch(e){}
+
+        if (photos.length === 0) {
+            gallery.innerHTML = '<p style="color:#64748b; font-style:italic;">Aucune photo actuellement.</p>';
+        } else {
+            photos.forEach(p => {
+                const url = (typeof p === 'object' && p.image) ? p.image : p;
+                gallery.innerHTML += `<div class="photo-wrapper"><img src="${url}"></div>`;
+            });
+        }
+    });
+
+    // 3. Widget Cloudinary
+    window.openWidget = function() {
+        cloudinary.openUploadWidget({ 
+            cloudName, uploadPreset, 
+            sources: ['local', 'url'],
+            multiple: true
+        }, (error, result) => {
+            if (!error && result && result.event === "success") {
+                const url = result.info.secure_url;
+                newPhotosToAdd.push({ image: url });
+                
+                // Affichage aperçu
+                const div = document.createElement('div');
+                div.className = 'photo-wrapper';
+                div.innerHTML = `<img src="${url}"><span class="badge-new">Nouveau</span>`;
+                document.getElementById('new-gallery').appendChild(div);
+
+                document.getElementById('btn-save').style.display = 'block';
+            }
+        });
+    }
+
+    // 4. Sauvegarde sur Firebase
+    window.sauvegarderChangements = async function() {
+        if (!currentRandoId || newPhotosToAdd.length === 0) return;
+
+        const btn = document.getElementById('btn-save');
+        btn.disabled = true;
+        btn.innerText = "Enregistrement...";
+
+        try {
+            const randoRef = doc(db, "randos", currentRandoId);
+            
+            // On utilise arrayUnion pour ajouter sans écraser les anciennes
+            await updateDoc(randoRef, {
+                photos: arrayUnion(...newPhotosToAdd)
+            });
+
+            document.getElementById('msg-success').style.display = 'block';
+            
+            // Recharger la page après 2 secondes pour rafraîchir la liste
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+
+        } catch (e) {
+            console.error(e);
+            alert("Erreur lors de la sauvegarde : " + e.message);
+            btn.disabled = false;
+            btn.innerText = "Réessayer";
+        }
+    }
+</script>
+
+</body>
+</html>
