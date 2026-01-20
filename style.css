@@ -264,3 +264,94 @@ header nav a.active { color: var(--accent); }
 #back-to-top.visible { display: flex; }
 .fav-btn-list { background: none; border: none; font-size: 1.2rem; color: #cbd5e1; cursor: pointer; margin-left: auto; transition: 0.2s; }
 .fav-btn-list.active { color: #ef4444; }
+
+
+/* =========================================
+   9. ELEMENTS "SEXY" POUR LA CARTE (Popups & Marqueurs)
+   ========================================= */
+
+/* Popups Modernes (Style Carte Postale) */
+.leaflet-popup-content-wrapper {
+    padding: 0;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+.leaflet-popup-content {
+    margin: 0 !important;
+    width: 260px !important;
+}
+.popup-header-img {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    display: block;
+}
+.popup-info {
+    padding: 15px;
+    text-align: center;
+}
+.popup-title {
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #0f172a;
+    margin-bottom: 5px;
+    display: block;
+}
+.popup-meta {
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+/* Marqueurs Animés (Pulsation) */
+.marker-pin {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #f97316; /* Orange Ethan */
+    border: 3px solid white;
+    box-shadow: 0 4px 10px rgba(249, 115, 22, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    position: relative;
+    z-index: 20;
+}
+/* Le cercle qui pulse autour */
+.marker-pin::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: rgba(249, 115, 22, 0.6);
+    z-index: -1;
+    animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(2.5); opacity: 0; }
+}
+
+/* Contrôles Flottants (Glassmorphism) */
+.leaflet-bar a, .map-switch-btn {
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.5) !important;
+    border-radius: 12px !important;
+    color: #0f172a !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+    display: flex; align-items: center; justify-content: center;
+}
+.leaflet-control-zoom-in, .leaflet-control-zoom-out {
+    border-radius: 50% !important;
+    margin-bottom: 10px !important;
+    width: 40px !important;
+    height: 40px !important;
+    line-height: 40px !important;
+}
+.map-switch-btn {
+    margin-top: 10px !important;
+    margin-right: 10px !important;
+}

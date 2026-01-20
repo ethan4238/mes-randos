@@ -59,39 +59,45 @@ window.goToMap = function() { showSection('app-container'); }
 
 
 // ==========================================
-// 3. CONFIGURATION DE LA CARTE (LEAFLET)
+// 3. CONFIGURATION DE LA CARTE (VERSION SEXY)
 // ==========================================
-const topoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, attribution: '© OpenStreetMap' });
-const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: '© Esri' });
+// Fond de carte "Voyager" (Très épuré et moderne)
+const cleanLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { 
+    maxZoom: 19, 
+    attribution: '© CartoDB' 
+});
+const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { 
+    maxZoom: 19, 
+    attribution: '© Esri' 
+});
 
 var map = L.map('map', { 
     center: [45.1885, 5.7245], 
     zoom: 10, 
-    layers: [topoLayer], 
+    layers: [cleanLayer], // On démarre sur le fond clean
     zoomControl: false 
 });
 
-L.control.zoom({ position: 'topleft' }).addTo(map);
+// Zoom en bas à droite (plus moderne)
+L.control.zoom({ position: 'bottomright' }).addTo(map);
 
+// Bouton Switch Satellite (Design mis à jour)
 const switchControl = L.Control.extend({
     options: { position: 'topright' },
     onAdd: function(map) {
         const btn = L.DomUtil.create('button', 'map-switch-btn');
-        btn.innerHTML = '🛰️ Satellite';
-        btn.style.padding = "8px 12px";
-        btn.style.background = "white";
-        btn.style.border = "none";
-        btn.style.borderRadius = "20px";
-        btn.style.fontWeight = "bold";
+        btn.innerHTML = '<i class="fa-solid fa-layer-group"></i>'; // Icône
+        btn.title = "Changer le fond de carte";
+        
+        // Le style est géré dans le CSS, mais on force le curseur ici
         btn.style.cursor = "pointer";
-        btn.style.boxShadow = "0 2px 5px rgba(0,0,0,0.2)";
-
+        
         L.DomEvent.disableClickPropagation(btn);
         btn.onclick = function() {
-            if (map.hasLayer(topoLayer)) {
-                map.removeLayer(topoLayer); map.addLayer(satelliteLayer); this.innerHTML = '🗺️ Plan';
+            if (map.hasLayer(cleanLayer)) {
+                map.removeLayer(cleanLayer); map.addLayer(satelliteLayer); 
             } else {
-                map.removeLayer(satelliteLayer); map.addLayer(topoLayer); this.innerHTML = '🛰️ Satellite';
+                map.removeLayer(satelliteLayer); map.addLayer(cleanLayer); 
             }
         };
         return btn;
@@ -104,7 +110,7 @@ let myElevationChart = null;
 
 
 // ==========================================
-// 4. CHARGEMENT DES DONNÉES (FIREBASE)
+// 4. CHARGEMENT DES DONNÉES (FIREBASE + SEXY MARKERS)
 // ==========================================
 async function chargerRandos() {
     try {
@@ -113,13 +119,12 @@ async function chargerRandos() {
         
         querySnapshot.forEach((doc) => {
             const data = doc.data();
-            const index = doc.id; // On utilise l'ID unique de Firebase comme identifiant
+            const index = doc.id; 
 
-            // --- GESTION DES PHOTOS (Compatibilité Cloudinary) ---
+            // --- GESTION DES PHOTOS ---
             let safePhotos = [];
             if (data.photos) {
                 if (Array.isArray(data.photos)) {
-                    // Si c'est un tableau d'objets ou de strings
                     safePhotos = data.photos.map(p => (typeof p === 'object' && p.image) ? p.image : p);
                 } else if (typeof data.photos === 'string') {
                     safePhotos = [data.photos];
@@ -129,17 +134,32 @@ async function chargerRandos() {
 
             const trackColor = getDiffColor(data.difficulty);
 
-            // Création de la couche GPX
+            // --- CRÉATION DU MARQUEUR ANIMÉ (PULSATION) ---
+            const customIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: "<div class='marker-pin'>🏔️</div>", // L'émoji montagne dans le rond
+                iconSize: [40, 40],
+                iconAnchor: [20, 20],
+                popupAnchor: [0, -20]
+            });
+
+            // --- COUCHE GPX ---
             const gpxLayer = new L.GPX(data.gpx, {
                 async: true,
                 marker_options: {
-                    startIconUrl: 'icones/depart.png', endIconUrl: 'icones/arrivee.png', shadowUrl: null, iconSize: [32, 32], iconAnchor: [16, 32]
+                    startIcon: customIcon, // Notre icône animée
+                    endIcon: null,         // Pas d'icône à la fin pour ne pas surcharger
+                    shadowUrl: null
                 },
-                polyline_options: { color: trackColor, opacity: 0.8, weight: 5, lineCap: 'round' }
+                polyline_options: { 
+                    color: trackColor, 
+                    opacity: 0.9, 
+                    weight: 6, // Trait un peu plus épais
+                    lineCap: 'round' 
+                }
             }).on('loaded', function(e) {
                 const dist = (e.target.get_distance() / 1000).toFixed(1);
                 
-                // Petit délai pour s'assurer que l'élément HTML est créé
                 setTimeout(() => {
                     const elDist = document.getElementById(`dist-${index}`);
                     if(elDist) elDist.innerText = `${dist} km`;
@@ -150,11 +170,38 @@ async function chargerRandos() {
                     const dateStr = rawDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
                     data.calculatedDate = dateStr; 
                 }
+
+                // --- CONSTRUCTION DU POPUP STYLE "CARTE POSTALE" ---
+                let popupImg = 'https://via.placeholder.com/260x140?text=Rando';
+                if(data.safePhotos && data.safePhotos.length > 0) popupImg = data.safePhotos[0];
+
+                const popupContent = `
+                    <div style="cursor:pointer;" onclick="document.getElementById('item-${index}').click()">
+                        <img src="${popupImg}" class="popup-header-img">
+                        <div class="popup-info">
+                            <span class="popup-title">${data.title}</span>
+                            <div class="popup-meta">
+                                <span>📏 ${dist} km</span> • 
+                                <span style="color:${trackColor}; font-weight:bold;">📶 ${data.difficulty}</span>
+                            </div>
+                            <button style="margin-top:10px; background:#f97316; color:white; border:none; padding:6px 15px; border-radius:20px; cursor:pointer; font-size:0.8rem; font-weight:bold;">
+                                Voir Détails
+                            </button>
+                        </div>
+                    </div>
+                `;
+                gpxLayer.bindPopup(popupContent);
+
             }).on('click', function(e) {
+                // Au clic sur la trace, on ouvre le panneau latéral
                 L.DomEvent.stopPropagation(e);
                 afficherDetails(data, gpxLayer);
                 updateActiveItem(index);
             }).addTo(map);
+
+            // Effet de survol sur la trace
+            gpxLayer.on('mouseover', function() { this.setStyle({ weight: 8, opacity: 1 }); });
+            gpxLayer.on('mouseout', function() { this.setStyle({ weight: 6, opacity: 0.9 }); });
 
             addRandoToList(data, index, safePhotos, gpxLayer);
         });
@@ -176,16 +223,14 @@ function addRandoToList(data, index, photos, gpxLayer) {
     item.className = 'rando-item';
     item.id = `item-${index}`;
     item.setAttribute('data-diff', data.difficulty); 
-    item.setAttribute('data-id', index); // Ici l'ID est une string (ex: "7f8s7d...")
+    item.setAttribute('data-id', index); 
     
-    // IMAGE PAR DÉFAUT
     let thumbUrl = 'https://via.placeholder.com/80?text=Rando';
     if (photos && photos.length > 0) thumbUrl = photos[0];
     
     const diff = data.difficulty || "Moyenne";
     const diffColor = getDiffColor(diff);
     
-    // Gestion Favoris (Stockage Local pour l'instant)
     const isFav = getFavoris().includes(index);
     const heartIcon = isFav ? '❤️' : '🤍';
     const activeClass = isFav ? 'active' : '';
@@ -204,15 +249,14 @@ function addRandoToList(data, index, photos, gpxLayer) {
         document.querySelectorAll('.rando-item').forEach(i => i.classList.remove('active'));
         item.classList.add('active');
         
-        // Ouvre les détails
         afficherDetails(data, gpxLayer);
         
-        // Zoom sur la carte
         if (gpxLayer && map) {
             map.fitBounds(gpxLayer.getBounds());
+            // On ouvre le popup automatiquement quand on clique dans la liste
+            gpxLayer.openPopup();
         }
 
-        // Mobile : ferme la liste
         if (window.innerWidth < 768) {
             const sidebar = document.getElementById('sidebar');
             if(sidebar && !sidebar.classList.contains('minimized')) {
@@ -341,7 +385,6 @@ function msToTime(duration) {
     return (h < 10 ? "0"+h : h) + "h" + (min < 10 ? "0"+min : min);
 }
 
-// Pour rendre les fonctions accessibles depuis le HTML (onclick), il faut les attacher à "window"
 window.getFavoris = function() { return JSON.parse(localStorage.getItem('mes_favoris_randos')) || []; }
 
 window.toggleFavori = function(index, event) {
@@ -370,7 +413,7 @@ window.filtrerRandos = function(filtre) {
 
     items.forEach(item => {
         const diff = item.getAttribute('data-diff');
-        const id = item.getAttribute('data-id'); // ID String Firebase
+        const id = item.getAttribute('data-id'); 
         if (filtre === 'all') item.style.display = 'flex';
         else if (filtre === 'favoris') item.style.display = favoris.includes(id) ? 'flex' : 'none';
         else item.style.display = (diff === filtre) ? 'flex' : 'none';
@@ -403,7 +446,6 @@ window.toggleMobilePanel = function(panelId) {
     }
 }
 
-// Recherche
 document.getElementById('search-input').addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase();
     document.querySelectorAll('.rando-item').forEach(item => {
