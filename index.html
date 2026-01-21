@@ -25,6 +25,9 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol/dist/L.Control.Locate.min.css" />
     
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -90,19 +93,24 @@
 
         <footer class="site-footer">
             <div class="footer-content">
-                <div class="footer-logo">🏔️ Ethan Randonnées</div>
-                <p class="footer-text">Suis-moi sur les réseaux :</p>
+                <div class="footer-brand">
+                    <img src="icones/montagne.png" alt="Logo" class="footer-logo-img">
+                    <h3>Ethan Randonnées</h3>
+                </div>
+
                 <div class="footer-socials">
                     <a href="https://www.instagram.com/ethan4238/" target="_blank" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
                     <a href="https://www.tiktok.com/@ethan42380" target="_blank" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
                     <a href="https://www.strava.com/athletes/132170603" target="_blank" aria-label="Strava"><i class="fa-brands fa-strava"></i></a>
                 </div>
-                <div class="footer-links">
-                    <a href="#" onclick="showSection('home')">Accueil</a>
-                    <a href="#" onclick="showSection('app-container')">Carte</a>
-                    <a href="#" onclick="showSection('about')">À Propos</a>
+
+                <div class="footer-nav">
+                    <button class="footer-nav-btn" onclick="showSection('home')">Accueil</button>
+                    <button class="footer-nav-btn" onclick="showSection('app-container')">Carte</button>
+                    <button class="footer-nav-btn" onclick="showSection('about')">À Propos</button>
                 </div>
-                <div class="copyright">© 2026 Ethan Randonnées - Tous droits réservés.</div>
+
+                <p class="copyright">© 2026 Ethan Randonnées - Tous droits réservés.</p>
             </div>
         </footer>
     </section>
@@ -128,7 +136,7 @@
             </div>
 
             <div id="randonnees-list"></div>
-            <div class="sidebar-footer">© 2026 - Ethan42380 - Fait avec passion 🏔️</div>
+            <div class="sidebar-footer">© 2026 Ethan42380 • Fait avec <span>❤</span> & Montagne</div>
         </div>
 
         <div id="map"></div>
@@ -169,27 +177,27 @@
         </div>
 
         <footer class="site-footer">
-    <div class="footer-content">
-        <div class="footer-brand">
-            <img src="icones/montagne.png" alt="Logo" class="footer-logo-img">
-            <h3>Ethan Randonnées</h3>
-        </div>
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <img src="icones/montagne.png" alt="Logo" class="footer-logo-img">
+                    <h3>Ethan Randonnées</h3>
+                </div>
 
-        <div class="footer-socials">
-            <a href="https://www.instagram.com/ethan4238/" target="_blank" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
-            <a href="https://www.tiktok.com/@ethan42380" target="_blank" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
-            <a href="https://www.strava.com/athletes/132170603" target="_blank" aria-label="Strava"><i class="fa-brands fa-strava"></i></a>
-        </div>
+                <div class="footer-socials">
+                    <a href="https://www.instagram.com/ethan4238/" target="_blank" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="https://www.tiktok.com/@ethan42380" target="_blank" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                    <a href="https://www.strava.com/athletes/132170603" target="_blank" aria-label="Strava"><i class="fa-brands fa-strava"></i></a>
+                </div>
 
-        <div class="footer-nav">
-            <button class="footer-nav-btn" onclick="showSection('home')">Accueil</button>
-            <button class="footer-nav-btn" onclick="showSection('app-container')">Carte</button>
-            <button class="footer-nav-btn" onclick="showSection('about')">À Propos</button>
-        </div>
+                <div class="footer-nav">
+                    <button class="footer-nav-btn" onclick="showSection('home')">Accueil</button>
+                    <button class="footer-nav-btn" onclick="showSection('app-container')">Carte</button>
+                    <button class="footer-nav-btn" onclick="showSection('about')">À Propos</button>
+                </div>
 
-        <p class="copyright">© 2026 Ethan Randonnées - Tous droits réservés.</p>
-    </div>
-</footer>
+                <p class="copyright">© 2026 Ethan Randonnées - Tous droits réservés.</p>
+            </div>
+        </footer>
     </section>
 
     <button id="back-to-top" title="Retour en haut">⬆️</button>
@@ -197,6 +205,9 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/gpx.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol/dist/L.Control.Locate.min.js"></script>
+    
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fslightbox/3.0.9/index.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>

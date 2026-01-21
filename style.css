@@ -148,7 +148,7 @@ header nav a.active { color: var(--accent); }
     padding: 10px 20px 80px 20px; /* Espace en bas pour le footer */
 }
 
-/* --- STYLE DES FICHES RANDOS (NOUVEAU STYLE) --- */
+/* --- STYLE DES FICHES RANDOS --- */
 .rando-item {
     display: flex; align-items: center; gap: 15px;
     padding: 15px; margin-bottom: 15px;
@@ -188,7 +188,7 @@ header nav a.active { color: var(--accent); }
 .list-content p { font-size: 0.85rem; color: var(--text-light); margin: 0; }
 .diff-badge { display: inline-block; padding: 3px 10px; border-radius: 10px; color: white; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; margin-top: 6px; }
 
-/* Footer de la Sidebar (Fait avec passion) */
+/* Footer Sidebar */
 .sidebar-footer {
     text-align: center;
     padding: 20px;
@@ -241,99 +241,33 @@ header nav a.active { color: var(--accent); }
 .chart-container { background: #fff; padding: 10px; border-radius: 12px; border: 1px solid #f1f5f9; margin: 20px 0; height: 180px; }
 
 /* =========================================
-   7. À PROPOS & FOOTER PRINCIPAL (REFONDU)
+   7. À PROPOS & FOOTER PRINCIPAL
    ========================================= */
 .about-container { max-width: 1100px; margin: 40px auto; padding: 0 30px 80px; }
 .about-main-title { text-align: center; font-size: 2.5rem; margin-bottom: 60px; text-transform: uppercase; color: var(--primary); }
 
-.about-row { 
-    display: flex; align-items: stretch; gap: 60px; margin-bottom: 80px; 
-}
+.about-row { display: flex; align-items: stretch; gap: 60px; margin-bottom: 80px; }
 .about-image { flex: 1; }
-.about-image img { 
-    width: 100%; height: 100%; object-fit: cover; border-radius: 20px; 
-    box-shadow: var(--shadow-md); 
-}
-.about-text { 
-    flex: 1; display: flex; flex-direction: column; justify-content: center; 
-}
-.about-text p { 
-    font-size: 1.05rem; line-height: 1.8; margin-bottom: 20px; 
-    color: var(--text-main); text-align: justify;
-}
+.about-image img { width: 100%; height: 100%; object-fit: cover; border-radius: 20px; box-shadow: var(--shadow-md); }
+.about-text { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.about-text p { font-size: 1.05rem; line-height: 1.8; margin-bottom: 20px; color: var(--text-main); text-align: justify; }
 
-/* --- NOUVEAU FOOTER SOMBRE ET CLASSE --- */
+/* --- FOOTER SOMBRE --- */
 .site-footer {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); /* Dégradé sombre */
-    color: white;
-    padding: 50px 20px;
-    text-align: center;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: white; padding: 50px 20px; text-align: center;
 }
-.footer-content {
-    max-width: 600px;
-    margin: 0 auto;
-    display: flex; flex-direction: column; align-items: center; gap: 25px;
-}
-.footer-brand {
-    display: flex; align-items: center; gap: 10px;
-}
-.footer-logo-img {
-    width: 40px; height: auto;
-}
-.footer-brand h3 {
-    margin: 0;
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 800;
-    font-size: 1.3rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-.footer-socials {
-    display: flex; gap: 20px;
-}
-.footer-socials a {
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 1.8rem;
-    text-decoration: none;
-    transition: 0.3s;
-    padding: 10px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.05);
-}
-.footer-socials a:hover {
-    color: var(--accent); /* Orange au survol */
-    background: rgba(255, 255, 255, 0.1);
-    transform: translateY(-3px);
-}
-
-/* Nouveaux Boutons de Navigation du Footer */
-.footer-nav {
-    display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;
-}
-.footer-nav-btn {
-    background: rgba(255, 255, 255, 0.1); /* Fond transparent */
-    border: 2px solid rgba(255, 255, 255, 0.2); /* Bordure fine */
-    color: white;
-    padding: 10px 20px;
-    border-radius: 30px; /* Boutons arrondis */
-    font-weight: 700;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-.footer-nav-btn:hover {
-    background: var(--accent); /* Fond orange au survol */
-    border-color: var(--accent);
-    box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
-    transform: translateY(-2px);
-}
-
-.copyright {
-    font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.5);
-    margin-top: 20px;
-}
+.footer-content { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 25px; }
+.footer-brand { display: flex; align-items: center; gap: 10px; }
+.footer-logo-img { width: 40px; height: auto; }
+.footer-brand h3 { margin: 0; font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 1.3rem; text-transform: uppercase; letter-spacing: 1px; }
+.footer-socials { display: flex; gap: 20px; }
+.footer-socials a { color: rgba(255, 255, 255, 0.7); font-size: 1.8rem; text-decoration: none; transition: 0.3s; padding: 10px; border-radius: 50%; background: rgba(255, 255, 255, 0.05); }
+.footer-socials a:hover { color: var(--accent); background: rgba(255, 255, 255, 0.1); transform: translateY(-3px); }
+.footer-nav { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; }
+.footer-nav-btn { background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2); color: white; padding: 10px 20px; border-radius: 30px; font-weight: 700; font-size: 0.9rem; text-transform: uppercase; cursor: pointer; transition: all 0.3s ease; }
+.footer-nav-btn:hover { background: var(--accent); border-color: var(--accent); box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4); transform: translateY(-2px); }
+.copyright { font-size: 0.85rem; color: rgba(255, 255, 255, 0.5); margin-top: 20px; }
 
 
 /* =========================================
@@ -346,8 +280,7 @@ header nav a.active { color: var(--accent); }
     #main-nav { 
         position: absolute; top: var(--header-height); left: 0; width: 100%; 
         background: white; flex-direction: column; padding: 20px; gap: 10px;
-        transform: translateY(-150%); transition: 0.3s; z-index: -1;
-        border-bottom: 1px solid #eee;
+        transform: translateY(-150%); transition: 0.3s; z-index: -1; border-bottom: 1px solid #eee;
     }
     #main-nav.open { transform: translateY(0); }
     header nav a { text-align: center; display: block; width: 100%; }
@@ -359,17 +292,12 @@ header nav a.active { color: var(--accent); }
     #app-container { display: block; position: relative; height: calc(100vh - var(--header-height)); } 
     #sidebar { width: 100%; height: 60vh; position: absolute; bottom: 0; border-radius: 20px 20px 0 0; }
     #sidebar.minimized { height: 60px; overflow: hidden; }
-    
     .mobile-toggle-bar { display: flex; height: 40px; align-items: center; justify-content: center; background: white; border-radius: 20px 20px 0 0; cursor: pointer; }
 
-    #info-panel { 
-        width: 100%; height: 75vh; top: auto; bottom: 0; right: 0; left: 0;
-        border-radius: 20px 20px 0 0; transform: translateY(0);
-    }
+    #info-panel { width: 100%; height: 75vh; top: auto; bottom: 0; right: 0; left: 0; border-radius: 20px 20px 0 0; transform: translateY(0); }
     #info-panel.hidden { transform: translateY(110%); }
     #info-panel.minimized { height: 60px; overflow: hidden; }
 
-    /* À Propos Empilé */
     .about-row { flex-direction: column; gap: 30px; }
     .about-row.reverse-mobile { flex-direction: column-reverse; }
 }
@@ -389,80 +317,57 @@ header nav a.active { color: var(--accent); }
 
 /* =========================================
    9. ELEMENTS "SEXY" POUR LA CARTE
-   (Popups, Marqueurs, Contrôles)
    ========================================= */
 
-/* Popups Modernes */
-.leaflet-popup-content-wrapper {
-    padding: 0;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+/* --- 1. CLUSTERING (GROUPES DE MARQUEURS) --- */
+.marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
+    background-color: rgba(16, 185, 129, 0.6) !important; /* Vert émeraude transparent */
 }
+.marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
+    background-color: rgba(16, 185, 129, 0.9) !important; /* Vert plus foncé au centre */
+    color: white !important;
+    font-weight: 800 !important;
+    border-radius: 50%;
+    font-family: 'Nunito Sans', sans-serif;
+}
+
+/* --- 2. POPUPS MODERNES --- */
+.leaflet-popup-content-wrapper { padding: 0; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
 .leaflet-popup-content { margin: 0 !important; width: 260px !important; }
 .popup-header-img { width: 100%; height: 140px; object-fit: cover; display: block; }
 .popup-info { padding: 15px; text-align: center; }
 .popup-title { font-weight: 800; font-size: 1.1rem; color: #0f172a; margin-bottom: 5px; display: block; }
 .popup-meta { font-size: 0.85rem; color: #64748b; }
 
-/* Marqueurs Animés (Pulsation) */
+/* --- 3. MARQUEURS ANIMÉS (PULSATION) --- */
 .marker-pin {
-    width: 40px; height: 40px;
-    border-radius: 50%;
-    background: #f97316;
-    border: 3px solid white;
-    box-shadow: 0 4px 10px rgba(249, 115, 22, 0.4);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.2rem;
-    position: relative; z-index: 20;
+    width: 40px; height: 40px; border-radius: 50%; background: #f97316; border: 3px solid white;
+    box-shadow: 0 4px 10px rgba(249, 115, 22, 0.4); display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; position: relative; z-index: 20;
 }
 .marker-pin::after {
-    content: ''; position: absolute;
-    width: 100%; height: 100%;
-    border-radius: 50%;
-    background: rgba(249, 115, 22, 0.6);
-    z-index: -1;
-    animation: pulse 2s infinite;
+    content: ''; position: absolute; width: 100%; height: 100%; border-radius: 50%;
+    background: rgba(249, 115, 22, 0.6); z-index: -1; animation: pulse 2s infinite;
 }
 @keyframes pulse {
     0% { transform: scale(1); opacity: 0.8; }
     100% { transform: scale(2.5); opacity: 0; }
 }
 
-/* --- BOUTONS CARTE (Zoom, Localisation) PROPRES --- */
-.leaflet-bar {
-    border: none !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-}
+/* --- 4. BOUTONS CARTE & SATELLITE --- */
+.leaflet-bar { border: none !important; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important; }
 .leaflet-bar a {
-    border-bottom: 1px solid #f1f5f9 !important;
-    color: var(--primary) !important;
-    background: rgba(255, 255, 255, 0.9) !important;
-    backdrop-filter: blur(5px);
+    border-bottom: 1px solid #f1f5f9 !important; color: var(--primary) !important;
+    background: rgba(255, 255, 255, 0.9) !important; backdrop-filter: blur(5px);
     border-radius: 8px !important;
 }
 .leaflet-bar a:last-child { border-bottom: none !important; }
-.leaflet-bar a:hover {
-    background: white !important;
-    color: var(--accent) !important;
-}
+.leaflet-bar a:hover { background: white !important; color: var(--accent) !important; }
 
-/* --- BOUTON SATELLITE (ROND & DESIGN) --- */
 .map-switch-btn-container { margin-top: 10px; margin-right: 10px; }
 .map-switch-btn {
-    width: 44px; height: 44px;
-    background: white;
-    border-radius: 50%;
-    border: none;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.2rem;
-    color: var(--primary);
-    transition: all 0.3s ease;
+    width: 44px; height: 44px; background: white; border-radius: 50%; border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; color: var(--primary); transition: all 0.3s ease;
 }
-.map-switch-btn:hover {
-    transform: scale(1.1);
-    color: var(--accent);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-}
+.map-switch-btn:hover { transform: scale(1.1); color: var(--accent); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2); }

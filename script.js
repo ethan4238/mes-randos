@@ -16,7 +16,11 @@ const firebaseConfig = {
   measurementId: "G-2ZZ60TDVDP"
 };
 
-// Initialisation
+// --- CLE API METEO (OpenWeatherMap) ---
+// 👇 REMPLACE CECI PAR TA CLÉ, SINON LA MÉTÉO AFFICHERA UNE ERREUR 👇
+const API_METEO = "TA_CLE_OPENWEATHER_ICI"; 
+
+// Initialisation Firebase
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const db = getFirestore(app);
@@ -37,6 +41,7 @@ function showSection(targetId) {
     if(targetSection) {
         targetSection.classList.add('active');
         targetSection.classList.remove('hidden');
+        targetSection.scrollTop = 0; 
     }
 
     const activeLink = document.querySelector(`.nav-link[data-target="${targetId}"]`);
@@ -44,6 +49,14 @@ function showSection(targetId) {
 
     if(targetId === 'app-container' && map) {
         setTimeout(() => { map.invalidateSize(); }, 200);
+    }
+
+    // Masquer bouton retour haut sur la carte
+    const backBtn = document.getElementById('back-to-top');
+    if (backBtn) {
+        backBtn.classList.remove('visible');
+        if (targetId === 'app-container') backBtn.style.display = 'none';
+        else backBtn.style.display = 'flex';
     }
 }
 
@@ -54,62 +67,58 @@ navLinks.forEach(link => {
     });
 });
 
-// Rendre accessible globalement
 window.goToMap = function() { showSection('app-container'); }
 
 
 // ==========================================
-// 3. CONFIGURATION DE LA CARTE (FINAL)
+// 3. CONFIGURATION DE LA CARTE & CLUSTERING
 // ==========================================
 
-// 1. Fond Original (OpenTopoMap) - Le meilleur pour la rando
 const mainLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { 
-    maxZoom: 17, 
-    attribution: '© OpenStreetMap' 
+    maxZoom: 17, attribution: '© OpenStreetMap' 
 });
 
-// 2. Fond Satellite (En option)
 const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { 
-    maxZoom: 19, 
-    attribution: 'Tiles © Esri' 
+    maxZoom: 19, attribution: 'Tiles © Esri' 
 });
 
 var map = L.map('map', { 
     center: [45.1885, 5.7245], 
-    zoom: 12, // Zoom idéal pour voir Grenoble et alentours
+    zoom: 12, 
     layers: [mainLayer], 
     zoomControl: false 
 });
 
-// Zoom en bas à droite
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-// Bouton Switch (Passer au satellite) - NOUVEAU STYLE ROND
+// --- GROUPE DE CLUSTERING (Sécurité si la librairie manque) ---
+let markersCluster;
+if (typeof L.markerClusterGroup === 'function') {
+    markersCluster = L.markerClusterGroup({
+        showCoverageOnHover: false,
+        maxClusterRadius: 50
+    });
+    map.addLayer(markersCluster);
+} else {
+    console.warn("Leaflet.markercluster non chargé. Les marqueurs ne seront pas regroupés.");
+}
+
+// Bouton Switch Satellite
 const switchControl = L.Control.extend({
     options: { position: 'topright' },
     onAdd: function(map) {
         const container = L.DomUtil.create('div', 'map-switch-btn-container');
         const btn = L.DomUtil.create('button', 'map-switch-btn', container);
-
-        // Icône initiale (Couches)
         btn.innerHTML = '<i class="fa-solid fa-layer-group"></i>';
         btn.title = "Changer le fond de carte";
-
-        // Empêcher le clic de se propager à la carte
         L.DomEvent.disableClickPropagation(btn);
         
         btn.onclick = function() {
             if (map.hasLayer(mainLayer)) {
-                // Passer en Satellite
-                map.removeLayer(mainLayer);
-                map.addLayer(satelliteLayer);
-                // Changer l'icône pour "Plan" (Indique retour arrière)
+                map.removeLayer(mainLayer); map.addLayer(satelliteLayer);
                 btn.innerHTML = '<i class="fa-regular fa-map"></i>';
             } else {
-                // Repasser en Plan
-                map.removeLayer(satelliteLayer);
-                map.addLayer(mainLayer);
-                // Remettre l'icône "Couches"
+                map.removeLayer(satelliteLayer); map.addLayer(mainLayer);
                 btn.innerHTML = '<i class="fa-solid fa-layer-group"></i>';
             }
         };
@@ -123,7 +132,7 @@ let myElevationChart = null;
 
 
 // ==========================================
-// 4. CHARGEMENT DES DONNÉES
+// 4. CHARGEMENT DES DONNÉES (CORRIGÉ)
 // ==========================================
 async function chargerRandos() {
     try {
@@ -134,20 +143,16 @@ async function chargerRandos() {
             const data = doc.data();
             const index = doc.id; 
 
-            // --- GESTION DES PHOTOS ---
             let safePhotos = [];
             if (data.photos) {
-                if (Array.isArray(data.photos)) {
-                    safePhotos = data.photos.map(p => (typeof p === 'object' && p.image) ? p.image : p);
-                } else if (typeof data.photos === 'string') {
-                    safePhotos = [data.photos];
-                }
+                if (Array.isArray(data.photos)) safePhotos = data.photos.map(p => (typeof p === 'object' && p.image) ? p.image : p);
+                else if (typeof data.photos === 'string') safePhotos = [data.photos];
             }
             data.safePhotos = safePhotos;
 
             const trackColor = getDiffColor(data.difficulty);
 
-            // --- MARQUEUR ANIMÉ ---
+            // Icône "Montagne" dans le rond
             const customIcon = L.divIcon({
                 className: 'custom-div-icon',
                 html: "<div class='marker-pin'>🏔️</div>",
@@ -156,7 +161,7 @@ async function chargerRandos() {
                 popupAnchor: [0, -20]
             });
 
-            // --- COUCHE GPX ---
+            // --- CRÉATION DE LA COUCHE GPX ---
             const gpxLayer = new L.GPX(data.gpx, {
                 async: true,
                 marker_options: {
@@ -164,61 +169,58 @@ async function chargerRandos() {
                     endIcon: null,
                     shadowUrl: null
                 },
-                polyline_options: { 
-                    color: trackColor, 
-                    opacity: 0.9, 
-                    weight: 6, 
-                    lineCap: 'round' 
-                }
+                polyline_options: { color: trackColor, opacity: 0.9, weight: 6, lineCap: 'round' }
             }).on('loaded', function(e) {
+                // --- C'EST ICI QUE LA MAGIE OPÈRE (Une fois chargé) ---
                 const dist = (e.target.get_distance() / 1000).toFixed(1);
                 
+                // Mise à jour de la distance dans la liste latérale
                 setTimeout(() => {
                     const elDist = document.getElementById(`dist-${index}`);
                     if(elDist) elDist.innerText = `${dist} km`;
                 }, 100);
 
                 const rawDate = e.target.get_start_time();
-                if(rawDate) {
-                    const dateStr = rawDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-                    data.calculatedDate = dateStr; 
-                }
+                if(rawDate) data.calculatedDate = rawDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 
-                // --- POPUP STYLE CARTE POSTALE ---
-                let popupImg = 'https://via.placeholder.com/260x140?text=Rando';
-                if(data.safePhotos && data.safePhotos.length > 0) popupImg = data.safePhotos[0];
-
+                // Popup "Carte Postale"
+                let popupImg = (data.safePhotos.length > 0) ? data.safePhotos[0] : 'https://via.placeholder.com/260x140?text=Rando';
                 const popupContent = `
                     <div style="cursor:pointer;" onclick="document.getElementById('item-${index}').click()">
                         <img src="${popupImg}" class="popup-header-img">
                         <div class="popup-info">
                             <span class="popup-title">${data.title}</span>
                             <div class="popup-meta">
-                                <span>📏 ${dist} km</span> • 
-                                <span style="color:${trackColor}; font-weight:bold;">📶 ${data.difficulty}</span>
+                                <span>📏 ${dist} km</span> • <span style="color:${trackColor}; font-weight:bold;">📶 ${data.difficulty}</span>
                             </div>
-                            <button style="margin-top:10px; background:#f97316; color:white; border:none; padding:6px 15px; border-radius:20px; cursor:pointer; font-size:0.8rem; font-weight:bold;">
-                                Voir Détails
-                            </button>
+                            <button style="margin-top:10px; background:#f97316; color:white; border:none; padding:6px 15px; border-radius:20px; cursor:pointer; font-size:0.8rem; font-weight:bold;">Voir Détails</button>
                         </div>
-                    </div>
-                `;
+                    </div>`;
                 gpxLayer.bindPopup(popupContent);
+
+                // --- IMPORTANT : AJOUT AU CLUSTER ICI SEULEMENT ---
+                if (markersCluster) {
+                    markersCluster.addLayer(gpxLayer);
+                } else {
+                    gpxLayer.addTo(map); // Fallback si pas de cluster
+                }
 
             }).on('click', function(e) {
                 L.DomEvent.stopPropagation(e);
                 afficherDetails(data, gpxLayer);
                 updateActiveItem(index);
-            }).addTo(map);
+            });
 
+            // Effets de survol sur la trace
             gpxLayer.on('mouseover', function() { this.setStyle({ weight: 8, opacity: 1 }); });
             gpxLayer.on('mouseout', function() { this.setStyle({ weight: 6, opacity: 0.9 }); });
 
+            // On ajoute l'élément dans la liste latérale
             addRandoToList(data, index, safePhotos, gpxLayer);
         });
 
-    } catch (error) {
-        console.error("Erreur lors du chargement Firebase :", error);
+    } catch (error) { 
+        console.error("Erreur critique chargement randos :", error); 
     }
 }
 
@@ -226,6 +228,7 @@ async function chargerRandos() {
 chargerRandos();
 
 
+// --- FONCTION AJOUT LISTE ---
 function addRandoToList(data, index, photos, gpxLayer) {
     const list = document.getElementById('randonnees-list');
     if (!list) return;
@@ -236,12 +239,8 @@ function addRandoToList(data, index, photos, gpxLayer) {
     item.setAttribute('data-diff', data.difficulty); 
     item.setAttribute('data-id', index); 
     
-    let thumbUrl = 'https://via.placeholder.com/80?text=Rando';
-    if (photos && photos.length > 0) thumbUrl = photos[0];
-    
-    const diff = data.difficulty || "Moyenne";
-    const diffColor = getDiffColor(diff);
-    
+    let thumbUrl = (photos && photos.length > 0) ? photos[0] : 'https://via.placeholder.com/80?text=Rando';
+    const diffColor = getDiffColor(data.difficulty || "Moyenne");
     const isFav = getFavoris().includes(index);
     const heartIcon = isFav ? '❤️' : '🤍';
     const activeClass = isFav ? 'active' : '';
@@ -251,7 +250,7 @@ function addRandoToList(data, index, photos, gpxLayer) {
         <div class="list-content">
             <h3 style="margin:0; font-size:1rem; color:#0f172a;">${data.title}</h3>
             <p style="margin:2px 0; font-size:0.85rem; color:#64748b;">Distance : <span id="dist-${index}">...</span></p>
-            <span class="diff-badge" style="background-color: ${diffColor}; padding:2px 8px; border-radius:10px; color:white; font-size:0.7rem;">${diff}</span>
+            <span class="diff-badge" style="background-color: ${diffColor}; padding:2px 8px; border-radius:10px; color:white; font-size:0.7rem;">${data.difficulty || "Moyenne"}</span>
         </div>
         <button id="fav-btn-${index}" class="fav-btn-list ${activeClass}" onclick="toggleFavori('${index}', event)">${heartIcon}</button>
     `;
@@ -262,16 +261,20 @@ function addRandoToList(data, index, photos, gpxLayer) {
         
         afficherDetails(data, gpxLayer);
         
-        if (gpxLayer && map) {
+        // Zoom intelligent
+        if (gpxLayer && markersCluster) {
+            markersCluster.zoomToShowLayer(gpxLayer, () => {
+                map.fitBounds(gpxLayer.getBounds());
+                gpxLayer.openPopup();
+            });
+        } else if (gpxLayer) {
             map.fitBounds(gpxLayer.getBounds());
             gpxLayer.openPopup();
         }
 
         if (window.innerWidth < 768) {
             const sidebar = document.getElementById('sidebar');
-            if(sidebar && !sidebar.classList.contains('minimized')) {
-                sidebar.classList.add('minimized');
-            }
+            if(sidebar && !sidebar.classList.contains('minimized')) sidebar.classList.add('minimized');
         }
     });
 
@@ -280,21 +283,24 @@ function addRandoToList(data, index, photos, gpxLayer) {
 
 
 // ==========================================
-// 5. PANNEAU DE DÉTAILS
+// 5. PANNEAU DE DÉTAILS (MÉTÉO, GPS, GRAPHIQUE)
 // ==========================================
 function afficherDetails(data, gpxLayer) {
     const panel = document.getElementById('info-panel');
     const displayDate = data.calculatedDate || "Date inconnue";
     const diffColor = getDiffColor(data.difficulty);
 
+    // Coordonnées approximatives (centre de la rando) pour Météo/GPS
+    const center = gpxLayer.getBounds().getCenter(); 
+    const lat = center.lat;
+    const lng = center.lng;
+
     panel.innerHTML = `
-        <div class="mobile-toggle-bar" onclick="toggleMobilePanel('info-panel')">
-            <i class="fa-solid fa-chevron-down"></i>
-        </div>
+        <div class="mobile-toggle-bar" onclick="toggleMobilePanel('info-panel')"><i class="fa-solid fa-chevron-down"></i></div>
 
         <div class="panel-header">
             <h2 style="margin:0;">${data.title}</h2>
-            <button id="close-panel-btn" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#64748b;">&times;</button>
+            <button id="close-panel-btn" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#64748b;">×</button>
         </div>
 
         <div class="panel-content">
@@ -303,19 +309,26 @@ function afficherDetails(data, gpxLayer) {
                 <span style="background:${diffColor}; color:white; padding:4px 12px; border-radius:12px; font-weight:700; font-size:0.75rem;">${data.difficulty}</span>
             </div>
 
+            <div id="weather-widget" style="background:#f0f9ff; padding:15px; border-radius:12px; margin-bottom:20px; border:1px solid #bae6fd; display:flex; align-items:center; gap:15px;">
+                <i class="fa-solid fa-cloud-sun" style="font-size:1.5rem; color:#0ea5e9;"></i>
+                <div style="flex-grow:1;">
+                    <span style="font-weight:bold; color:#0284c7; display:block;">Météo sur place</span>
+                    <span id="weather-text" style="font-size:0.9rem; color:#334155;">Chargement...</span>
+                </div>
+            </div>
+
             <div id="stats-placeholder" class="stats-grid">Chargement...</div>
 
-            <button id="share-btn-action" class="share-btn">
-                <i class="fa-solid fa-paper-plane"></i> Partager la sortie
-            </button>
-
-            <a href="${data.gpx}" download class="download-btn">
-                <i class="fa-solid fa-download"></i> Télécharger la trace GPX
-            </a>
-            
-            <div style="color:#334155; line-height:1.6; margin: 20px 0; font-size:0.95rem;">
-                ${marked.parse(data.description || "")}
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+                <button id="share-btn-action" class="share-btn" style="margin:0;"><i class="fa-solid fa-paper-plane"></i> Partager</button>
+                <a href="https://www.google.com/maps/search/?api=1&query=${lat},${lng}" target="_blank" class="share-btn" style="background:#10b981; color:white; margin:0; text-decoration:none;">
+                    <i class="fa-solid fa-location-arrow"></i> S'y rendre
+                </a>
             </div>
+
+            <a href="${data.gpx}" download class="download-btn"><i class="fa-solid fa-download"></i> Télécharger GPX</a>
+            
+            <div style="color:#334155; line-height:1.6; margin: 20px 0; font-size:0.95rem;">${marked.parse(data.description || "")}</div>
             
             <div class="chart-container"><canvas id="elevationChart"></canvas></div>
 
@@ -324,39 +337,33 @@ function afficherDetails(data, gpxLayer) {
         </div>
     `;
 
+    // Stats
     const dist = (gpxLayer.get_distance() / 1000).toFixed(1); 
     const elev = gpxLayer.get_elevation_gain().toFixed(0);    
     const time = msToTime(gpxLayer.get_moving_time());
-    
     document.getElementById('stats-placeholder').innerHTML = `
         <div class="stat-item"><span class="stat-value">${dist} km</span><span class="stat-label">Distance</span></div>
         <div class="stat-item"><span class="stat-value">${elev} m</span><span class="stat-label">Dénivelé</span></div>
         <div class="stat-item"><span class="stat-value">${time}</span><span class="stat-label">Temps</span></div>
     `;
 
+    // Charger Météo
+    chargerMeteo(lat, lng);
+
+    // Photos
     const pContainer = document.getElementById('rando-photos');
     if(data.safePhotos && data.safePhotos.length > 0) {
         data.safePhotos.forEach(url => {
             const div = document.createElement('div');
             div.className = 'photo-box';
-            div.innerHTML = `<a data-fslightbox="gallery" href="${url}"><img src="${url}" loading="lazy" alt="Photo rando"></a>`;
+            div.innerHTML = `<a data-fslightbox="gallery" href="${url}"><img src="${url}" loading="lazy"></a>`;
             pContainer.appendChild(div);
         });
         if(typeof refreshFsLightbox === 'function') refreshFsLightbox();
-    } else {
-        pContainer.innerHTML = "<p style='color:#94a3b8; font-style:italic;'>Pas de photos pour cette sortie.</p>";
-    }
+    } else { pContainer.innerHTML = "<p style='color:#94a3b8; font-style:italic;'>Pas de photos.</p>"; }
 
-    const raw = gpxLayer.get_elevation_data();
-    const lbls=[], dataPoints=[];
-    raw.forEach((p, i) => { if(i%10===0) { lbls.push(p[0].toFixed(1)); dataPoints.push(p[1]); }}); 
-
-    if(myElevationChart) myElevationChart.destroy();
-    myElevationChart = new Chart(document.getElementById('elevationChart'), {
-        type: 'line',
-        data: { labels: lbls, datasets: [{ label: 'Altitude', data: dataPoints, borderColor: '#f97316', backgroundColor: 'rgba(249,115,22,0.1)', fill: true, pointRadius: 0, borderWidth: 2 }] },
-        options: { responsive: true, maintainAspectRatio: false, scales: { x: {display:false}, y: {ticks:{font:{size:10}}} }, plugins: {legend:{display:false}} }
-    });
+    // Graphique
+    createChart(gpxLayer);
 
     document.getElementById('close-panel-btn').onclick = () => {
         panel.classList.add('hidden');
@@ -368,11 +375,60 @@ function afficherDetails(data, gpxLayer) {
     panel.classList.remove('minimized');
 }
 
+// --- GRAPHIQUE ---
+function createChart(gpxLayer) {
+    const ctxCanvas = document.getElementById('elevationChart');
+    if(!ctxCanvas || typeof Chart === 'undefined') return;
+
+    const raw = gpxLayer.get_elevation_data();
+    const lbls=[], dataPoints=[];
+    raw.forEach((p, i) => { if(i%10===0) { lbls.push(p[0].toFixed(1)); dataPoints.push(p[1]); } }); 
+
+    if(myElevationChart) myElevationChart.destroy();
+    myElevationChart = new Chart(ctxCanvas.getContext('2d'), {
+        type: 'line',
+        data: { 
+            labels: lbls, 
+            datasets: [{ 
+                label: 'Altitude', data: dataPoints, 
+                borderColor: '#f97316', backgroundColor: 'rgba(249,115,22,0.1)', 
+                fill: true, pointRadius: 0, borderWidth: 2, hoverRadius: 6 
+            }] 
+        },
+        options: { 
+            responsive: true, maintainAspectRatio: false, 
+            interaction: { mode: 'index', intersect: false },
+            scales: { x: {display:false}, y: {ticks:{font:{size:10}}} }, 
+            plugins: {legend:{display:false}} 
+        }
+    });
+}
+
+// --- MÉTÉO ---
+async function chargerMeteo(lat, lon) {
+    const div = document.getElementById('weather-text');
+    if (API_METEO.includes("TA_CLE")) {
+        div.innerHTML = "<span style='color:orange'>Clé API manquante</span>";
+        return;
+    }
+    try {
+        const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=fr&appid=${API_METEO}`);
+        if(!res.ok) throw new Error("Erreur API");
+        const data = await res.json();
+        if(data.weather) {
+            const desc = data.weather[0].description;
+            const temp = Math.round(data.main.temp);
+            div.innerHTML = `<strong>${temp}°C</strong> - ${desc.charAt(0).toUpperCase() + desc.slice(1)}`;
+        }
+    } catch (e) {
+        div.innerText = "Météo indisponible";
+    }
+}
+
 
 // ==========================================
-// 6. FONCTIONS UTILITAIRES & GLOBALES
+// 6. UTILITAIRES
 // ==========================================
-
 function updateActiveItem(idx) {
     document.querySelectorAll('.rando-item').forEach(i => i.classList.remove('active'));
     const sel = document.getElementById(`item-${idx}`);
@@ -463,21 +519,6 @@ document.getElementById('search-input').addEventListener('input', (e) => {
         item.style.display = title.includes(term) ? 'flex' : 'none';
     });
 });
-
-const backToTopBtn = document.getElementById('back-to-top');
-const scrollableSections = document.querySelectorAll('.page-section');
-if (backToTopBtn) {
-    scrollableSections.forEach(section => {
-        section.addEventListener('scroll', () => {
-            if (section.scrollTop > 300) backToTopBtn.classList.add('visible');
-            else backToTopBtn.classList.remove('visible');
-        });
-    });
-    backToTopBtn.addEventListener('click', () => {
-        const activeSection = document.querySelector('.page-section.active');
-        if(activeSection) activeSection.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-}
 
 document.addEventListener('DOMContentLoaded', () => {
     const menuToggle = document.querySelector('.menu-toggle');
