@@ -75,7 +75,7 @@ const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/
 
 var map = L.map('map', { 
     center: [45.1885, 5.7245], 
-    zoom: 10, 
+    zoom: 12, 
     layers: [mainLayer], // On démarre sur le fond "Rando"
     zoomControl: false 
 });

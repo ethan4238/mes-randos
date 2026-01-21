@@ -71,6 +71,18 @@ header nav a.active { color: var(--accent); }
 /* Cas spécial pour la carte : pas de scroll global, on veut du plein écran */
 #app-container.active { display: flex; overflow: hidden; }
 
+/* CACHER LA BARRE DE DÉFILEMENT (Scroll Invisible mais fonctionnel) */
+#sidebar, #randonnees-list, .page-section, #info-panel .panel-content {
+    scrollbar-width: none; /* Pour Firefox */
+    -ms-overflow-style: none; /* Pour IE/Edge */
+}
+#sidebar::-webkit-scrollbar, 
+#randonnees-list::-webkit-scrollbar, 
+.page-section::-webkit-scrollbar,
+#info-panel .panel-content::-webkit-scrollbar {
+    display: none; /* Pour Chrome, Safari */
+}
+
 /* =========================================
    4. ACCUEIL (HERO & FEATURES)
    ========================================= */
@@ -130,29 +142,68 @@ header nav a.active { color: var(--accent); }
 .filter-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid #e2e8f0; background: white; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
 .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-#randonnees-list { flex-grow: 1; overflow-y: auto; padding: 10px 25px; }
+#randonnees-list { 
+    flex-grow: 1; 
+    overflow-y: auto; 
+    padding: 10px 20px 80px 20px; /* Espace en bas pour le footer */
+}
 
-/* --- STYLE DES FICHES RANDOS (LISTE) --- */
+/* --- STYLE DES FICHES RANDOS (NOUVEAU STYLE) --- */
 .rando-item {
     display: flex; align-items: center; gap: 15px;
-    padding: 12px; margin-bottom: 16px;
-    background: white; border: 1px solid #e2e8f0; border-radius: 12px;
-    cursor: pointer; transition: 0.2s;
+    padding: 15px; margin-bottom: 15px;
+    background: white; 
+    border: 1px solid #f1f5f9;
+    border-radius: 16px;
+    cursor: pointer; 
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
 }
-.rando-item:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
-.rando-item.active { border: 2px solid var(--accent); background: #fff7ed; }
+.rando-item:hover { 
+    transform: translateY(-3px); 
+    box-shadow: 0 10px 20px rgba(0,0,0,0.08); 
+    border-color: #e2e8f0;
+}
+.rando-item.active { 
+    border: 2px solid var(--accent); 
+    background: #fff7ed; 
+    box-shadow: 0 10px 20px rgba(249, 115, 22, 0.15);
+}
 
 .list-thumb { 
-    width: 75px; height: 75px; border-radius: 10px; object-fit: cover; 
+    width: 70px; height: 70px; 
+    border-radius: 12px; 
+    object-fit: cover; 
     background: #e2e8f0; flex-shrink: 0; 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 .list-content { flex-grow: 1; }
-.list-content h3 { font-size: 1rem; font-weight: 700; margin-bottom: 4px; color: var(--primary); }
+.list-content h3 { 
+    font-size: 1.05rem; 
+    font-weight: 800; 
+    margin-bottom: 5px; 
+    color: var(--primary); 
+    letter-spacing: -0.5px;
+}
 .list-content p { font-size: 0.85rem; color: var(--text-light); margin: 0; }
 .diff-badge { display: inline-block; padding: 3px 10px; border-radius: 10px; color: white; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; margin-top: 6px; }
 
+/* Footer de la Sidebar (Fait avec passion) */
+.sidebar-footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-top: 1px solid #f1f5f9;
+    background: white;
+}
+.sidebar-footer span { color: #ef4444; font-size: 0.9rem; }
+
 /* =========================================
-   6. PANNEAU DÉTAILS (CORRIGÉ)
+   6. PANNEAU DÉTAILS
    ========================================= */
 #info-panel {
     position: absolute; top: 20px; right: 20px; bottom: 20px; width: 420px;
