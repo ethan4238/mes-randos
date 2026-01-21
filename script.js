@@ -58,16 +58,16 @@ navLinks.forEach(link => {
 window.goToMap = function() { showSection('app-container'); }
 
 // ==========================================
-// 3. CONFIGURATION DE LA CARTE (RETOUR À L'ORIGINE)
+// 3. CONFIGURATION DE LA CARTE (RETOUR ORIGINE)
 // ==========================================
 
-// 1. Fond Original (OpenTopoMap) - Le style "Carte IGN"
+// 1. Fond Original (OpenTopoMap)
 const mainLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { 
     maxZoom: 17, 
     attribution: '© OpenStreetMap' 
 });
 
-// 2. Fond Satellite (Toujours dispo en option)
+// 2. Fond Satellite (En option)
 const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { 
     maxZoom: 19, 
     attribution: 'Tiles © Esri' 
@@ -76,14 +76,14 @@ const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/
 var map = L.map('map', { 
     center: [45.1885, 5.7245], 
     zoom: 10, 
-    layers: [mainLayer], // On démarre sur OpenTopoMap
+    layers: [mainLayer], // On démarre sur le fond "Rando"
     zoomControl: false 
 });
 
 // Zoom en bas à droite
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-// Bouton Switch
+// Bouton Switch (Passer au satellite)
 const switchControl = L.Control.extend({
     options: { position: 'topright' },
     onAdd: function(map) {
