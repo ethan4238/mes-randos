@@ -57,18 +57,17 @@ navLinks.forEach(link => {
 // Rendre accessible globalement
 window.goToMap = function() { showSection('app-container'); }
 
-
 // ==========================================
-// 3. CONFIGURATION DE LA CARTE (STYLE DARK MODE)
+// 3. CONFIGURATION DE LA CARTE (RETOUR À L'ORIGINE)
 // ==========================================
 
-// 1. Fond "Dark Matter" (Sombre, fort contraste pour le tracé orange)
-const mainLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { 
-    maxZoom: 19, 
-    attribution: '© CartoDB' 
+// 1. Fond Original (OpenTopoMap) - Le style "Carte IGN"
+const mainLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { 
+    maxZoom: 17, 
+    attribution: '© OpenStreetMap' 
 });
 
-// 2. Fond Satellite
+// 2. Fond Satellite (Toujours dispo en option)
 const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { 
     maxZoom: 19, 
     attribution: 'Tiles © Esri' 
@@ -76,20 +75,23 @@ const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/
 
 var map = L.map('map', { 
     center: [45.1885, 5.7245], 
-    zoom: 11, 
-    layers: [mainLayer], 
+    zoom: 10, 
+    layers: [mainLayer], // On démarre sur OpenTopoMap
     zoomControl: false 
 });
 
+// Zoom en bas à droite
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
+// Bouton Switch
 const switchControl = L.Control.extend({
     options: { position: 'topright' },
     onAdd: function(map) {
         const btn = L.DomUtil.create('button', 'map-switch-btn');
         btn.innerHTML = '<i class="fa-solid fa-layer-group"></i>';
-        btn.title = "Changer le fond";
+        btn.title = "Changer le fond de carte";
         btn.style.cursor = "pointer";
+        
         L.DomEvent.disableClickPropagation(btn);
         btn.onclick = function() {
             if (map.hasLayer(mainLayer)) {

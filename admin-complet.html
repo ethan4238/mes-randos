@@ -13,7 +13,7 @@
         body { margin: 0; padding: 0; background: #f1f5f9; font-family: 'Nunito Sans', sans-serif; color: #0f172a; }
         
         /* Navigation (Onglets) */
-        .navbar { background: white; padding: 15px 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); display: flex; justify-content: center; gap: 10px; position: sticky; top: 0; z-index: 100; }
+        .navbar { background: white; padding: 15px 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); display: flex; justify-content: center; gap: 10px; position: sticky; top: 0; z-index: 100; flex-wrap: wrap; }
         .nav-btn { background: none; border: none; padding: 10px 20px; font-weight: 700; color: #64748b; cursor: pointer; border-radius: 50px; transition: 0.3s; font-size: 1rem; }
         .nav-btn:hover { background: #f8fafc; color: #0f172a; }
         .nav-btn.active { background: #0f172a; color: white; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.3); }
@@ -39,6 +39,7 @@
         .btn-blue { background: #3b82f6; } .btn-blue:hover { background: #2563eb; }
         .btn-orange { background: #f97316; } .btn-orange:hover { background: #ea580c; }
         .btn-red { background: #ef4444; } .btn-red:hover { background: #dc2626; }
+        .btn-purple { background: #8b5cf6; } .btn-purple:hover { background: #7c3aed; }
 
         /* Gestion des Photos */
         .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-top: 20px; }
@@ -51,13 +52,13 @@
         .msg { padding: 15px; border-radius: 10px; margin-top: 20px; display: none; font-weight: bold; text-align: center; }
         .msg-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
         .msg-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-        .loading { opacity: 0.6; pointer-events: none; }
     </style>
 </head>
 <body>
 
     <div class="navbar">
-        <button class="nav-btn active" onclick="switchTab('tab-add')"><i class="fa-solid fa-plus"></i> Ajouter</button>
+        <button class="nav-btn active" onclick="switchTab('tab-add')"><i class="fa-solid fa-plus"></i> Créer</button>
+        <button class="nav-btn" onclick="switchTab('tab-edit')"><i class="fa-solid fa-pen"></i> Modifier</button>
         <button class="nav-btn" onclick="switchTab('tab-photos')"><i class="fa-solid fa-images"></i> Photos</button>
         <button class="nav-btn" onclick="switchTab('tab-delete')"><i class="fa-solid fa-trash"></i> Supprimer</button>
     </div>
@@ -91,6 +92,42 @@
 
             <hr style="margin:30px 0; border:0; border-top:1px solid #e2e8f0;">
             <button class="btn btn-orange" onclick="creerRando()">ENREGISTRER LA RANDO</button>
+        </div>
+
+
+        <div id="tab-edit" class="tab-content">
+            <h2><i class="fa-solid fa-pen"></i> Modifier une fiche existante</h2>
+            
+            <select id="select-edit-data" onchange="chargerInfosModif()">
+                <option value="">-- Choisir une randonnée à modifier --</option>
+            </select>
+
+            <div id="edit-form-area" style="display:none;">
+                <label>Titre</label>
+                <input type="text" id="edit-title">
+                
+                <label>Difficulté</label>
+                <select id="edit-difficulty">
+                    <option value="Facile">Facile</option>
+                    <option value="Moyenne">Moyenne</option>
+                    <option value="Difficile">Difficile</option>
+                    <option value="Expert">Expert</option>
+                </select>
+
+                <label>Description</label>
+                <textarea id="edit-desc"></textarea>
+
+                <label>Fichier GPX</label>
+                <div style="background:#f8fafc; padding:10px; border-radius:8px; margin-bottom:10px; font-size:0.9rem; word-break:break-all;">
+                    Actuel : <span id="current-gpx-display" style="color:#64748b;">Aucun</span>
+                </div>
+                <button class="btn btn-green" onclick="openWidget('gpx', 'update_gpx')">🔄 Remplacer le fichier GPX</button>
+                <div id="edit-gpx-status" style="color:#10b981; margin-top:5px; font-weight:bold;"></div>
+                <input type="hidden" id="edit-gpx-url">
+
+                <hr style="margin:30px 0; border:0; border-top:1px solid #e2e8f0;">
+                <button class="btn btn-purple" onclick="sauvegarderModification()">💾 ENREGISTRER LES MODIFICATIONS</button>
+            </div>
         </div>
 
 
@@ -147,11 +184,12 @@
         const db = getFirestore(app);
 
         const cloudName = "dkbulsjyo"; 
-        const uploadPreset = "ethan_upload"; // <--- METS TON PRESET ICI
+        // 👇 REMPLACE PAR TON PRESET ICI 👇
+        const uploadPreset = "ethan_upload"; 
 
         // Variables globales
-        let newPhotosForAdd = []; // Pour l'onglet 1
-        let newPhotosForEdit = []; // Pour l'onglet 2
+        let newPhotosForAdd = []; 
+        let newPhotosForEdit = []; 
 
         // --- 2. GESTION DES ONGLETS ---
         window.switchTab = function(tabId) {
@@ -160,11 +198,17 @@
             
             document.getElementById(tabId).classList.add('active');
             
-            // Trouver le bouton correspondant (un peu barbare mais efficace)
+            // Mise à jour visuelle des boutons
             if(tabId === 'tab-add') document.querySelector('button[onclick*="tab-add"]').classList.add('active');
+            
+            if(tabId === 'tab-edit') {
+                document.querySelector('button[onclick*="tab-edit"]').classList.add('active');
+                chargerListesDeroulantes();
+            }
+
             if(tabId === 'tab-photos') {
                 document.querySelector('button[onclick*="tab-photos"]').classList.add('active');
-                chargerListesDeroulantes(); // On rafraichit la liste
+                chargerListesDeroulantes();
             }
             if(tabId === 'tab-delete') {
                 document.querySelector('button[onclick*="tab-delete"]').classList.add('active');
@@ -174,11 +218,19 @@
 
         // --- 3. FONCTIONS UTILITAIRES ---
         async function chargerListesDeroulantes() {
-            const selects = [document.getElementById('select-edit-photos'), document.getElementById('select-delete')];
+            // On met à jour toutes les listes déroulantes de tous les onglets
+            const selects = [
+                document.getElementById('select-edit-data'), 
+                document.getElementById('select-edit-photos'), 
+                document.getElementById('select-delete')
+            ];
             
             try {
                 const querySnapshot = await getDocs(collection(db, "randos"));
                 selects.forEach(sel => {
+                    if(!sel) return;
+                    // Garder la valeur actuelle si elle existe
+                    const currentVal = sel.value;
                     sel.innerHTML = '<option value="">-- Choisir une randonnée --</option>';
                     querySnapshot.forEach(doc => {
                         const opt = document.createElement('option');
@@ -186,6 +238,7 @@
                         opt.text = doc.data().title;
                         sel.appendChild(opt);
                     });
+                    if(currentVal) sel.value = currentVal; // Restaurer la sélection
                 });
             } catch (e) { console.error(e); }
         }
@@ -203,7 +256,7 @@
             cloudinary.openUploadWidget({ 
                 cloudName, uploadPreset, 
                 sources: ['local', 'url'],
-                multiple: type === 'image'
+                multiple: (context === 'add' || context === 'edit') && type === 'image'
             }, (error, result) => {
                 if (!error && result && result.event === "success") {
                     const url = result.info.secure_url;
@@ -216,9 +269,14 @@
                             document.getElementById('add-gpx-url').value = url;
                             document.getElementById('add-gpx-status').innerText = "✅ GPX prêt";
                         }
-                    } else if (context === 'edit') {
+                    } 
+                    else if (context === 'update_gpx') {
+                        // Mise à jour du GPX dans l'onglet modifier
+                        document.getElementById('edit-gpx-url').value = url;
+                        document.getElementById('edit-gpx-status').innerText = "✅ Nouveau GPX chargé ! (Pense à sauvegarder)";
+                    }
+                    else if (context === 'edit') {
                         newPhotosForEdit.push({ image: url });
-                        // Ajouter visuellement (temporaire)
                         document.getElementById('gallery-edit').innerHTML += `
                             <div class="photo-card" style="border-color:#3b82f6;">
                                 <img src="${url}">
@@ -253,7 +311,58 @@
         }
 
         // ==========================================
-        // ONGLET 2 : GÉRER PHOTOS (AJOUT + SUPPRESSION)
+        // ONGLET 2 : MODIFIER (UPDATE)
+        // ==========================================
+        window.chargerInfosModif = async function() {
+            const id = document.getElementById('select-edit-data').value;
+            const form = document.getElementById('edit-form-area');
+
+            if(!id) { form.style.display = 'none'; return; }
+
+            try {
+                const docSnap = await getDoc(doc(db, "randos", id));
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    
+                    // Remplir les champs
+                    document.getElementById('edit-title').value = data.title || "";
+                    document.getElementById('edit-difficulty').value = data.difficulty || "Moyenne";
+                    document.getElementById('edit-desc').value = data.description || "";
+                    
+                    // Gérer le GPX
+                    document.getElementById('edit-gpx-url').value = data.gpx || "";
+                    document.getElementById('current-gpx-display').innerText = data.gpx ? "Fichier lié" : "Aucun";
+                    document.getElementById('edit-gpx-status').innerText = "";
+
+                    form.style.display = 'block';
+                }
+            } catch(e) { console.error(e); showMsg("Erreur de chargement", "error"); }
+        }
+
+        window.sauvegarderModification = async function() {
+            const id = document.getElementById('select-edit-data').value;
+            if(!id) return;
+
+            const title = document.getElementById('edit-title').value;
+            const diff = document.getElementById('edit-difficulty').value;
+            const desc = document.getElementById('edit-desc').value;
+            const gpx = document.getElementById('edit-gpx-url').value;
+
+            try {
+                const randoRef = doc(db, "randos", id);
+                await updateDoc(randoRef, {
+                    title: title,
+                    difficulty: diff,
+                    description: desc,
+                    gpx: gpx
+                });
+                showMsg("✅ Modifications enregistrées !");
+            } catch(e) { showMsg("Erreur: " + e.message, "error"); }
+        }
+
+
+        // ==========================================
+        // ONGLET 3 : GÉRER PHOTOS
         // ==========================================
         window.chargerPhotosRando = async function() {
             const id = document.getElementById('select-edit-photos').value;
@@ -275,19 +384,17 @@
                 if(photos.length === 0) gallery.innerHTML = '<p>Aucune photo.</p>';
 
                 photos.forEach(photoObj => {
-                    const url = photoObj.image || photoObj; // Compatibilité ancien format
+                    const url = (typeof photoObj === 'object' && photoObj.image) ? photoObj.image : photoObj;
                     const div = document.createElement('div');
                     div.className = 'photo-card';
                     
-                    // L'image
                     const img = document.createElement('img');
                     img.src = url;
                     
-                    // Le bouton supprimer
                     const btn = document.createElement('button');
                     btn.className = 'delete-photo-btn';
                     btn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
-                    btn.onclick = () => supprimerUnePhoto(id, photoObj); // On passe l'objet entier
+                    btn.onclick = () => supprimerUnePhoto(id, photoObj); 
 
                     div.appendChild(img);
                     div.appendChild(btn);
@@ -298,39 +405,31 @@
 
         window.supprimerUnePhoto = async function(randoId, photoObject) {
             if(!confirm("Supprimer cette photo ?")) return;
-
             try {
                 const randoRef = doc(db, "randos", randoId);
-                // arrayRemove supprime l'objet exact du tableau
-                await updateDoc(randoRef, {
-                    photos: arrayRemove(photoObject)
-                });
+                await updateDoc(randoRef, { photos: arrayRemove(photoObject) });
                 showMsg("Photo supprimée !");
-                chargerPhotosRando(); // Rafraichir l'affichage
+                chargerPhotosRando(); 
             } catch(e) { showMsg("Erreur: " + e.message, "error"); }
         }
 
         window.sauvegarderAjouts = async function() {
             const id = document.getElementById('select-edit-photos').value;
             if(!id || newPhotosForEdit.length === 0) return;
-
             try {
                 const randoRef = doc(db, "randos", id);
-                await updateDoc(randoRef, {
-                    photos: arrayUnion(...newPhotosForEdit)
-                });
+                await updateDoc(randoRef, { photos: arrayUnion(...newPhotosForEdit) });
                 showMsg("Nouvelles photos enregistrées !");
                 chargerPhotosRando();
             } catch(e) { showMsg("Erreur: " + e.message, "error"); }
         }
 
         // ==========================================
-        // ONGLET 3 : SUPPRIMER RANDO
+        // ONGLET 4 : SUPPRIMER RANDO
         // ==========================================
         window.supprimerRandoDefinitivement = async function() {
             const id = document.getElementById('select-delete').value;
             if(!id) return;
-
             if(confirm("⚠️ ES-TU SÛR ? C'est irréversible.")) {
                 try {
                     await deleteDoc(doc(db, "randos", id));
