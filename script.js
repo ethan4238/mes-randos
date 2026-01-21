@@ -57,11 +57,12 @@ navLinks.forEach(link => {
 // Rendre accessible globalement
 window.goToMap = function() { showSection('app-container'); }
 
+
 // ==========================================
-// 3. CONFIGURATION DE LA CARTE (RETOUR ORIGINE)
+// 3. CONFIGURATION DE LA CARTE (FINAL)
 // ==========================================
 
-// 1. Fond Original (OpenTopoMap)
+// 1. Fond Original (OpenTopoMap) - Le meilleur pour la rando
 const mainLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { 
     maxZoom: 17, 
     attribution: '© OpenStreetMap' 
@@ -75,40 +76,54 @@ const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/
 
 var map = L.map('map', { 
     center: [45.1885, 5.7245], 
-    zoom: 12, 
-    layers: [mainLayer], // On démarre sur le fond "Rando"
+    zoom: 12, // Zoom idéal pour voir Grenoble et alentours
+    layers: [mainLayer], 
     zoomControl: false 
 });
 
 // Zoom en bas à droite
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-// Bouton Switch (Passer au satellite)
+// Bouton Switch (Passer au satellite) - NOUVEAU STYLE ROND
 const switchControl = L.Control.extend({
     options: { position: 'topright' },
     onAdd: function(map) {
-        const btn = L.DomUtil.create('button', 'map-switch-btn');
+        const container = L.DomUtil.create('div', 'map-switch-btn-container');
+        const btn = L.DomUtil.create('button', 'map-switch-btn', container);
+
+        // Icône initiale (Couches)
         btn.innerHTML = '<i class="fa-solid fa-layer-group"></i>';
         btn.title = "Changer le fond de carte";
-        btn.style.cursor = "pointer";
-        
+
+        // Empêcher le clic de se propager à la carte
         L.DomEvent.disableClickPropagation(btn);
+        
         btn.onclick = function() {
             if (map.hasLayer(mainLayer)) {
-                map.removeLayer(mainLayer); map.addLayer(satelliteLayer); 
+                // Passer en Satellite
+                map.removeLayer(mainLayer);
+                map.addLayer(satelliteLayer);
+                // Changer l'icône pour "Plan" (Indique retour arrière)
+                btn.innerHTML = '<i class="fa-regular fa-map"></i>';
             } else {
-                map.removeLayer(satelliteLayer); map.addLayer(mainLayer); 
+                // Repasser en Plan
+                map.removeLayer(satelliteLayer);
+                map.addLayer(mainLayer);
+                // Remettre l'icône "Couches"
+                btn.innerHTML = '<i class="fa-solid fa-layer-group"></i>';
             }
         };
-        return btn;
+        return container;
     }
 });
 map.addControl(new switchControl());
 L.control.locate({ position: 'topleft', strings: { title: "Me localiser" } }).addTo(map);
 
 let myElevationChart = null;
+
+
 // ==========================================
-// 4. CHARGEMENT DES DONNÉES (FIREBASE + SEXY MARKERS)
+// 4. CHARGEMENT DES DONNÉES
 // ==========================================
 async function chargerRandos() {
     try {
@@ -132,10 +147,10 @@ async function chargerRandos() {
 
             const trackColor = getDiffColor(data.difficulty);
 
-            // --- CRÉATION DU MARQUEUR ANIMÉ (PULSATION) ---
+            // --- MARQUEUR ANIMÉ ---
             const customIcon = L.divIcon({
                 className: 'custom-div-icon',
-                html: "<div class='marker-pin'>🏔️</div>", // L'émoji montagne dans le rond
+                html: "<div class='marker-pin'>🏔️</div>",
                 iconSize: [40, 40],
                 iconAnchor: [20, 20],
                 popupAnchor: [0, -20]
@@ -145,14 +160,14 @@ async function chargerRandos() {
             const gpxLayer = new L.GPX(data.gpx, {
                 async: true,
                 marker_options: {
-                    startIcon: customIcon, // Notre icône animée
-                    endIcon: null,         // Pas d'icône à la fin pour ne pas surcharger
+                    startIcon: customIcon,
+                    endIcon: null,
                     shadowUrl: null
                 },
                 polyline_options: { 
                     color: trackColor, 
                     opacity: 0.9, 
-                    weight: 6, // Trait un peu plus épais
+                    weight: 6, 
                     lineCap: 'round' 
                 }
             }).on('loaded', function(e) {
@@ -169,7 +184,7 @@ async function chargerRandos() {
                     data.calculatedDate = dateStr; 
                 }
 
-                // --- CONSTRUCTION DU POPUP STYLE "CARTE POSTALE" ---
+                // --- POPUP STYLE CARTE POSTALE ---
                 let popupImg = 'https://via.placeholder.com/260x140?text=Rando';
                 if(data.safePhotos && data.safePhotos.length > 0) popupImg = data.safePhotos[0];
 
@@ -191,13 +206,11 @@ async function chargerRandos() {
                 gpxLayer.bindPopup(popupContent);
 
             }).on('click', function(e) {
-                // Au clic sur la trace, on ouvre le panneau latéral
                 L.DomEvent.stopPropagation(e);
                 afficherDetails(data, gpxLayer);
                 updateActiveItem(index);
             }).addTo(map);
 
-            // Effet de survol sur la trace
             gpxLayer.on('mouseover', function() { this.setStyle({ weight: 8, opacity: 1 }); });
             gpxLayer.on('mouseout', function() { this.setStyle({ weight: 6, opacity: 0.9 }); });
 
@@ -251,7 +264,6 @@ function addRandoToList(data, index, photos, gpxLayer) {
         
         if (gpxLayer && map) {
             map.fitBounds(gpxLayer.getBounds());
-            // On ouvre le popup automatiquement quand on clique dans la liste
             gpxLayer.openPopup();
         }
 
