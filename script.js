@@ -59,16 +59,16 @@ window.goToMap = function() { showSection('app-container'); }
 
 
 // ==========================================
-// 3. CONFIGURATION DE LA CARTE (STYLE NAT GEO)
+// 3. CONFIGURATION DE LA CARTE (STYLE DARK MODE)
 // ==========================================
 
-// 1. Fond "National Geographic" (Style Aventure / Magazine)
-const mainLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}', { 
-    maxZoom: 16, // Zoom max un peu plus limité mais très beau
-    attribution: 'Tiles © Esri & National Geographic' 
+// 1. Fond "Dark Matter" (Sombre, fort contraste pour le tracé orange)
+const mainLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { 
+    maxZoom: 19, 
+    attribution: '© CartoDB' 
 });
 
-// 2. Fond Satellite (Pour le switch)
+// 2. Fond Satellite
 const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { 
     maxZoom: 19, 
     attribution: 'Tiles © Esri' 
