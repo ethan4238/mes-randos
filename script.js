@@ -59,13 +59,13 @@ window.goToMap = function() { showSection('app-container'); }
 
 
 // ==========================================
-// 3. CONFIGURATION DE LA CARTE (STYLE PRO)
+// 3. CONFIGURATION DE LA CARTE (STYLE NAT GEO)
 // ==========================================
 
-// 1. Fond de carte "Esri World Topo" (Relief, courbes de niveau, look Pro)
-const mainLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', { 
-    maxZoom: 19, 
-    attribution: 'Tiles © Esri' 
+// 1. Fond "National Geographic" (Style Aventure / Magazine)
+const mainLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}', { 
+    maxZoom: 16, // Zoom max un peu plus limité mais très beau
+    attribution: 'Tiles © Esri & National Geographic' 
 });
 
 // 2. Fond Satellite (Pour le switch)
@@ -74,26 +74,22 @@ const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/
     attribution: 'Tiles © Esri' 
 });
 
-// Création de la carte
 var map = L.map('map', { 
     center: [45.1885, 5.7245], 
-    zoom: 11, // Zoom un peu plus près au démarrage
-    layers: [mainLayer], // On démarre sur le fond Topo Pro
+    zoom: 11, 
+    layers: [mainLayer], 
     zoomControl: false 
 });
 
-// Zoom en bas à droite
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-// Bouton Switch Satellite
 const switchControl = L.Control.extend({
     options: { position: 'topright' },
     onAdd: function(map) {
         const btn = L.DomUtil.create('button', 'map-switch-btn');
         btn.innerHTML = '<i class="fa-solid fa-layer-group"></i>';
-        btn.title = "Changer le fond de carte";
+        btn.title = "Changer le fond";
         btn.style.cursor = "pointer";
-        
         L.DomEvent.disableClickPropagation(btn);
         btn.onclick = function() {
             if (map.hasLayer(mainLayer)) {
