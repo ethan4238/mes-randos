@@ -53,8 +53,8 @@ function showSection(targetId) {
     const backBtn = document.getElementById('back-to-top');
     if (backBtn) {
         backBtn.classList.remove('visible');
-        if (targetId === 'app-container') backBtn.style.display = 'none';
-        else backBtn.style.display = 'flex';
+        // Affiche le bouton retour sauf sur la carte
+        backBtn.style.display = (targetId === 'app-container') ? 'none' : 'flex';
     }
 }
 
@@ -89,12 +89,16 @@ var map = L.map('map', {
 
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-let markersCluster = L.markerClusterGroup({
-    showCoverageOnHover: false,
-    maxClusterRadius: 50,
-    spiderfyOnMaxZoom: true
-});
-map.addLayer(markersCluster);
+// Sécurité Cluster : vérification si la librairie est chargée
+let markersCluster = null;
+if (typeof L.markerClusterGroup !== 'undefined') {
+    markersCluster = L.markerClusterGroup({
+        showCoverageOnHover: false,
+        maxClusterRadius: 50,
+        spiderfyOnMaxZoom: true
+    });
+    map.addLayer(markersCluster);
+}
 
 const switchControl = L.Control.extend({
     options: { position: 'topright' },
@@ -120,13 +124,37 @@ const switchControl = L.Control.extend({
 map.addControl(new switchControl());
 L.control.locate({ position: 'topleft', strings: { title: "Me localiser" } }).addTo(map);
 
+// VARIABLES GLOBALES (CRUCIAL POUR LA SYNCHRO)
 let myElevationChart = null;
-let hoverMarker = null; // Point bleu interactif
-let currentChartCoords = []; // Stocke les coords du graphique actuel
+let hoverMarker = null; 
+let currentChartCoords = []; 
 
 
 // ==========================================
-// 4. CHARGEMENT DES DONNÉES
+// 4. FONCTION HELPER POUR LES TAGS
+// ==========================================
+function generateTagsHTML(tagsArray) {
+    if (!tagsArray || !Array.isArray(tagsArray) || tagsArray.length === 0) return '';
+    
+    let html = '<div class="tags-container">';
+    tagsArray.forEach(tag => {
+        // Définir une classe CSS basée sur le nom du tag
+        let cssClass = 'tag-default';
+        const lowerTag = tag.toLowerCase();
+        if (lowerTag.includes('bivouac')) cssClass = 'tag-bivouac';
+        else if (lowerTag.includes('alpinisme')) cssClass = 'tag-alpinisme';
+        else if (lowerTag.includes('neige') || lowerTag.includes('ski')) cssClass = 'tag-neige';
+        else if (lowerTag.includes('coucher') || lowerTag.includes('sunset')) cssClass = 'tag-sunset';
+        
+        html += `<span class="rando-tag ${cssClass}">${tag}</span>`;
+    });
+    html += '</div>';
+    return html;
+}
+
+
+// ==========================================
+// 5. CHARGEMENT DES DONNÉES
 // ==========================================
 async function chargerRandos() {
     try {
@@ -146,8 +174,10 @@ async function chargerRandos() {
             const data = doc.data();
             const index = doc.id; 
 
+            // Likes >= 0
             data.likes = (typeof data.likes === 'number' && data.likes >= 0) ? data.likes : 0;
 
+            // Gestion Photos
             let safePhotos = [];
             if (data.photos) {
                 if (Array.isArray(data.photos)) safePhotos = data.photos.map(p => (typeof p === 'object' && p.image) ? p.image : p);
@@ -155,8 +185,10 @@ async function chargerRandos() {
             }
             data.safePhotos = safePhotos;
 
-            const trackColor = getDiffColor(data.difficulty);
+            // Gestion Tags
+            const tagsHTML = generateTagsHTML(data.tags);
 
+            const trackColor = getDiffColor(data.difficulty);
             const customIcon = L.divIcon({
                 className: 'custom-div-icon',
                 html: "<div class='marker-pin'>🏔️</div>",
@@ -183,22 +215,21 @@ async function chargerRandos() {
                 const rawDate = e.target.get_start_time();
                 if(rawDate) data.calculatedDate = rawDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 
-                // Récupération Point de départ EXACT
+                // Récupération Point de départ EXACT (1er point du tracé)
                 let exactStart = null;
                 const layers = e.target.getLayers();
-                // On cherche la première couche qui a des latLngs (c'est le tracé)
                 for(const l of layers) {
                     if(l.getLatLngs) {
                         const pts = l.getLatLngs();
-                        if(pts.length > 0) { exactStart = pts[0]; break; }
+                        if(pts.length > 0) { 
+                            exactStart = (Array.isArray(pts[0])) ? pts[0][0] : pts[0]; 
+                            break; 
+                        }
                     }
                 }
-                if (!exactStart) exactStart = e.target.getBounds().getCenter(); // Sécurité
-                
-                // Sauvegarde pour le bouton GPS
+                if (!exactStart) exactStart = e.target.getBounds().getCenter();
                 data.startPoint = exactStart;
 
-                // Popup Content
                 let popupImg = (data.safePhotos.length > 0) ? data.safePhotos[0] : 'https://via.placeholder.com/260x140?text=Rando';
                 const popupContent = `
                     <div style="cursor:pointer;" onclick="document.getElementById('item-${index}').click()">
@@ -217,57 +248,67 @@ async function chargerRandos() {
                 startMarker.bindPopup(popupContent);
                 startMarker.on('click', (ev) => {
                     L.DomEvent.stopPropagation(ev);
-                    afficherDetails(data, gpxLayer);
+                    afficherDetails(data, gpxLayer, tagsHTML);
                     updateActiveItem(index);
                 });
                 startMarker.on('mouseover', function() { this.openPopup(); });
-                markersCluster.addLayer(startMarker);
+                
+                if (markersCluster) markersCluster.addLayer(startMarker);
+                else startMarker.addTo(map);
 
                 // Tracé
                 gpxLayer.bindPopup(popupContent);
                 gpxLayer.on('click', (ev) => {
                     L.DomEvent.stopPropagation(ev);
-                    afficherDetails(data, gpxLayer);
+                    afficherDetails(data, gpxLayer, tagsHTML);
                     updateActiveItem(index);
                 });
                 
-                // INTERACTION CARTE -> GRAPHIQUE (NOUVEAU)
+                // --- INTERACTION SYNCHRONISÉE : CARTE -> GRAPHIQUE ---
                 gpxLayer.on('mousemove', (ev) => {
-                    // 1. On bouge le point bleu sous la souris
+                    // 1. Point bleu suit la souris (snap sur ligne)
                     updateHoverMarker(ev.latlng);
                     
-                    // 2. On met à jour le graphique si ouvert
+                    // 2. Curseur sur le graphique suit
                     if(myElevationChart && currentChartCoords.length > 0) {
-                        // Trouver l'index le plus proche
                         let closestIndex = 0;
                         let minDst = Infinity;
-                        currentChartCoords.forEach((coord, i) => {
+                        
+                        // Recherche du point le plus proche dans le tableau des coordonnées
+                        for (let i = 0; i < currentChartCoords.length; i++) {
+                            const coord = currentChartCoords[i];
                             if(coord) {
                                 const dst = map.distance(ev.latlng, coord);
                                 if(dst < minDst) { minDst = dst; closestIndex = i; }
                             }
-                        });
+                        }
                         
-                        // Activer le tooltip du graphique
                         const chart = myElevationChart;
+                        // Force l'affichage du tooltip sur le point trouvé
                         chart.setActiveElements([{datasetIndex: 0, index: closestIndex}]);
                         chart.tooltip.setActiveElements([{datasetIndex: 0, index: closestIndex}]);
-                        chart.update();
+                        // 'none' est CRUCIAL pour désactiver l'animation et éviter le lag
+                        chart.update('none'); 
                     }
                 });
 
-                gpxLayer.on('mouseover', function(ev) { 
-                    this.setStyle({ weight: 8, opacity: 1 });
+                gpxLayer.on('mouseover', function() { 
+                    this.setStyle({ weight: 8, opacity: 1 }); 
                 });
                 gpxLayer.on('mouseout', function() { 
                     this.setStyle({ weight: 6, opacity: 0.9 });
-                    // On peut cacher le hoverMarker ici si on veut
+                    if(myElevationChart) {
+                        myElevationChart.setActiveElements([]);
+                        myElevationChart.tooltip.setActiveElements([]);
+                        myElevationChart.update('none');
+                    }
+                    if(hoverMarker) map.removeLayer(hoverMarker);
                 });
 
                 gpxLayer.addTo(map);
             });
 
-            addRandoToList(data, index, safePhotos, gpxLayer);
+            addRandoToList(data, index, safePhotos, gpxLayer, tagsHTML);
         });
 
     } catch (error) { console.error("Erreur chargement :", error); }
@@ -288,7 +329,7 @@ function updateHoverMarker(latlng) {
 
 
 // --- FONCTION AJOUT LISTE ---
-function addRandoToList(data, index, photos, gpxLayer) {
+function addRandoToList(data, index, photos, gpxLayer, tagsHTML) {
     const list = document.getElementById('randonnees-list');
     if (!list) return;
 
@@ -300,7 +341,6 @@ function addRandoToList(data, index, photos, gpxLayer) {
     
     let thumbUrl = (photos && photos.length > 0) ? photos[0] : 'https://via.placeholder.com/80?text=Rando';
     const diffColor = getDiffColor(data.difficulty || "Moyenne");
-    
     const isFav = getFavoris().includes(index);
     const heartClass = isFav ? 'active' : '';
     const heartSymbol = isFav ? '❤️' : '🤍';
@@ -310,7 +350,10 @@ function addRandoToList(data, index, photos, gpxLayer) {
         <div class="list-content">
             <h3 style="margin:0; font-size:1rem; color:#0f172a;">${data.title}</h3>
             <p style="margin:2px 0; font-size:0.85rem; color:#64748b;">Distance : <span id="dist-${index}">...</span></p>
-            <span class="diff-badge" style="background-color: ${diffColor}; padding:2px 8px; border-radius:10px; color:white; font-size:0.7rem;">${data.difficulty || "Moyenne"}</span>
+            <div style="display:flex; flex-wrap:wrap; gap:5px; align-items:center; margin-top:4px;">
+                <span class="diff-badge" style="background-color: ${diffColor}; padding:2px 8px; border-radius:10px; color:white; font-size:0.7rem;">${data.difficulty || "Moyenne"}</span>
+                ${tagsHTML}
+            </div>
         </div>
         <div style="display:flex; flex-direction:column; align-items:center; gap:2px;">
             <button id="fav-btn-${index}" class="fav-btn-list ${heartClass}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">${heartSymbol}</button>
@@ -319,27 +362,25 @@ function addRandoToList(data, index, photos, gpxLayer) {
     `;
     
     const favBtn = item.querySelector(`#fav-btn-${index}`);
-    favBtn.addEventListener('click', async (e) => {
+    favBtn.addEventListener('click', async (e) => { 
         e.stopPropagation(); 
-        await toggleGlobalLike(index, data);
+        await toggleGlobalLike(index, data); 
     });
 
     item.addEventListener('click', () => {
         document.querySelectorAll('.rando-item').forEach(i => i.classList.remove('active'));
         item.classList.add('active');
-        afficherDetails(data, gpxLayer);
+        afficherDetails(data, gpxLayer, tagsHTML);
         
         if (gpxLayer) {
             const flyToOptions = { padding: [50, 50], duration: 1.5, easeLinearity: 0.25 };
-            if (markersCluster) {
-                markersCluster.zoomToShowLayer(gpxLayer, () => {
-                    map.flyToBounds(gpxLayer.getBounds(), flyToOptions);
-                    setTimeout(() => gpxLayer.openPopup(), 1000); 
-                });
-            } else {
+            const zoomAction = () => {
                 map.flyToBounds(gpxLayer.getBounds(), flyToOptions);
-                setTimeout(() => gpxLayer.openPopup(), 1000);
-            }
+                setTimeout(() => gpxLayer.openPopup(), 1000); 
+            };
+
+            if (markersCluster) markersCluster.zoomToShowLayer(gpxLayer, zoomAction);
+            else zoomAction();
         }
 
         if (window.innerWidth < 768) {
@@ -386,7 +427,7 @@ async function toggleGlobalLike(docId, dataObj) {
 // ==========================================
 // 5. PANNEAU DE DÉTAILS
 // ==========================================
-function afficherDetails(data, gpxLayer) {
+function afficherDetails(data, gpxLayer, tagsHTML = '') {
     const panel = document.getElementById('info-panel');
     const displayDate = data.calculatedDate || "Date inconnue";
     const diffColor = getDiffColor(data.difficulty);
@@ -416,7 +457,7 @@ function afficherDetails(data, gpxLayer) {
         </div>
 
         <div class="panel-content">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <div style="margin-bottom:15px;">${tagsHTML}</div> <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                 <span style="color:#64748b; font-weight:700; font-size:0.9rem;">📅 ${displayDate}</span>
                 <span style="background:${diffColor}; color:white; padding:4px 12px; border-radius:12px; font-weight:700; font-size:0.75rem;">${data.difficulty}</span>
             </div>
@@ -489,23 +530,24 @@ function afficherDetails(data, gpxLayer) {
     panel.classList.remove('minimized');
 }
 
-// --- GRAPHIQUE & POINT INTERACTIF (CORRIGÉ & SYNCHRONISÉ) ---
+// --- GRAPHIQUE & POINT INTERACTIF (CORRIGÉ & ROBUSTE) ---
 function createChart(gpxLayer) {
     const ctxCanvas = document.getElementById('elevationChart');
     if(!ctxCanvas || typeof Chart === 'undefined') return;
 
+    // On récupère les données brutes
     const raw = gpxLayer.get_elevation_data();
     
     const lbls = [];
     const dataPoints = [];
-    currentChartCoords = []; // Reset pour la nouvelle rando
+    currentChartCoords = []; // ON REMPLIT LA VARIABLE GLOBALE
 
     raw.forEach((p, i) => { 
         if(i % 10 === 0) { 
             lbls.push(p[0].toFixed(1)); 
             dataPoints.push(p[1]); 
-            // Leaflet GPX : [dist, elev, slope, time, LAT, LNG]
-            // On prend TOUJOURS les 2 derniers
+            
+            // FIX : On prend les deux derniers éléments du tableau
             if(p.length >= 2) {
                 const lat = p[p.length - 2];
                 const lng = p[p.length - 1];
@@ -532,32 +574,25 @@ function createChart(gpxLayer) {
         options: { 
             responsive: true, maintainAspectRatio: false, 
             interaction: { mode: 'index', intersect: false },
+            animation: false, // Désactive l'animation initiale
             scales: { x: {display:false}, y: {ticks:{font:{size:10}}} }, 
             plugins: {
                 legend:{display:false},
-                tooltip: { intersect: false }
+                tooltip: { intersect: false, mode: 'index' }
             },
-            // --- GRAPHIQUE -> CARTE ---
+            // --- SYNC GRAPHIQUE -> CARTE ---
             onHover: (e, elements) => {
                 if (elements && elements.length > 0) {
                     const index = elements[0].index;
                     const latLng = currentChartCoords[index];
-                    if (latLng) updateHoverMarker(latLng);
+
+                    if (latLng) {
+                        updateHoverMarker(latLng);
+                    }
                 }
             }
         }
     });
-}
-
-function updateHoverMarker(latlng) {
-    if (!hoverMarker) {
-        hoverMarker = L.circleMarker(latlng, {
-            radius: 8, color: '#fff', weight: 3, fillColor: '#3b82f6', fillOpacity: 1, interactive: false
-        }).addTo(map);
-    } else {
-        hoverMarker.setLatLng(latlng);
-        if (!map.hasLayer(hoverMarker)) hoverMarker.addTo(map);
-    }
 }
 
 // --- MÉTÉO ---

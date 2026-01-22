@@ -371,3 +371,27 @@ header nav a.active { color: var(--accent); }
     font-size: 1.2rem; color: var(--primary); transition: all 0.3s ease;
 }
 .map-switch-btn:hover { transform: scale(1.1); color: var(--accent); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2); }
+/* --- NOUVEAU : STYLE DES TAGS --- */
+.tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.rando-tag {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+}
+
+/* Couleurs spécifiques pour certains tags (optionnel) */
+.tag-bivouac { background: #dbeafe; color: #1e40af; } /* Bleu */
+.tag-alpinisme { background: #fce7f3; color: #9d174d; } /* Rose */
+.tag-neige { background: #f1f5f9; color: #475569; } /* Gris */
+.tag-sunset { background: #ffedd5; color: #9a3412; } /* Orange */
+.tag-default { background: #f3f4f6; color: #374151; } /* Défaut */
