@@ -89,7 +89,6 @@ var map = L.map('map', {
 
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-// --- GROUPE DE CLUSTERING ---
 let markersCluster = L.markerClusterGroup({
     showCoverageOnHover: false,
     maxClusterRadius: 50,
@@ -97,7 +96,6 @@ let markersCluster = L.markerClusterGroup({
 });
 map.addLayer(markersCluster);
 
-// Bouton Switch Satellite
 const switchControl = L.Control.extend({
     options: { position: 'topright' },
     onAdd: function(map) {
@@ -124,6 +122,7 @@ L.control.locate({ position: 'topleft', strings: { title: "Me localiser" } }).ad
 
 let myElevationChart = null;
 let hoverMarker = null; // Point bleu interactif
+let currentChartCoords = []; // Stocke les coords du graphique actuel
 
 
 // ==========================================
@@ -133,7 +132,6 @@ async function chargerRandos() {
     try {
         if (markersCluster) markersCluster.clearLayers();
         map.eachLayer(function (layer) {
-            // Nettoyage agressif des anciennes traces et marqueurs
             if (layer instanceof L.GPX || layer === hoverMarker) { map.removeLayer(layer); }
         });
         if(hoverMarker) hoverMarker = null;
@@ -148,7 +146,6 @@ async function chargerRandos() {
             const data = doc.data();
             const index = doc.id; 
 
-            // IMPORTANT : Likes >= 0
             data.likes = (typeof data.likes === 'number' && data.likes >= 0) ? data.likes : 0;
 
             let safePhotos = [];
@@ -186,7 +183,22 @@ async function chargerRandos() {
                 const rawDate = e.target.get_start_time();
                 if(rawDate) data.calculatedDate = rawDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 
-                // Popup
+                // Récupération Point de départ EXACT
+                let exactStart = null;
+                const layers = e.target.getLayers();
+                // On cherche la première couche qui a des latLngs (c'est le tracé)
+                for(const l of layers) {
+                    if(l.getLatLngs) {
+                        const pts = l.getLatLngs();
+                        if(pts.length > 0) { exactStart = pts[0]; break; }
+                    }
+                }
+                if (!exactStart) exactStart = e.target.getBounds().getCenter(); // Sécurité
+                
+                // Sauvegarde pour le bouton GPS
+                data.startPoint = exactStart;
+
+                // Popup Content
                 let popupImg = (data.safePhotos.length > 0) ? data.safePhotos[0] : 'https://via.placeholder.com/260x140?text=Rando';
                 const popupContent = `
                     <div style="cursor:pointer;" onclick="document.getElementById('item-${index}').click()">
@@ -201,13 +213,6 @@ async function chargerRandos() {
                     </div>`;
 
                 // Marqueur Départ
-                const layers = e.target.getLayers();
-                let exactStart = e.target.getBounds().getCenter(); // Fallback
-                if(layers.length > 0 && layers[0].getLatLngs) {
-                     const pts = layers[0].getLatLngs();
-                     if(pts.length > 0) exactStart = pts[0]; 
-                }
-
                 const startMarker = L.marker(exactStart, { icon: customIcon });
                 startMarker.bindPopup(popupContent);
                 startMarker.on('click', (ev) => {
@@ -216,7 +221,6 @@ async function chargerRandos() {
                     updateActiveItem(index);
                 });
                 startMarker.on('mouseover', function() { this.openPopup(); });
-                
                 markersCluster.addLayer(startMarker);
 
                 // Tracé
@@ -226,12 +230,38 @@ async function chargerRandos() {
                     afficherDetails(data, gpxLayer);
                     updateActiveItem(index);
                 });
+                
+                // INTERACTION CARTE -> GRAPHIQUE (NOUVEAU)
+                gpxLayer.on('mousemove', (ev) => {
+                    // 1. On bouge le point bleu sous la souris
+                    updateHoverMarker(ev.latlng);
+                    
+                    // 2. On met à jour le graphique si ouvert
+                    if(myElevationChart && currentChartCoords.length > 0) {
+                        // Trouver l'index le plus proche
+                        let closestIndex = 0;
+                        let minDst = Infinity;
+                        currentChartCoords.forEach((coord, i) => {
+                            if(coord) {
+                                const dst = map.distance(ev.latlng, coord);
+                                if(dst < minDst) { minDst = dst; closestIndex = i; }
+                            }
+                        });
+                        
+                        // Activer le tooltip du graphique
+                        const chart = myElevationChart;
+                        chart.setActiveElements([{datasetIndex: 0, index: closestIndex}]);
+                        chart.tooltip.setActiveElements([{datasetIndex: 0, index: closestIndex}]);
+                        chart.update();
+                    }
+                });
+
                 gpxLayer.on('mouseover', function(ev) { 
                     this.setStyle({ weight: 8, opacity: 1 });
-                    this.openPopup(ev.latlng); 
                 });
                 gpxLayer.on('mouseout', function() { 
                     this.setStyle({ weight: 6, opacity: 0.9 });
+                    // On peut cacher le hoverMarker ici si on veut
                 });
 
                 gpxLayer.addTo(map);
@@ -244,6 +274,17 @@ async function chargerRandos() {
 }
 
 chargerRandos();
+
+function updateHoverMarker(latlng) {
+    if (!hoverMarker) {
+        hoverMarker = L.circleMarker(latlng, {
+            radius: 8, color: '#fff', weight: 3, fillColor: '#3b82f6', fillOpacity: 1, interactive: false
+        }).addTo(map);
+    } else {
+        hoverMarker.setLatLng(latlng);
+        if (!map.hasLayer(hoverMarker)) hoverMarker.addTo(map);
+    }
+}
 
 
 // --- FONCTION AJOUT LISTE ---
@@ -289,9 +330,7 @@ function addRandoToList(data, index, photos, gpxLayer) {
         afficherDetails(data, gpxLayer);
         
         if (gpxLayer) {
-            const flyToOptions = { 
-                padding: [50, 50], duration: 1.5, easeLinearity: 0.25 
-            };
+            const flyToOptions = { padding: [50, 50], duration: 1.5, easeLinearity: 0.25 };
             if (markersCluster) {
                 markersCluster.zoomToShowLayer(gpxLayer, () => {
                     map.flyToBounds(gpxLayer.getBounds(), flyToOptions);
@@ -312,50 +351,35 @@ function addRandoToList(data, index, photos, gpxLayer) {
     list.appendChild(item);
 }
 
-// --- FONCTION LIKE GLOBAL SÉCURISÉE ---
+// --- LIKE GLOBAL SÉCURISÉ ---
 async function toggleGlobalLike(docId, dataObj) {
     const btn = document.getElementById(`fav-btn-${docId}`);
     const countSpan = document.getElementById(`like-count-${docId}`);
     const isCurrentlyFav = getFavoris().includes(docId);
 
     let favoris = getFavoris();
-    
-    // 1. Mise à jour Locale avec sécurité
     if (isCurrentlyFav) {
-        // UNLIKE
         favoris = favoris.filter(id => id !== docId);
         btn.innerHTML = '🤍';
         btn.classList.remove('active');
-        // Ne descend jamais en dessous de 0
-        if (dataObj.likes > 0) {
-            dataObj.likes -= 1;
-        }
+        if (dataObj.likes > 0) dataObj.likes -= 1;
     } else {
-        // LIKE
         favoris.push(docId);
         btn.innerHTML = '❤️';
         btn.classList.add('active');
         dataObj.likes += 1;
     }
-    
     localStorage.setItem('mes_favoris_randos', JSON.stringify(favoris));
     countSpan.innerText = dataObj.likes;
 
-    // 2. Mise à jour Firebase avec sécurité
     try {
         const randoRef = doc(db, "randos", docId);
         if (isCurrentlyFav) {
-            // Si on unlike, on vérifie qu'on n'est pas déjà à 0
-            if(dataObj.likes >= 0) { 
-                await updateDoc(randoRef, { likes: increment(-1) });
-            }
+            if(dataObj.likes >= 0) await updateDoc(randoRef, { likes: increment(-1) });
         } else {
-            // Si on like, on incrémente toujours
             await updateDoc(randoRef, { likes: increment(1) });
         }
-    } catch (err) {
-        console.error("Erreur mise à jour like :", err);
-    }
+    } catch (err) { console.error("Erreur like :", err); }
 }
 
 
@@ -366,9 +390,10 @@ function afficherDetails(data, gpxLayer) {
     const panel = document.getElementById('info-panel');
     const displayDate = data.calculatedDate || "Date inconnue";
     const diffColor = getDiffColor(data.difficulty);
-    const center = gpxLayer.getBounds().getCenter(); 
-    const lat = center.lat;
-    const lng = center.lng;
+    
+    // GPS POINT DÉPART EXACT
+    const startLat = data.startPoint ? data.startPoint.lat : 0;
+    const startLng = data.startPoint ? data.startPoint.lng : 0;
 
     const topPhotos = data.safePhotos.slice(0, 2);
     const bottomPhotos = data.safePhotos.slice(2);
@@ -402,7 +427,7 @@ function afficherDetails(data, gpxLayer) {
 
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
                 <button id="share-btn-action" class="share-btn" style="margin:0;"><i class="fa-solid fa-paper-plane"></i> Partager</button>
-                <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank" class="share-btn" style="background:#10b981; color:white; margin:0; text-decoration:none;">
+                <a href="https://www.google.com/maps/dir/?api=1&destination=${startLat},${startLng}" target="_blank" class="share-btn" style="background:#10b981; color:white; margin:0; text-decoration:none;">
                     <i class="fa-solid fa-location-arrow"></i> S'y rendre
                 </a>
             </div>
@@ -416,7 +441,7 @@ function afficherDetails(data, gpxLayer) {
             <div id="weather-widget" style="background:#f0f9ff; padding:15px; border-radius:12px; margin-top:20px; margin-bottom:20px; border:1px solid #bae6fd; display:flex; align-items:center; gap:15px;">
                 <i class="fa-solid fa-cloud-sun" style="font-size:1.5rem; color:#0ea5e9;"></i>
                 <div style="flex-grow:1;">
-                    <span style="font-weight:bold; color:#0284c7; display:block;">Météo sur place</span>
+                    <span style="font-weight:bold; color:#0284c7; display:block;">Météo au départ</span>
                     <span id="weather-text" style="font-size:0.9rem; color:#334155;">Chargement...</span>
                 </div>
             </div>
@@ -435,7 +460,7 @@ function afficherDetails(data, gpxLayer) {
         <div class="stat-item"><span class="stat-value">${time}</span><span class="stat-label">Temps</span></div>
     `;
 
-    chargerMeteo(lat, lng);
+    chargerMeteo(startLat, startLng);
 
     const pContainerBottom = document.getElementById('rando-photos-bottom');
     if(bottomPhotos.length > 0) {
@@ -464,31 +489,29 @@ function afficherDetails(data, gpxLayer) {
     panel.classList.remove('minimized');
 }
 
-// --- GRAPHIQUE & POINT INTERACTIF (CORRIGÉ & ROBUSTE) ---
+// --- GRAPHIQUE & POINT INTERACTIF (CORRIGÉ & SYNCHRONISÉ) ---
 function createChart(gpxLayer) {
     const ctxCanvas = document.getElementById('elevationChart');
     if(!ctxCanvas || typeof Chart === 'undefined') return;
 
-    // On récupère les données brutes
     const raw = gpxLayer.get_elevation_data();
     
     const lbls = [];
     const dataPoints = [];
-    const chartCoords = []; 
+    currentChartCoords = []; // Reset pour la nouvelle rando
 
     raw.forEach((p, i) => { 
         if(i % 10 === 0) { 
             lbls.push(p[0].toFixed(1)); 
             dataPoints.push(p[1]); 
-            
-            // FIX : On prend les deux derniers éléments du tableau
-            // (Leaflet GPX met toujours Lat/Lng à la fin, peu importe si Time est présent ou non)
+            // Leaflet GPX : [dist, elev, slope, time, LAT, LNG]
+            // On prend TOUJOURS les 2 derniers
             if(p.length >= 2) {
                 const lat = p[p.length - 2];
                 const lng = p[p.length - 1];
-                chartCoords.push([lat, lng]);
+                currentChartCoords.push([lat, lng]);
             } else {
-                chartCoords.push(null);
+                currentChartCoords.push(null);
             }
         } 
     }); 
@@ -514,26 +537,27 @@ function createChart(gpxLayer) {
                 legend:{display:false},
                 tooltip: { intersect: false }
             },
-            // --- SYNC CARTE ---
+            // --- GRAPHIQUE -> CARTE ---
             onHover: (e, elements) => {
                 if (elements && elements.length > 0) {
                     const index = elements[0].index;
-                    const latLng = chartCoords[index];
-
-                    if (latLng) {
-                        if (!hoverMarker) {
-                            hoverMarker = L.circleMarker(latLng, {
-                                radius: 8, color: '#3b82f6', weight: 2, fillColor: '#3b82f6', fillOpacity: 1
-                            }).addTo(map);
-                        } else {
-                            hoverMarker.setLatLng(latLng);
-                            if (!map.hasLayer(hoverMarker)) hoverMarker.addTo(map);
-                        }
-                    }
+                    const latLng = currentChartCoords[index];
+                    if (latLng) updateHoverMarker(latLng);
                 }
             }
         }
     });
+}
+
+function updateHoverMarker(latlng) {
+    if (!hoverMarker) {
+        hoverMarker = L.circleMarker(latlng, {
+            radius: 8, color: '#fff', weight: 3, fillColor: '#3b82f6', fillOpacity: 1, interactive: false
+        }).addTo(map);
+    } else {
+        hoverMarker.setLatLng(latlng);
+        if (!map.hasLayer(hoverMarker)) hoverMarker.addTo(map);
+    }
 }
 
 // --- MÉTÉO ---
