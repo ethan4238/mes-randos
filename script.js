@@ -16,8 +16,7 @@ const firebaseConfig = {
   measurementId: "G-2ZZ60TDVDP"
 };
 
-// --- CLE API METEO (OpenWeatherMap) ---
-// 👇 REMPLACE CECI PAR TA CLÉ, SINON LA MÉTÉO AFFICHERA UNE ERREUR 👇
+// --- ⚠️ COLLE TA CLÉ MÉTÉO ICI ⚠️ ---
 const API_METEO = "TA_CLE_OPENWEATHER_ICI"; 
 
 // Initialisation Firebase
@@ -51,7 +50,6 @@ function showSection(targetId) {
         setTimeout(() => { map.invalidateSize(); }, 200);
     }
 
-    // Masquer bouton retour haut sur la carte
     const backBtn = document.getElementById('back-to-top');
     if (backBtn) {
         backBtn.classList.remove('visible');
@@ -91,19 +89,15 @@ var map = L.map('map', {
 
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-// --- GROUPE DE CLUSTERING (Sécurité si la librairie manque) ---
-let markersCluster;
-if (typeof L.markerClusterGroup === 'function') {
-    markersCluster = L.markerClusterGroup({
-        showCoverageOnHover: false,
-        maxClusterRadius: 50
-    });
-    map.addLayer(markersCluster);
-} else {
-    console.warn("Leaflet.markercluster non chargé. Les marqueurs ne seront pas regroupés.");
-}
+// Groupe Cluster
+let markersCluster = L.markerClusterGroup({
+    showCoverageOnHover: false,
+    maxClusterRadius: 50,
+    spiderfyOnMaxZoom: true
+});
+map.addLayer(markersCluster);
 
-// Bouton Switch Satellite
+// Bouton Switch
 const switchControl = L.Control.extend({
     options: { position: 'topright' },
     onAdd: function(map) {
@@ -128,14 +122,27 @@ const switchControl = L.Control.extend({
 map.addControl(new switchControl());
 L.control.locate({ position: 'topleft', strings: { title: "Me localiser" } }).addTo(map);
 
+// VARIABLES GLOBALES POUR LE GRAPHIQUE ET LE POINT INTERACTIF
 let myElevationChart = null;
+let hoverMarker = null; // Le fameux point bleu
 
 
 // ==========================================
-// 4. CHARGEMENT DES DONNÉES (CORRIGÉ)
+// 4. CHARGEMENT DES DONNÉES
 // ==========================================
 async function chargerRandos() {
     try {
+        if (markersCluster) markersCluster.clearLayers();
+        
+        // Supprimer anciennes traces et points interactifs
+        map.eachLayer(function (layer) {
+            if (layer instanceof L.GPX || layer === hoverMarker) { map.removeLayer(layer); }
+        });
+        if(hoverMarker) hoverMarker = null;
+
+        const listContainer = document.getElementById('randonnees-list');
+        if (listContainer) listContainer.innerHTML = ''; 
+
         console.log("Chargement depuis Firebase...");
         const querySnapshot = await getDocs(collection(db, "randos"));
         
@@ -152,29 +159,27 @@ async function chargerRandos() {
 
             const trackColor = getDiffColor(data.difficulty);
 
-            // Icône "Montagne" dans le rond
+            // Icône Départ
             const customIcon = L.divIcon({
                 className: 'custom-div-icon',
                 html: "<div class='marker-pin'>🏔️</div>",
                 iconSize: [40, 40],
                 iconAnchor: [20, 20],
-                popupAnchor: [0, -20]
+                popupAnchor: [0, -25]
             });
 
-            // --- CRÉATION DE LA COUCHE GPX ---
+            // LAYER GPX
             const gpxLayer = new L.GPX(data.gpx, {
                 async: true,
                 marker_options: {
-                    startIcon: customIcon,
+                    startIcon: null, // Pas de marqueur auto
                     endIcon: null,
                     shadowUrl: null
                 },
                 polyline_options: { color: trackColor, opacity: 0.9, weight: 6, lineCap: 'round' }
             }).on('loaded', function(e) {
-                // --- C'EST ICI QUE LA MAGIE OPÈRE (Une fois chargé) ---
-                const dist = (e.target.get_distance() / 1000).toFixed(1);
                 
-                // Mise à jour de la distance dans la liste latérale
+                const dist = (e.target.get_distance() / 1000).toFixed(1);
                 setTimeout(() => {
                     const elDist = document.getElementById(`dist-${index}`);
                     if(elDist) elDist.innerText = `${dist} km`;
@@ -183,7 +188,7 @@ async function chargerRandos() {
                 const rawDate = e.target.get_start_time();
                 if(rawDate) data.calculatedDate = rawDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 
-                // Popup "Carte Postale"
+                // Popup
                 let popupImg = (data.safePhotos.length > 0) ? data.safePhotos[0] : 'https://via.placeholder.com/260x140?text=Rando';
                 const popupContent = `
                     <div style="cursor:pointer;" onclick="document.getElementById('item-${index}').click()">
@@ -196,35 +201,51 @@ async function chargerRandos() {
                             <button style="margin-top:10px; background:#f97316; color:white; border:none; padding:6px 15px; border-radius:20px; cursor:pointer; font-size:0.8rem; font-weight:bold;">Voir Détails</button>
                         </div>
                     </div>`;
-                gpxLayer.bindPopup(popupContent);
 
-                // --- IMPORTANT : AJOUT AU CLUSTER ICI SEULEMENT ---
-                if (markersCluster) {
-                    markersCluster.addLayer(gpxLayer);
-                } else {
-                    gpxLayer.addTo(map); // Fallback si pas de cluster
+                // 1. Marqueur Départ (Cluster)
+                const startPoint = e.target.getBounds().getCenter();
+                const layers = e.target.getLayers();
+                let exactStart = startPoint;
+                if(layers.length > 0 && layers[0].getLatLngs) {
+                     const pts = layers[0].getLatLngs();
+                     if(pts.length > 0) exactStart = pts[0]; 
                 }
 
-            }).on('click', function(e) {
-                L.DomEvent.stopPropagation(e);
-                afficherDetails(data, gpxLayer);
-                updateActiveItem(index);
+                const startMarker = L.marker(exactStart, { icon: customIcon });
+                startMarker.bindPopup(popupContent);
+                startMarker.on('click', (ev) => {
+                    L.DomEvent.stopPropagation(ev);
+                    afficherDetails(data, gpxLayer);
+                    updateActiveItem(index);
+                });
+                startMarker.on('mouseover', function() { this.openPopup(); });
+                
+                markersCluster.addLayer(startMarker);
+
+                // 2. Tracé (Carte)
+                gpxLayer.bindPopup(popupContent);
+                gpxLayer.on('click', (ev) => {
+                    L.DomEvent.stopPropagation(ev);
+                    afficherDetails(data, gpxLayer);
+                    updateActiveItem(index);
+                });
+                gpxLayer.on('mouseover', function(ev) { 
+                    this.setStyle({ weight: 8, opacity: 1 });
+                    this.openPopup(ev.latlng); 
+                });
+                gpxLayer.on('mouseout', function() { 
+                    this.setStyle({ weight: 6, opacity: 0.9 });
+                });
+
+                gpxLayer.addTo(map);
             });
 
-            // Effets de survol sur la trace
-            gpxLayer.on('mouseover', function() { this.setStyle({ weight: 8, opacity: 1 }); });
-            gpxLayer.on('mouseout', function() { this.setStyle({ weight: 6, opacity: 0.9 }); });
-
-            // On ajoute l'élément dans la liste latérale
             addRandoToList(data, index, safePhotos, gpxLayer);
         });
 
-    } catch (error) { 
-        console.error("Erreur critique chargement randos :", error); 
-    }
+    } catch (error) { console.error("Erreur chargement :", error); }
 }
 
-// Lancer le chargement
 chargerRandos();
 
 
@@ -261,15 +282,15 @@ function addRandoToList(data, index, photos, gpxLayer) {
         
         afficherDetails(data, gpxLayer);
         
-        // Zoom intelligent
-        if (gpxLayer && markersCluster) {
-            markersCluster.zoomToShowLayer(gpxLayer, () => {
-                map.fitBounds(gpxLayer.getBounds());
-                gpxLayer.openPopup();
-            });
-        } else if (gpxLayer) {
-            map.fitBounds(gpxLayer.getBounds());
-            gpxLayer.openPopup();
+        if (gpxLayer) {
+            if(markersCluster) {
+               // On zoome mais sans déclencher le click du cluster
+               map.fitBounds(gpxLayer.getBounds());
+               gpxLayer.openPopup();
+            } else {
+               map.fitBounds(gpxLayer.getBounds());
+               gpxLayer.openPopup();
+            }
         }
 
         if (window.innerWidth < 768) {
@@ -283,17 +304,28 @@ function addRandoToList(data, index, photos, gpxLayer) {
 
 
 // ==========================================
-// 5. PANNEAU DE DÉTAILS (MÉTÉO, GPS, GRAPHIQUE)
+// 5. PANNEAU DE DÉTAILS
 // ==========================================
 function afficherDetails(data, gpxLayer) {
     const panel = document.getElementById('info-panel');
     const displayDate = data.calculatedDate || "Date inconnue";
     const diffColor = getDiffColor(data.difficulty);
-
-    // Coordonnées approximatives (centre de la rando) pour Météo/GPS
     const center = gpxLayer.getBounds().getCenter(); 
     const lat = center.lat;
     const lng = center.lng;
+
+    // Photos (2 en haut)
+    const topPhotos = data.safePhotos.slice(0, 2);
+    const bottomPhotos = data.safePhotos.slice(2);
+
+    let topGalleryHTML = '';
+    if(topPhotos.length > 0) {
+        topGalleryHTML = '<div class="photo-grid-top" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">';
+        topPhotos.forEach(url => {
+            topGalleryHTML += `<div class="photo-box"><a data-fslightbox="gallery" href="${url}"><img src="${url}" loading="lazy"></a></div>`;
+        });
+        topGalleryHTML += '</div>';
+    }
 
     panel.innerHTML = `
         <div class="mobile-toggle-bar" onclick="toggleMobilePanel('info-panel')"><i class="fa-solid fa-chevron-down"></i></div>
@@ -309,19 +341,13 @@ function afficherDetails(data, gpxLayer) {
                 <span style="background:${diffColor}; color:white; padding:4px 12px; border-radius:12px; font-weight:700; font-size:0.75rem;">${data.difficulty}</span>
             </div>
 
-            <div id="weather-widget" style="background:#f0f9ff; padding:15px; border-radius:12px; margin-bottom:20px; border:1px solid #bae6fd; display:flex; align-items:center; gap:15px;">
-                <i class="fa-solid fa-cloud-sun" style="font-size:1.5rem; color:#0ea5e9;"></i>
-                <div style="flex-grow:1;">
-                    <span style="font-weight:bold; color:#0284c7; display:block;">Météo sur place</span>
-                    <span id="weather-text" style="font-size:0.9rem; color:#334155;">Chargement...</span>
-                </div>
-            </div>
+            ${topGalleryHTML}
 
             <div id="stats-placeholder" class="stats-grid">Chargement...</div>
 
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
                 <button id="share-btn-action" class="share-btn" style="margin:0;"><i class="fa-solid fa-paper-plane"></i> Partager</button>
-                <a href="https://www.google.com/maps/search/?api=1&query=${lat},${lng}" target="_blank" class="share-btn" style="background:#10b981; color:white; margin:0; text-decoration:none;">
+                <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank" class="share-btn" style="background:#10b981; color:white; margin:0; text-decoration:none;">
                     <i class="fa-solid fa-location-arrow"></i> S'y rendre
                 </a>
             </div>
@@ -332,8 +358,16 @@ function afficherDetails(data, gpxLayer) {
             
             <div class="chart-container"><canvas id="elevationChart"></canvas></div>
 
-            <h3 style="font-size:1.1rem; margin-top:20px; margin-bottom:10px;">📸 Galerie Photos</h3>
-            <div id="rando-photos"></div>
+            <div id="weather-widget" style="background:#f0f9ff; padding:15px; border-radius:12px; margin-top:20px; margin-bottom:20px; border:1px solid #bae6fd; display:flex; align-items:center; gap:15px;">
+                <i class="fa-solid fa-cloud-sun" style="font-size:1.5rem; color:#0ea5e9;"></i>
+                <div style="flex-grow:1;">
+                    <span style="font-weight:bold; color:#0284c7; display:block;">Météo sur place</span>
+                    <span id="weather-text" style="font-size:0.9rem; color:#334155;">Chargement...</span>
+                </div>
+            </div>
+
+            <h3 style="font-size:1rem; margin-top:10px; color:#334155;">📸 Plus de photos</h3>
+            <div id="rando-photos-bottom" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; padding-bottom:20px;"></div>
         </div>
     `;
 
@@ -347,26 +381,28 @@ function afficherDetails(data, gpxLayer) {
         <div class="stat-item"><span class="stat-value">${time}</span><span class="stat-label">Temps</span></div>
     `;
 
-    // Charger Météo
     chargerMeteo(lat, lng);
 
-    // Photos
-    const pContainer = document.getElementById('rando-photos');
-    if(data.safePhotos && data.safePhotos.length > 0) {
-        data.safePhotos.forEach(url => {
+    const pContainerBottom = document.getElementById('rando-photos-bottom');
+    if(bottomPhotos.length > 0) {
+        bottomPhotos.forEach(url => {
             const div = document.createElement('div');
             div.className = 'photo-box';
             div.innerHTML = `<a data-fslightbox="gallery" href="${url}"><img src="${url}" loading="lazy"></a>`;
-            pContainer.appendChild(div);
+            pContainerBottom.appendChild(div);
         });
-        if(typeof refreshFsLightbox === 'function') refreshFsLightbox();
-    } else { pContainer.innerHTML = "<p style='color:#94a3b8; font-style:italic;'>Pas de photos.</p>"; }
+    } else {
+        pContainerBottom.innerHTML = "<p style='color:#94a3b8; font-style:italic; font-size:0.9rem;'>Pas d'autres photos.</p>";
+    }
+    
+    if(typeof refreshFsLightbox === 'function') refreshFsLightbox();
 
-    // Graphique
+    // APPEL CRÉATION GRAPHIQUE AVEC POINT INTERACTIF
     createChart(gpxLayer);
 
     document.getElementById('close-panel-btn').onclick = () => {
         panel.classList.add('hidden');
+        if(hoverMarker) map.removeLayer(hoverMarker); // Enlever le point bleu
         document.querySelectorAll('.rando-item').forEach(i => i.classList.remove('active'));
     };
     document.getElementById('share-btn-action').onclick = () => partagerRando(data.title);
@@ -375,16 +411,37 @@ function afficherDetails(data, gpxLayer) {
     panel.classList.remove('minimized');
 }
 
-// --- GRAPHIQUE ---
+// --- GRAPHIQUE & POINT INTERACTIF ---
 function createChart(gpxLayer) {
     const ctxCanvas = document.getElementById('elevationChart');
     if(!ctxCanvas || typeof Chart === 'undefined') return;
 
+    // Récupération des données brutes [dist, elev, ..., lat, lng]
     const raw = gpxLayer.get_elevation_data();
-    const lbls=[], dataPoints=[];
-    raw.forEach((p, i) => { if(i%10===0) { lbls.push(p[0].toFixed(1)); dataPoints.push(p[1]); } }); 
+    
+    // Tableaux pour le graphique
+    const lbls = [];
+    const dataPoints = [];
+    // Tableau pour stocker les coordonnées GPS correspondant à chaque point du graphique
+    const chartCoords = []; 
+
+    raw.forEach((p, i) => { 
+        // On prend 1 point sur 10 pour alléger, comme avant
+        if(i % 10 === 0) { 
+            lbls.push(p[0].toFixed(1)); 
+            dataPoints.push(p[1]); 
+            // Leaflet GPX renvoie [dist, elev, gradient, electrode, lat, lng...]
+            // Les indices 4 et 5 sont Lat et Lng
+            if(p.length >= 6) {
+                chartCoords.push([p[4], p[5]]);
+            } else {
+                chartCoords.push(null);
+            }
+        } 
+    }); 
 
     if(myElevationChart) myElevationChart.destroy();
+    
     myElevationChart = new Chart(ctxCanvas.getContext('2d'), {
         type: 'line',
         data: { 
@@ -392,14 +449,40 @@ function createChart(gpxLayer) {
             datasets: [{ 
                 label: 'Altitude', data: dataPoints, 
                 borderColor: '#f97316', backgroundColor: 'rgba(249,115,22,0.1)', 
-                fill: true, pointRadius: 0, borderWidth: 2, hoverRadius: 6 
+                fill: true, pointRadius: 0, borderWidth: 2, 
+                hoverBackgroundColor: '#0f172a', hoverRadius: 6 
             }] 
         },
         options: { 
             responsive: true, maintainAspectRatio: false, 
             interaction: { mode: 'index', intersect: false },
             scales: { x: {display:false}, y: {ticks:{font:{size:10}}} }, 
-            plugins: {legend:{display:false}} 
+            plugins: {legend:{display:false}},
+            
+            // --- C'EST ICI QUE LE POINT BOUGE SUR LA CARTE ---
+            onHover: (e, elements) => {
+                if (elements && elements.length > 0) {
+                    const index = elements[0].index;
+                    const latLng = chartCoords[index]; // On récupère la coordonnée stockée
+
+                    if (latLng) {
+                        if (!hoverMarker) {
+                            // Création du point bleu s'il n'existe pas
+                            hoverMarker = L.circleMarker(latLng, {
+                                radius: 8,
+                                color: '#fff',
+                                weight: 2,
+                                fillColor: '#3b82f6', // Bleu
+                                fillOpacity: 1
+                            }).addTo(map);
+                        } else {
+                            // Déplacement du point existant
+                            hoverMarker.setLatLng(latLng);
+                            if (!map.hasLayer(hoverMarker)) hoverMarker.addTo(map);
+                        }
+                    }
+                }
+            }
         }
     });
 }
@@ -408,7 +491,7 @@ function createChart(gpxLayer) {
 async function chargerMeteo(lat, lon) {
     const div = document.getElementById('weather-text');
     if (API_METEO.includes("TA_CLE")) {
-        div.innerHTML = "<span style='color:orange'>Clé API manquante</span>";
+        div.innerHTML = "<span style='color:orange'>Clé API manquante (voir script.js)</span>";
         return;
     }
     try {
