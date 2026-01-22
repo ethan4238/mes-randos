@@ -3,7 +3,6 @@
 // ==========================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
-// Ajout de doc, updateDoc et increment pour gérer les Likes
 import { getFirestore, collection, getDocs, doc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Tes clés Firebase
@@ -17,7 +16,7 @@ const firebaseConfig = {
   measurementId: "G-2ZZ60TDVDP"
 };
 
-// --- ⚠️ TA CLÉ MÉTÉO ⚠️ ---
+// --- TA CLÉ MÉTÉO ---
 const API_METEO = "d8228c5ce53a841509cf2c653e7b69d6"; 
 
 // Initialisation Firebase
@@ -134,6 +133,7 @@ async function chargerRandos() {
     try {
         if (markersCluster) markersCluster.clearLayers();
         map.eachLayer(function (layer) {
+            // Nettoyage agressif des anciennes traces et marqueurs
             if (layer instanceof L.GPX || layer === hoverMarker) { map.removeLayer(layer); }
         });
         if(hoverMarker) hoverMarker = null;
@@ -148,8 +148,8 @@ async function chargerRandos() {
             const data = doc.data();
             const index = doc.id; 
 
-            // IMPORTANT : On s'assure que likes est un nombre
-            data.likes = (typeof data.likes === 'number') ? data.likes : 0;
+            // IMPORTANT : Likes >= 0
+            data.likes = (typeof data.likes === 'number' && data.likes >= 0) ? data.likes : 0;
 
             let safePhotos = [];
             if (data.photos) {
@@ -168,17 +168,11 @@ async function chargerRandos() {
                 popupAnchor: [0, -25]
             });
 
-            // --- LAYER GPX (FIX BUG MARKER) ---
+            // --- LAYER GPX ---
             const gpxLayer = new L.GPX(data.gpx, {
                 async: true,
                 marker_options: {
-                    // ON VIDE TOUT pour éviter l'icône cassée
-                    startIconUrl: '', 
-                    endIconUrl: '',
-                    shadowUrl: '',
-                    wptIconUrls: '',
-                    startIcon: null,
-                    endIcon: null
+                    startIconUrl: '', endIconUrl: '', shadowUrl: '', wptIconUrls: '', startIcon: null, endIcon: null
                 },
                 polyline_options: { color: trackColor, opacity: 0.9, weight: 6, lineCap: 'round' }
             }).on('loaded', function(e) {
@@ -206,10 +200,9 @@ async function chargerRandos() {
                         </div>
                     </div>`;
 
-                // Marqueur Départ (Cluster)
-                const startPoint = e.target.getBounds().getCenter();
+                // Marqueur Départ
                 const layers = e.target.getLayers();
-                let exactStart = startPoint;
+                let exactStart = e.target.getBounds().getCenter(); // Fallback
                 if(layers.length > 0 && layers[0].getLatLngs) {
                      const pts = layers[0].getLatLngs();
                      if(pts.length > 0) exactStart = pts[0]; 
@@ -226,7 +219,7 @@ async function chargerRandos() {
                 
                 markersCluster.addLayer(startMarker);
 
-                // Tracé (Carte)
+                // Tracé
                 gpxLayer.bindPopup(popupContent);
                 gpxLayer.on('click', (ev) => {
                     L.DomEvent.stopPropagation(ev);
@@ -253,7 +246,7 @@ async function chargerRandos() {
 chargerRandos();
 
 
-// --- FONCTION AJOUT LISTE (AVEC LIKE GLOBAL) ---
+// --- FONCTION AJOUT LISTE ---
 function addRandoToList(data, index, photos, gpxLayer) {
     const list = document.getElementById('randonnees-list');
     if (!list) return;
@@ -267,7 +260,6 @@ function addRandoToList(data, index, photos, gpxLayer) {
     let thumbUrl = (photos && photos.length > 0) ? photos[0] : 'https://via.placeholder.com/80?text=Rando';
     const diffColor = getDiffColor(data.difficulty || "Moyenne");
     
-    // Vérification locale pour le cœur rouge
     const isFav = getFavoris().includes(index);
     const heartClass = isFav ? 'active' : '';
     const heartSymbol = isFav ? '❤️' : '🤍';
@@ -285,10 +277,9 @@ function addRandoToList(data, index, photos, gpxLayer) {
         </div>
     `;
     
-    // GESTION DU CLIC SUR LE COEUR (GLOBAL)
     const favBtn = item.querySelector(`#fav-btn-${index}`);
     favBtn.addEventListener('click', async (e) => {
-        e.stopPropagation(); // Ne pas ouvrir la fiche
+        e.stopPropagation(); 
         await toggleGlobalLike(index, data);
     });
 
@@ -297,20 +288,14 @@ function addRandoToList(data, index, photos, gpxLayer) {
         item.classList.add('active');
         afficherDetails(data, gpxLayer);
         
-        // --- 🚀 ANIMATION CINÉMATIQUE (FLY TO) ---
         if (gpxLayer) {
             const flyToOptions = { 
-                padding: [50, 50], 
-                duration: 1.5, // Durée du vol (1.5 secondes)
-                easeLinearity: 0.25 
+                padding: [50, 50], duration: 1.5, easeLinearity: 0.25 
             };
-
             if (markersCluster) {
-                // Si la rando est dans un cluster, on zoome d'abord le cluster
                 markersCluster.zoomToShowLayer(gpxLayer, () => {
-                    // Une fois dégroupé, on vole vers la trace
                     map.flyToBounds(gpxLayer.getBounds(), flyToOptions);
-                    setTimeout(() => gpxLayer.openPopup(), 1000); // Petit délai pour le popup
+                    setTimeout(() => gpxLayer.openPopup(), 1000); 
                 });
             } else {
                 map.flyToBounds(gpxLayer.getBounds(), flyToOptions);
@@ -327,40 +312,49 @@ function addRandoToList(data, index, photos, gpxLayer) {
     list.appendChild(item);
 }
 
-// --- FONCTION LIKE GLOBAL (PERSISTANT) ---
+// --- FONCTION LIKE GLOBAL SÉCURISÉE ---
 async function toggleGlobalLike(docId, dataObj) {
     const btn = document.getElementById(`fav-btn-${docId}`);
     const countSpan = document.getElementById(`like-count-${docId}`);
     const isCurrentlyFav = getFavoris().includes(docId);
 
-    // 1. UI Locale (Immédiat)
     let favoris = getFavoris();
+    
+    // 1. Mise à jour Locale avec sécurité
     if (isCurrentlyFav) {
+        // UNLIKE
         favoris = favoris.filter(id => id !== docId);
         btn.innerHTML = '🤍';
         btn.classList.remove('active');
-        dataObj.likes = Math.max(0, dataObj.likes - 1);
+        // Ne descend jamais en dessous de 0
+        if (dataObj.likes > 0) {
+            dataObj.likes -= 1;
+        }
     } else {
+        // LIKE
         favoris.push(docId);
         btn.innerHTML = '❤️';
         btn.classList.add('active');
         dataObj.likes += 1;
     }
+    
     localStorage.setItem('mes_favoris_randos', JSON.stringify(favoris));
     countSpan.innerText = dataObj.likes;
 
-    // 2. Mise à jour Database (Firebase)
+    // 2. Mise à jour Firebase avec sécurité
     try {
-        console.log("Tentative d'écriture Firebase...");
         const randoRef = doc(db, "randos", docId);
-        // Utilisation de increment pour éviter les conflits
-        await updateDoc(randoRef, {
-            likes: increment(isCurrentlyFav ? -1 : 1)
-        });
-        console.log("Like enregistré sur Firebase !");
+        if (isCurrentlyFav) {
+            // Si on unlike, on vérifie qu'on n'est pas déjà à 0
+            if(dataObj.likes >= 0) { 
+                await updateDoc(randoRef, { likes: increment(-1) });
+            }
+        } else {
+            // Si on like, on incrémente toujours
+            await updateDoc(randoRef, { likes: increment(1) });
+        }
     } catch (err) {
-        console.error("ERREUR D'ÉCRITURE : Vérifie tes règles Firebase !", err);
-        alert("Impossible de sauvegarder le Like. Vérifie que tes règles Firestore autorisent l'écriture (mode public pour l'instant).");
+        console.error("Erreur mise à jour like :", err);
     }
 }
 
@@ -470,25 +464,29 @@ function afficherDetails(data, gpxLayer) {
     panel.classList.remove('minimized');
 }
 
-// --- GRAPHIQUE & POINT INTERACTIF ---
+// --- GRAPHIQUE & POINT INTERACTIF (CORRIGÉ & ROBUSTE) ---
 function createChart(gpxLayer) {
     const ctxCanvas = document.getElementById('elevationChart');
     if(!ctxCanvas || typeof Chart === 'undefined') return;
 
-    // On récupère les données brutes AVEC les coordonnées
+    // On récupère les données brutes
     const raw = gpxLayer.get_elevation_data();
     
     const lbls = [];
     const dataPoints = [];
-    const chartCoords = []; // On stocke les GPS ici
+    const chartCoords = []; 
 
     raw.forEach((p, i) => { 
         if(i % 10 === 0) { 
             lbls.push(p[0].toFixed(1)); 
             dataPoints.push(p[1]); 
-            // Leaflet GPX : [dist, elev, slope, time, LAT, LNG]
-            if(p.length >= 6) {
-                chartCoords.push([p[4], p[5]]);
+            
+            // FIX : On prend les deux derniers éléments du tableau
+            // (Leaflet GPX met toujours Lat/Lng à la fin, peu importe si Time est présent ou non)
+            if(p.length >= 2) {
+                const lat = p[p.length - 2];
+                const lng = p[p.length - 1];
+                chartCoords.push([lat, lng]);
             } else {
                 chartCoords.push(null);
             }
@@ -525,7 +523,7 @@ function createChart(gpxLayer) {
                     if (latLng) {
                         if (!hoverMarker) {
                             hoverMarker = L.circleMarker(latLng, {
-                                radius: 8, color: '#fff', weight: 3, fillColor: '#3b82f6', fillOpacity: 1
+                                radius: 8, color: '#3b82f6', weight: 2, fillColor: '#3b82f6', fillOpacity: 1
                             }).addTo(map);
                         } else {
                             hoverMarker.setLatLng(latLng);
