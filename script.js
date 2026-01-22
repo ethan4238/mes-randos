@@ -3,7 +3,8 @@
 // ==========================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+// Ajout de doc, updateDoc et increment pour gérer les Likes
+import { getFirestore, collection, getDocs, doc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Tes clés Firebase
 const firebaseConfig = {
@@ -89,7 +90,7 @@ var map = L.map('map', {
 
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-// Groupe Cluster
+// --- GROUPE DE CLUSTERING ---
 let markersCluster = L.markerClusterGroup({
     showCoverageOnHover: false,
     maxClusterRadius: 50,
@@ -97,7 +98,7 @@ let markersCluster = L.markerClusterGroup({
 });
 map.addLayer(markersCluster);
 
-// Bouton Switch
+// Bouton Switch Satellite
 const switchControl = L.Control.extend({
     options: { position: 'topright' },
     onAdd: function(map) {
@@ -122,9 +123,8 @@ const switchControl = L.Control.extend({
 map.addControl(new switchControl());
 L.control.locate({ position: 'topleft', strings: { title: "Me localiser" } }).addTo(map);
 
-// VARIABLES GLOBALES POUR LE GRAPHIQUE ET LE POINT INTERACTIF
 let myElevationChart = null;
-let hoverMarker = null; // Le fameux point bleu
+let hoverMarker = null; // Point bleu interactif
 
 
 // ==========================================
@@ -133,8 +133,6 @@ let hoverMarker = null; // Le fameux point bleu
 async function chargerRandos() {
     try {
         if (markersCluster) markersCluster.clearLayers();
-        
-        // Supprimer anciennes traces et points interactifs
         map.eachLayer(function (layer) {
             if (layer instanceof L.GPX || layer === hoverMarker) { map.removeLayer(layer); }
         });
@@ -150,6 +148,9 @@ async function chargerRandos() {
             const data = doc.data();
             const index = doc.id; 
 
+            // Récupérer le nombre de J'aime (ou 0 par défaut)
+            data.likes = data.likes || 0;
+
             let safePhotos = [];
             if (data.photos) {
                 if (Array.isArray(data.photos)) safePhotos = data.photos.map(p => (typeof p === 'object' && p.image) ? p.image : p);
@@ -159,7 +160,6 @@ async function chargerRandos() {
 
             const trackColor = getDiffColor(data.difficulty);
 
-            // Icône Départ
             const customIcon = L.divIcon({
                 className: 'custom-div-icon',
                 html: "<div class='marker-pin'>🏔️</div>",
@@ -168,13 +168,17 @@ async function chargerRandos() {
                 popupAnchor: [0, -25]
             });
 
-            // LAYER GPX
+            // --- LAYER GPX (FIX BUG MARKER) ---
             const gpxLayer = new L.GPX(data.gpx, {
                 async: true,
                 marker_options: {
-                    startIcon: null, // Pas de marqueur auto
-                    endIcon: null,
-                    shadowUrl: null
+                    // ON VIDE TOUT pour éviter l'icône cassée
+                    startIconUrl: '', 
+                    endIconUrl: '',
+                    shadowUrl: '',
+                    wptIconUrls: '',
+                    startIcon: null,
+                    endIcon: null
                 },
                 polyline_options: { color: trackColor, opacity: 0.9, weight: 6, lineCap: 'round' }
             }).on('loaded', function(e) {
@@ -202,7 +206,7 @@ async function chargerRandos() {
                         </div>
                     </div>`;
 
-                // 1. Marqueur Départ (Cluster)
+                // Marqueur Départ (Cluster)
                 const startPoint = e.target.getBounds().getCenter();
                 const layers = e.target.getLayers();
                 let exactStart = startPoint;
@@ -222,7 +226,7 @@ async function chargerRandos() {
                 
                 markersCluster.addLayer(startMarker);
 
-                // 2. Tracé (Carte)
+                // Tracé (Carte)
                 gpxLayer.bindPopup(popupContent);
                 gpxLayer.on('click', (ev) => {
                     L.DomEvent.stopPropagation(ev);
@@ -249,7 +253,7 @@ async function chargerRandos() {
 chargerRandos();
 
 
-// --- FONCTION AJOUT LISTE ---
+// --- FONCTION AJOUT LISTE (AVEC LIKE GLOBAL) ---
 function addRandoToList(data, index, photos, gpxLayer) {
     const list = document.getElementById('randonnees-list');
     if (!list) return;
@@ -262,9 +266,11 @@ function addRandoToList(data, index, photos, gpxLayer) {
     
     let thumbUrl = (photos && photos.length > 0) ? photos[0] : 'https://via.placeholder.com/80?text=Rando';
     const diffColor = getDiffColor(data.difficulty || "Moyenne");
+    
+    // Vérification locale pour le cœur rouge
     const isFav = getFavoris().includes(index);
-    const heartIcon = isFav ? '❤️' : '🤍';
-    const activeClass = isFav ? 'active' : '';
+    const heartClass = isFav ? 'active' : '';
+    const heartSymbol = isFav ? '❤️' : '🤍';
 
     item.innerHTML = `
         <img src="${thumbUrl}" class="list-thumb" loading="lazy" alt="${data.title}" onerror="this.src='https://via.placeholder.com/80?text=No+Img'">
@@ -273,26 +279,27 @@ function addRandoToList(data, index, photos, gpxLayer) {
             <p style="margin:2px 0; font-size:0.85rem; color:#64748b;">Distance : <span id="dist-${index}">...</span></p>
             <span class="diff-badge" style="background-color: ${diffColor}; padding:2px 8px; border-radius:10px; color:white; font-size:0.7rem;">${data.difficulty || "Moyenne"}</span>
         </div>
-        <button id="fav-btn-${index}" class="fav-btn-list ${activeClass}" onclick="toggleFavori('${index}', event)">${heartIcon}</button>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:2px;">
+            <button id="fav-btn-${index}" class="fav-btn-list ${heartClass}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">${heartSymbol}</button>
+            <span id="like-count-${index}" style="font-size:0.75rem; color:#64748b; font-weight:bold;">${data.likes}</span>
+        </div>
     `;
     
+    // GESTION DU CLIC SUR LE COEUR (GLOBAL)
+    const favBtn = item.querySelector(`#fav-btn-${index}`);
+    favBtn.addEventListener('click', async (e) => {
+        e.stopPropagation(); // Ne pas ouvrir la fiche
+        await toggleGlobalLike(index, data);
+    });
+
     item.addEventListener('click', () => {
         document.querySelectorAll('.rando-item').forEach(i => i.classList.remove('active'));
         item.classList.add('active');
-        
         afficherDetails(data, gpxLayer);
-        
         if (gpxLayer) {
-            if(markersCluster) {
-               // On zoome mais sans déclencher le click du cluster
-               map.fitBounds(gpxLayer.getBounds());
-               gpxLayer.openPopup();
-            } else {
-               map.fitBounds(gpxLayer.getBounds());
-               gpxLayer.openPopup();
-            }
+            map.fitBounds(gpxLayer.getBounds());
+            gpxLayer.openPopup();
         }
-
         if (window.innerWidth < 768) {
             const sidebar = document.getElementById('sidebar');
             if(sidebar && !sidebar.classList.contains('minimized')) sidebar.classList.add('minimized');
@@ -300,6 +307,40 @@ function addRandoToList(data, index, photos, gpxLayer) {
     });
 
     list.appendChild(item);
+}
+
+// --- FONCTION LIKE GLOBAL (FIREBASE) ---
+async function toggleGlobalLike(docId, dataObj) {
+    const btn = document.getElementById(`fav-btn-${docId}`);
+    const countSpan = document.getElementById(`like-count-${docId}`);
+    const isCurrentlyFav = getFavoris().includes(docId);
+
+    // 1. Mise à jour Locale (Visuel immédiat)
+    let favoris = getFavoris();
+    if (isCurrentlyFav) {
+        favoris = favoris.filter(id => id !== docId);
+        btn.innerHTML = '🤍';
+        btn.classList.remove('active');
+        dataObj.likes = Math.max(0, dataObj.likes - 1); // Pas de likes négatifs
+    } else {
+        favoris.push(docId);
+        btn.innerHTML = '❤️';
+        btn.classList.add('active');
+        dataObj.likes += 1;
+    }
+    localStorage.setItem('mes_favoris_randos', JSON.stringify(favoris));
+    countSpan.innerText = dataObj.likes;
+
+    // 2. Mise à jour Firebase (Base de données)
+    try {
+        const randoRef = doc(db, "randos", docId);
+        await updateDoc(randoRef, {
+            likes: increment(isCurrentlyFav ? -1 : 1)
+        });
+    } catch (err) {
+        console.error("Erreur mise à jour like :", err);
+        // On pourrait annuler le visuel ici si erreur, mais on laisse fluide pour l'utilisateur
+    }
 }
 
 
@@ -314,7 +355,6 @@ function afficherDetails(data, gpxLayer) {
     const lat = center.lat;
     const lng = center.lng;
 
-    // Photos (2 en haut)
     const topPhotos = data.safePhotos.slice(0, 2);
     const bottomPhotos = data.safePhotos.slice(2);
 
@@ -397,12 +437,11 @@ function afficherDetails(data, gpxLayer) {
     
     if(typeof refreshFsLightbox === 'function') refreshFsLightbox();
 
-    // APPEL CRÉATION GRAPHIQUE AVEC POINT INTERACTIF
     createChart(gpxLayer);
 
     document.getElementById('close-panel-btn').onclick = () => {
         panel.classList.add('hidden');
-        if(hoverMarker) map.removeLayer(hoverMarker); // Enlever le point bleu
+        if(hoverMarker) map.removeLayer(hoverMarker);
         document.querySelectorAll('.rando-item').forEach(i => i.classList.remove('active'));
     };
     document.getElementById('share-btn-action').onclick = () => partagerRando(data.title);
@@ -411,27 +450,23 @@ function afficherDetails(data, gpxLayer) {
     panel.classList.remove('minimized');
 }
 
-// --- GRAPHIQUE & POINT INTERACTIF ---
+// --- GRAPHIQUE & POINT INTERACTIF (CORRIGÉ) ---
 function createChart(gpxLayer) {
     const ctxCanvas = document.getElementById('elevationChart');
     if(!ctxCanvas || typeof Chart === 'undefined') return;
 
-    // Récupération des données brutes [dist, elev, ..., lat, lng]
+    // On récupère les données brutes AVEC les coordonnées
     const raw = gpxLayer.get_elevation_data();
     
-    // Tableaux pour le graphique
     const lbls = [];
     const dataPoints = [];
-    // Tableau pour stocker les coordonnées GPS correspondant à chaque point du graphique
-    const chartCoords = []; 
+    const chartCoords = []; // On stocke les GPS ici
 
     raw.forEach((p, i) => { 
-        // On prend 1 point sur 10 pour alléger, comme avant
         if(i % 10 === 0) { 
             lbls.push(p[0].toFixed(1)); 
             dataPoints.push(p[1]); 
-            // Leaflet GPX renvoie [dist, elev, gradient, electrode, lat, lng...]
-            // Les indices 4 et 5 sont Lat et Lng
+            // Leaflet GPX : [dist, elev, slope, time, LAT, LNG]
             if(p.length >= 6) {
                 chartCoords.push([p[4], p[5]]);
             } else {
@@ -457,26 +492,29 @@ function createChart(gpxLayer) {
             responsive: true, maintainAspectRatio: false, 
             interaction: { mode: 'index', intersect: false },
             scales: { x: {display:false}, y: {ticks:{font:{size:10}}} }, 
-            plugins: {legend:{display:false}},
+            plugins: {
+                legend:{display:false},
+                tooltip: { intersect: false }
+            },
             
-            // --- C'EST ICI QUE LE POINT BOUGE SUR LA CARTE ---
+            // --- SYNC CARTE ---
             onHover: (e, elements) => {
                 if (elements && elements.length > 0) {
                     const index = elements[0].index;
-                    const latLng = chartCoords[index]; // On récupère la coordonnée stockée
+                    const latLng = chartCoords[index];
 
                     if (latLng) {
                         if (!hoverMarker) {
-                            // Création du point bleu s'il n'existe pas
+                            // Créer le point bleu
                             hoverMarker = L.circleMarker(latLng, {
                                 radius: 8,
                                 color: '#fff',
-                                weight: 2,
-                                fillColor: '#3b82f6', // Bleu
+                                weight: 3,
+                                fillColor: '#3b82f6',
                                 fillOpacity: 1
                             }).addTo(map);
                         } else {
-                            // Déplacement du point existant
+                            // Bouger le point bleu
                             hoverMarker.setLatLng(latLng);
                             if (!map.hasLayer(hoverMarker)) hoverMarker.addTo(map);
                         }
@@ -491,7 +529,7 @@ function createChart(gpxLayer) {
 async function chargerMeteo(lat, lon) {
     const div = document.getElementById('weather-text');
     if (API_METEO.includes("TA_CLE")) {
-        div.innerHTML = "<span style='color:orange'>Clé API manquante (voir script.js)</span>";
+        div.innerHTML = "<span style='color:orange'>Clé API manquante</span>";
         return;
     }
     try {
@@ -536,20 +574,7 @@ function msToTime(duration) {
 
 window.getFavoris = function() { return JSON.parse(localStorage.getItem('mes_favoris_randos')) || []; }
 
-window.toggleFavori = function(index, event) {
-    if(event) event.stopPropagation();
-    let favoris = window.getFavoris();
-    const btn = document.getElementById(`fav-btn-${index}`);
-    
-    if (favoris.includes(index)) {
-        favoris = favoris.filter(id => id !== index);
-        if(btn) { btn.classList.remove('active'); btn.innerHTML = '🤍'; }
-    } else {
-        favoris.push(index);
-        if(btn) { btn.classList.add('active'); btn.innerHTML = '❤️'; }
-    }
-    localStorage.setItem('mes_favoris_randos', JSON.stringify(favoris));
-}
+// Note: toggleFavori est maintenant géré directement dans addRandoToList pour le global
 
 window.filtrerRandos = function(filtre) {
     document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
