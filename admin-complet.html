@@ -29,8 +29,14 @@
         
         /* Formulaires */
         label { display: block; font-weight: 700; margin-bottom: 8px; color: #334155; }
-        input, select, textarea { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 1rem; margin-bottom: 20px; box-sizing: border-box; font-family: inherit; }
+        input[type="text"], select, textarea { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 1rem; margin-bottom: 20px; box-sizing: border-box; font-family: inherit; }
         textarea { height: 100px; resize: vertical; }
+
+        /* Checkboxes Tags */
+        .tags-wrapper { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .tags-wrapper label { display: flex; align-items: center; gap: 5px; font-weight: 600; cursor: pointer; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0; transition: 0.2s; }
+        .tags-wrapper label:hover { background: #e2e8f0; }
+        .tags-wrapper input[type="checkbox"] { width: auto; margin: 0; }
 
         /* Boutons */
         .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; font-size: 1.1rem; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 10px; color: white; margin-bottom: 10px; }
@@ -74,6 +80,18 @@
                 <option value="Difficile">Difficile</option>
                 <option value="Expert">Expert</option>
             </select>
+
+            <label>Tags</label>
+            <div class="tags-wrapper">
+                <label><input type="checkbox" name="add-tags" value="Bivouac"> Bivouac ⛺</label>
+                <label><input type="checkbox" name="add-tags" value="Coucher de soleil"> Coucher de soleil 🌅</label>
+                <label><input type="checkbox" name="add-tags" value="Mer de nuage"> Mer de nuage ☁️</label>
+                <label><input type="checkbox" name="add-tags" value="Alpinisme"> Alpinisme 🧗</label>
+                <label><input type="checkbox" name="add-tags" value="Neige"> Neige ❄️</label>
+                <label><input type="checkbox" name="add-tags" value="Lac"> Lac 💧</label>
+                <label><input type="checkbox" name="add-tags" value="Faune"> Faune 🐐</label>
+            </div>
+
             <label>Description</label> <textarea id="add-desc" placeholder="Description..."></textarea>
 
             <label>Fichiers</label>
@@ -106,6 +124,18 @@
                     <option value="Difficile">Difficile</option>
                     <option value="Expert">Expert</option>
                 </select>
+
+                <label>Tags</label>
+                <div class="tags-wrapper">
+                    <label><input type="checkbox" name="edit-tags" value="Bivouac"> Bivouac ⛺</label>
+                    <label><input type="checkbox" name="edit-tags" value="Coucher de soleil"> Coucher de soleil 🌅</label>
+                    <label><input type="checkbox" name="edit-tags" value="Mer de nuage"> Mer de nuage ☁️</label>
+                    <label><input type="checkbox" name="edit-tags" value="Alpinisme"> Alpinisme 🧗</label>
+                    <label><input type="checkbox" name="edit-tags" value="Neige"> Neige ❄️</label>
+                    <label><input type="checkbox" name="edit-tags" value="Lac"> Lac 💧</label>
+                    <label><input type="checkbox" name="edit-tags" value="Faune"> Faune 🐐</label>
+                </div>
+
                 <label>Description</label> <textarea id="edit-desc"></textarea>
 
                 <button class="btn btn-purple" onclick="sauvegarderInfosTexte()">💾 SAUVEGARDER LES INFOS TEXTE</button>
@@ -160,7 +190,6 @@
         const db = getFirestore(app);
 
         const cloudName = "dkbulsjyo"; 
-        // 👇 VERIFIE TON PRESET 👇
         const uploadPreset = "ethan_upload"; 
 
         let newPhotosForAdd = []; 
@@ -234,7 +263,6 @@
                         document.getElementById('edit-gpx-status').innerText = "✅ Nouveau GPX chargé ! (Clique sur Sauvegarder)";
                     }
                     else if (context === 'add_photo_direct') {
-                        // Ajout direct sur la fiche existante (Fusion des fonctionnalités)
                         await ajouterPhotoExistante(url);
                     }
                 }
@@ -248,11 +276,15 @@
             const desc = document.getElementById('add-desc').value;
             const gpx = document.getElementById('add-gpx-url').value;
 
+            // Récupération des tags cochés
+            const tags = Array.from(document.querySelectorAll('input[name="add-tags"]:checked')).map(cb => cb.value);
+
             if(!title || !gpx) { showMsg("Titre et GPX obligatoires !", "error"); return; }
 
             try {
                 await addDoc(collection(db, "randos"), {
                     title, difficulty: diff, description: desc, gpx,
+                    tags: tags, // AJOUT DES TAGS ICI
                     photos: newPhotosForAdd,
                     dateAjout: new Date()
                 });
@@ -280,7 +312,13 @@
                     document.getElementById('edit-gpx-url').value = data.gpx || "";
                     document.getElementById('current-gpx-display').innerText = data.gpx ? "Fichier actuel OK" : "Aucun";
                     
-                    // Remplissage Galerie Photos (Directement dans l'onglet modif)
+                    // Remplissage des Tags (cocher les cases)
+                    const tags = data.tags || [];
+                    document.querySelectorAll('input[name="edit-tags"]').forEach(cb => {
+                        cb.checked = tags.includes(cb.value);
+                    });
+
+                    // Remplissage Galerie Photos
                     chargerGalerieVisuelle(data.photos || [], id);
 
                     form.style.display = 'block';
@@ -306,17 +344,21 @@
             });
         }
 
-        // Sauvegarde Texte + GPX
+        // Sauvegarde Texte + GPX + Tags
         window.sauvegarderInfosTexte = async function() {
             const id = document.getElementById('select-edit-data').value;
             if(!id) return;
+
+            // Récupération des tags modifiés
+            const tags = Array.from(document.querySelectorAll('input[name="edit-tags"]:checked')).map(cb => cb.value);
 
             try {
                 await updateDoc(doc(db, "randos", id), {
                     title: document.getElementById('edit-title').value,
                     difficulty: document.getElementById('edit-difficulty').value,
                     description: document.getElementById('edit-desc').value,
-                    gpx: document.getElementById('edit-gpx-url').value
+                    gpx: document.getElementById('edit-gpx-url').value,
+                    tags: tags // MISE A JOUR DES TAGS
                 });
                 showMsg("✅ Infos mises à jour !");
             } catch(e) { showMsg("Erreur: " + e.message, "error"); }
@@ -340,7 +382,7 @@
             if(!confirm("Supprimer cette photo ?")) return;
             try {
                 await updateDoc(doc(db, "randos", randoId), { photos: arrayRemove({ image: url }) });
-                await updateDoc(doc(db, "randos", randoId), { photos: arrayRemove(url) }); // Au cas où ancien format
+                await updateDoc(doc(db, "randos", randoId), { photos: arrayRemove(url) }); 
                 
                 showMsg("Photo supprimée !");
                 chargerInfosModif();

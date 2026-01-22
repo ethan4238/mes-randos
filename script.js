@@ -136,17 +136,20 @@ let currentChartCoords = [];
 function generateTagsHTML(tagsArray) {
     if (!tagsArray || !Array.isArray(tagsArray) || tagsArray.length === 0) return '';
     
-    let html = '<div class="tags-container">';
+    let html = '<div class="tags-container" style="display:inline-flex; gap:5px; margin-left:5px;">';
     tagsArray.forEach(tag => {
-        // Définir une classe CSS basée sur le nom du tag
-        let cssClass = 'tag-default';
+        // Définir une couleur CSS basée sur le nom du tag
+        let style = 'background:#f3f4f6; color:#374151;'; // Gris par défaut
         const lowerTag = tag.toLowerCase();
-        if (lowerTag.includes('bivouac')) cssClass = 'tag-bivouac';
-        else if (lowerTag.includes('alpinisme')) cssClass = 'tag-alpinisme';
-        else if (lowerTag.includes('neige') || lowerTag.includes('ski')) cssClass = 'tag-neige';
-        else if (lowerTag.includes('coucher') || lowerTag.includes('sunset')) cssClass = 'tag-sunset';
         
-        html += `<span class="rando-tag ${cssClass}">${tag}</span>`;
+        if (lowerTag.includes('bivouac')) style = 'background:#dbeafe; color:#1e40af;'; // Bleu
+        else if (lowerTag.includes('alpinisme')) style = 'background:#fce7f3; color:#9d174d;'; // Rose
+        else if (lowerTag.includes('neige') || lowerTag.includes('ski')) style = 'background:#f1f5f9; color:#475569;'; // Gris froid
+        else if (lowerTag.includes('coucher') || lowerTag.includes('sunset')) style = 'background:#ffedd5; color:#9a3412;'; // Orange
+        else if (lowerTag.includes('mer de nuage')) style = 'background:#e0f2fe; color:#0369a1;'; // Bleu ciel
+        else if (lowerTag.includes('lac')) style = 'background:#ddd6fe; color:#5b21b6;'; // Violet
+
+        html += `<span style="${style} font-size:0.7rem; font-weight:700; padding:2px 6px; border-radius:6px; text-transform:uppercase;">${tag}</span>`;
     });
     html += '</div>';
     return html;
@@ -185,7 +188,8 @@ async function chargerRandos() {
             }
             data.safePhotos = safePhotos;
 
-            // Gestion Tags
+            // Gestion Tags (Récupération et génération HTML)
+            data.tags = data.tags || []; // Sécurité si pas de tags
             const tagsHTML = generateTagsHTML(data.tags);
 
             const trackColor = getDiffColor(data.difficulty);
@@ -350,10 +354,9 @@ function addRandoToList(data, index, photos, gpxLayer, tagsHTML) {
         <div class="list-content">
             <h3 style="margin:0; font-size:1rem; color:#0f172a;">${data.title}</h3>
             <p style="margin:2px 0; font-size:0.85rem; color:#64748b;">Distance : <span id="dist-${index}">...</span></p>
-            <div style="display:flex; flex-wrap:wrap; gap:5px; align-items:center; margin-top:4px;">
+            <div style="display:flex; flex-wrap:wrap; align-items:center; margin-top:4px;">
                 <span class="diff-badge" style="background-color: ${diffColor}; padding:2px 8px; border-radius:10px; color:white; font-size:0.7rem;">${data.difficulty || "Moyenne"}</span>
-                ${tagsHTML}
-            </div>
+                ${tagsHTML} </div>
         </div>
         <div style="display:flex; flex-direction:column; align-items:center; gap:2px;">
             <button id="fav-btn-${index}" class="fav-btn-list ${heartClass}" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">${heartSymbol}</button>
