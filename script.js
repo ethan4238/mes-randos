@@ -17,7 +17,7 @@ const firebaseConfig = {
 };
 
 // --- ⚠️ COLLE TA CLÉ MÉTÉO ICI ⚠️ ---
-const API_METEO = "TA_CLE_OPENWEATHER_ICI"; 
+const API_METEO = "d8228c5ce53a841509cf2c653e7b69d6"; 
 
 // Initialisation Firebase
 const app = initializeApp(firebaseConfig);
