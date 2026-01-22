@@ -17,7 +17,7 @@ const firebaseConfig = {
   measurementId: "G-2ZZ60TDVDP"
 };
 
-// --- ⚠️ COLLE TA CLÉ MÉTÉO ICI ⚠️ ---
+// --- ⚠️ TA CLÉ MÉTÉO ⚠️ ---
 const API_METEO = "d8228c5ce53a841509cf2c653e7b69d6"; 
 
 // Initialisation Firebase
@@ -148,8 +148,8 @@ async function chargerRandos() {
             const data = doc.data();
             const index = doc.id; 
 
-            // Récupérer le nombre de J'aime (ou 0 par défaut)
-            data.likes = data.likes || 0;
+            // IMPORTANT : On s'assure que likes est un nombre
+            data.likes = (typeof data.likes === 'number') ? data.likes : 0;
 
             let safePhotos = [];
             if (data.photos) {
@@ -296,10 +296,28 @@ function addRandoToList(data, index, photos, gpxLayer) {
         document.querySelectorAll('.rando-item').forEach(i => i.classList.remove('active'));
         item.classList.add('active');
         afficherDetails(data, gpxLayer);
+        
+        // --- 🚀 ANIMATION CINÉMATIQUE (FLY TO) ---
         if (gpxLayer) {
-            map.fitBounds(gpxLayer.getBounds());
-            gpxLayer.openPopup();
+            const flyToOptions = { 
+                padding: [50, 50], 
+                duration: 1.5, // Durée du vol (1.5 secondes)
+                easeLinearity: 0.25 
+            };
+
+            if (markersCluster) {
+                // Si la rando est dans un cluster, on zoome d'abord le cluster
+                markersCluster.zoomToShowLayer(gpxLayer, () => {
+                    // Une fois dégroupé, on vole vers la trace
+                    map.flyToBounds(gpxLayer.getBounds(), flyToOptions);
+                    setTimeout(() => gpxLayer.openPopup(), 1000); // Petit délai pour le popup
+                });
+            } else {
+                map.flyToBounds(gpxLayer.getBounds(), flyToOptions);
+                setTimeout(() => gpxLayer.openPopup(), 1000);
+            }
         }
+
         if (window.innerWidth < 768) {
             const sidebar = document.getElementById('sidebar');
             if(sidebar && !sidebar.classList.contains('minimized')) sidebar.classList.add('minimized');
@@ -309,19 +327,19 @@ function addRandoToList(data, index, photos, gpxLayer) {
     list.appendChild(item);
 }
 
-// --- FONCTION LIKE GLOBAL (FIREBASE) ---
+// --- FONCTION LIKE GLOBAL (PERSISTANT) ---
 async function toggleGlobalLike(docId, dataObj) {
     const btn = document.getElementById(`fav-btn-${docId}`);
     const countSpan = document.getElementById(`like-count-${docId}`);
     const isCurrentlyFav = getFavoris().includes(docId);
 
-    // 1. Mise à jour Locale (Visuel immédiat)
+    // 1. UI Locale (Immédiat)
     let favoris = getFavoris();
     if (isCurrentlyFav) {
         favoris = favoris.filter(id => id !== docId);
         btn.innerHTML = '🤍';
         btn.classList.remove('active');
-        dataObj.likes = Math.max(0, dataObj.likes - 1); // Pas de likes négatifs
+        dataObj.likes = Math.max(0, dataObj.likes - 1);
     } else {
         favoris.push(docId);
         btn.innerHTML = '❤️';
@@ -331,15 +349,18 @@ async function toggleGlobalLike(docId, dataObj) {
     localStorage.setItem('mes_favoris_randos', JSON.stringify(favoris));
     countSpan.innerText = dataObj.likes;
 
-    // 2. Mise à jour Firebase (Base de données)
+    // 2. Mise à jour Database (Firebase)
     try {
+        console.log("Tentative d'écriture Firebase...");
         const randoRef = doc(db, "randos", docId);
+        // Utilisation de increment pour éviter les conflits
         await updateDoc(randoRef, {
             likes: increment(isCurrentlyFav ? -1 : 1)
         });
+        console.log("Like enregistré sur Firebase !");
     } catch (err) {
-        console.error("Erreur mise à jour like :", err);
-        // On pourrait annuler le visuel ici si erreur, mais on laisse fluide pour l'utilisateur
+        console.error("ERREUR D'ÉCRITURE : Vérifie tes règles Firebase !", err);
+        alert("Impossible de sauvegarder le Like. Vérifie que tes règles Firestore autorisent l'écriture (mode public pour l'instant).");
     }
 }
 
@@ -411,7 +432,6 @@ function afficherDetails(data, gpxLayer) {
         </div>
     `;
 
-    // Stats
     const dist = (gpxLayer.get_distance() / 1000).toFixed(1); 
     const elev = gpxLayer.get_elevation_gain().toFixed(0);    
     const time = msToTime(gpxLayer.get_moving_time());
@@ -450,7 +470,7 @@ function afficherDetails(data, gpxLayer) {
     panel.classList.remove('minimized');
 }
 
-// --- GRAPHIQUE & POINT INTERACTIF (CORRIGÉ) ---
+// --- GRAPHIQUE & POINT INTERACTIF ---
 function createChart(gpxLayer) {
     const ctxCanvas = document.getElementById('elevationChart');
     if(!ctxCanvas || typeof Chart === 'undefined') return;
@@ -496,7 +516,6 @@ function createChart(gpxLayer) {
                 legend:{display:false},
                 tooltip: { intersect: false }
             },
-            
             // --- SYNC CARTE ---
             onHover: (e, elements) => {
                 if (elements && elements.length > 0) {
@@ -505,16 +524,10 @@ function createChart(gpxLayer) {
 
                     if (latLng) {
                         if (!hoverMarker) {
-                            // Créer le point bleu
                             hoverMarker = L.circleMarker(latLng, {
-                                radius: 8,
-                                color: '#fff',
-                                weight: 3,
-                                fillColor: '#3b82f6',
-                                fillOpacity: 1
+                                radius: 8, color: '#fff', weight: 3, fillColor: '#3b82f6', fillOpacity: 1
                             }).addTo(map);
                         } else {
-                            // Bouger le point bleu
                             hoverMarker.setLatLng(latLng);
                             if (!map.hasLayer(hoverMarker)) hoverMarker.addTo(map);
                         }
@@ -573,8 +586,6 @@ function msToTime(duration) {
 }
 
 window.getFavoris = function() { return JSON.parse(localStorage.getItem('mes_favoris_randos')) || []; }
-
-// Note: toggleFavori est maintenant géré directement dans addRandoToList pour le global
 
 window.filtrerRandos = function(filtre) {
     document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
