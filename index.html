@@ -24,36 +24,16 @@
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.locatecontrol/dist/L.Control.Locate.min.css" />
-    
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
 
     <link rel="stylesheet" href="style.css" />
 
     <style>
-        /* Force la hauteur du graphique pour éviter les bugs d'affichage */
-        .chart-container {
-            position: relative;
-            height: 200px;
-            width: 100%;
-            margin-top: 15px;
-        }
-        /* Style des images dans les popups de la carte */
-        .popup-header-img {
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
-            border-radius: 8px 8px 0 0;
-        }
-        .popup-info { padding: 10px; text-align: center; }
-        .popup-title { font-weight: 800; font-size: 1rem; color: #0f172a; display: block; margin-bottom: 5px; }
-        
-        /* Ajustement des tags sur mobile */
-        .tags-container {
-            display: inline-flex;
-            flex-wrap: wrap;
-            gap: 4px;
-        }
+        .chart-container { position: relative; height: 200px; width: 100%; margin-top: 15px; }
+        .popup-header-img { width: 100%; height: 130px; object-fit: cover; display: block; border-radius: 12px 12px 0 0; }
+        .leaflet-popup-content-wrapper { padding: 0; overflow: hidden; border-radius: 12px; }
+        #gallery-grid { min-height: 200px; } 
     </style>
 </head>
 <body>
@@ -66,9 +46,10 @@
         </button>
 
         <nav id="main-nav">
-            <a href="#home" class="nav-link active" data-target="home">Accueil</a>
-            <a href="#map" class="nav-link" data-target="app-container">Carte</a>
-            <a href="#about" class="nav-link" data-target="about">À Propos</a>
+            <a href="#" class="nav-link active" data-target="home">Accueil</a>
+            <a href="#" class="nav-link" data-target="gallery">Galerie</a>
+            <a href="#" class="nav-link" data-target="app-container">Carte</a>
+            <a href="#" class="nav-link" data-target="about">À Propos</a>
         </nav>
     </header>
 
@@ -77,7 +58,10 @@
             <div class="hero-content">
                 <h1>L'APPEL DES SOMMETS</h1>
                 <p>Carnet de randonnée d'Ethan. Découvrez mes traces GPS, mes photos et mes aventures en montagne.</p>
-                <button onclick="goToMap()" class="cta-button">EXPLORER LA CARTE</button>
+                <div class="hero-buttons">
+                    <button onclick="window.showSection('app-container')" class="cta-button">EXPLORER LA CARTE</button>
+                    <button onclick="window.showSection('gallery')" class="cta-button" style="background: #1e293b; margin-left: 10px;">VOIR LA GALERIE</button>
+                </div>
             </div>
         </div>
 
@@ -85,14 +69,9 @@
             <video autoplay muted loop playsinline class="cinematic-video">
                 <source src="videos/intro-desktop.mov" type="video/mp4" media="(min-width: 769px)">
                 <source src="videos/intro-mobile.mov" type="video/mp4">
-                Votre navigateur ne supporte pas la balise vidéo.
             </video>
-            
             <div class="cinematic-overlay">
-                <blockquote>
-                    "La montagne nous offre le décor,<br>
-                    à nous de créer l'histoire."
-                </blockquote>
+                <blockquote>"La montagne nous offre le décor, à nous de créer l'histoire."</blockquote>
                 <div class="citation-author">ETHAN</div>
             </div>
         </div>
@@ -103,13 +82,11 @@
                 <h3>Traces GPS Précises</h3>
                 <p>Télécharge mes fichiers GPX vérifiés et suis l'itinéraire sans jamais te perdre.</p>
             </div>
-            
             <div class="feature-card">
                 <div class="icon-circle">📈</div>
                 <h3>Profils & Stats</h3>
                 <p>Analyse le dénivelé et la difficulté de chaque sortie avant de lacer tes chaussures.</p>
             </div>
-            
             <div class="feature-card">
                 <div class="icon-circle">📸</div>
                 <h3>Galerie Immersive</h3>
@@ -123,6 +100,37 @@
                     <img src="icones/montagne.png" alt="Logo" class="footer-logo-img">
                     <h3>Ethan Randonnées</h3>
                 </div>
+                <div class="footer-socials">
+                    <a href="https://www.instagram.com/ethan4238/" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="https://www.tiktok.com/@ethan42380" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
+                    <a href="https://www.strava.com/athletes/132170603" target="_blank"><i class="fa-brands fa-strava"></i></a>
+                </div>
+                <div class="footer-nav">
+                    <button class="footer-nav-btn" onclick="window.showSection('home')">Accueil</button>
+                    <button class="footer-nav-btn" onclick="window.showSection('app-container')">Carte</button>
+                    <button class="footer-nav-btn" onclick="window.showSection('about')">À Propos</button>
+                </div>
+                <p class="copyright">© 2026 Ethan Randonnées - Tous droits réservés.</p>
+            </div>
+        </footer>
+    </section>
+
+    <section id="gallery" class="page-section hidden">
+        <div class="gallery-header">
+            <h2>MES PLUS BELLES ASCENSIONS</h2>
+            <p>Retrouvez ici toutes mes sorties sous forme de collection visuelle. Cliquez sur une image pour voir le détail et la carte.</p>
+        </div>
+
+        <div id="gallery-grid" class="gallery-grid">
+            <p style="text-align:center; width:100%; color:#64748b;">Chargement des randonnées...</p>
+        </div>
+
+        <footer class="site-footer" style="margin-top: 40px;">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <img src="icones/montagne.png" alt="Logo" class="footer-logo-img">
+                    <h3>Ethan Randonnées</h3>
+                </div>
 
                 <div class="footer-socials">
                     <a href="https://www.instagram.com/ethan4238/" target="_blank" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
@@ -131,9 +139,9 @@
                 </div>
 
                 <div class="footer-nav">
-                    <button class="footer-nav-btn" onclick="showSection('home')">Accueil</button>
-                    <button class="footer-nav-btn" onclick="showSection('app-container')">Carte</button>
-                    <button class="footer-nav-btn" onclick="showSection('about')">À Propos</button>
+                    <button class="footer-nav-btn" onclick="window.showSection('home')">Accueil</button>
+                    <button class="footer-nav-btn" onclick="window.showSection('app-container')">Carte</button>
+                    <button class="footer-nav-btn" onclick="window.showSection('about')">À Propos</button>
                 </div>
 
                 <p class="copyright">© 2026 Ethan Randonnées - Tous droits réservés.</p>
@@ -143,7 +151,7 @@
 
     <section id="app-container" class="page-section hidden">
         <div id="sidebar">
-            <div class="mobile-toggle-bar" onclick="toggleMobilePanel('sidebar')">
+            <div class="mobile-toggle-bar" onclick="window.toggleMobilePanel('sidebar')">
                 <i class="fa-solid fa-chevron-down"></i>
             </div>
             <h2>Mes Sorties</h2>
@@ -153,12 +161,15 @@
             </div>
 
             <div class="filter-buttons">
-                <button class="filter-btn" onclick="filtrerRandos('favoris')" style="border-color: #ef4444; color: #ef4444;">❤️ Favoris</button>
-                <button class="filter-btn active" onclick="filtrerRandos('all')">Tout</button>
-                <button class="filter-btn" onclick="filtrerRandos('Facile')"><span style="color:#10b981;">●</span> Facile</button>
-                <button class="filter-btn" onclick="filtrerRandos('Moyenne')"><span style="color:#f59e0b;">●</span> Moyenne</button>
-                <button class="filter-btn" onclick="filtrerRandos('Difficile')"><span style="color:#ef4444;">●</span> Difficile</button>
-                <button class="filter-btn" onclick="filtrerRandos('Expert')"><span style="color:#0f172a;">●</span> Expert</button>
+                <button class="filter-btn active" onclick="window.filtrerRandos('all')">Tout</button>
+                <button class="filter-btn" onclick="window.filtrerRandos('favoris')" style="border-color: #ef4444; color: #ef4444;">❤️ Favoris</button>
+                <button class="filter-btn" onclick="window.filtrerRandos('Bivouac')">⛺ Bivouac</button>
+                <button class="filter-btn" onclick="window.filtrerRandos('Coucher de soleil')">🌅 Sunset</button>
+                <button class="filter-btn" onclick="window.filtrerRandos('Mer de nuage')">☁️ Nuages</button>
+                <button class="filter-btn" onclick="window.filtrerRandos('Alpinisme')">🧗 Alpinisme</button>
+                <button class="filter-btn" onclick="window.filtrerRandos('Neige')">❄️ Neige</button>
+                <button class="filter-btn" onclick="window.filtrerRandos('Lac')">💧 Lac</button>
+                <button class="filter-btn" onclick="window.filtrerRandos('Faune')">🐐 Faune</button>
             </div>
 
             <div id="randonnees-list"></div>
@@ -216,9 +227,9 @@
                 </div>
 
                 <div class="footer-nav">
-                    <button class="footer-nav-btn" onclick="showSection('home')">Accueil</button>
-                    <button class="footer-nav-btn" onclick="showSection('app-container')">Carte</button>
-                    <button class="footer-nav-btn" onclick="showSection('about')">À Propos</button>
+                    <button class="footer-nav-btn" onclick="window.showSection('home')">Accueil</button>
+                    <button class="footer-nav-btn" onclick="window.showSection('gallery')">Galerie</button>
+                    <button class="footer-nav-btn" onclick="window.showSection('app-container')">Carte</button>
                 </div>
 
                 <p class="copyright">© 2026 Ethan Randonnées - Tous droits réservés.</p>
@@ -226,7 +237,7 @@
         </footer>
     </section>
 
-    <button id="back-to-top" title="Retour en haut">⬆️</button>
+    <button id="back-to-top" title="Retour en haut" onclick="window.scrollTo({top: 0, behavior: 'smooth'});">⬆️</button>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-gpx/1.7.0/gpx.min.js"></script>

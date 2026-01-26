@@ -7,7 +7,6 @@
     --primary: #0f172a;
     --accent: #f97316;
     --accent-hover: #ea580c;
-    --success: #10b981;
     --text-main: #1e293b;
     --text-light: #64748b;
     --bg-page: #f8fafc;
@@ -25,7 +24,7 @@ body, html {
     font-family: 'Nunito Sans', sans-serif;
     background-color: var(--bg-page);
     color: var(--text-main);
-    overflow: hidden; /* Important pour l'app "Carte" */
+    overflow-x: hidden;
 }
 
 /* =========================================
@@ -63,31 +62,34 @@ header nav a.active { color: var(--accent); }
    ========================================= */
 .page-section {
     position: absolute; top: var(--header-height); bottom: 0; left: 0; right: 0;
-    display: none; overflow-y: auto; /* Scroll normal pour Accueil/À Propos */
+    display: none; overflow-y: auto; 
     background: var(--bg-page);
+    padding-bottom: 60px; /* Espace pour éviter coupure footer mobile */
 }
-.page-section.active { display: block; }
+.page-section.active { display: block; animation: fadeIn 0.4s ease-out; }
+.page-section.hidden { display: none !important; }
 
-/* Cas spécial pour la carte : pas de scroll global, on veut du plein écran */
-#app-container.active { display: flex; overflow: hidden; }
+/* Carte Plein Écran */
+#app-container.active { display: flex; overflow: hidden; padding-bottom: 0; }
 
-/* CACHER LA BARRE DE DÉFILEMENT (Scroll Invisible mais fonctionnel) */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Scrollbars Invisibles mais fonctionnelles */
 #sidebar, #randonnees-list, .page-section, #info-panel .panel-content {
-    scrollbar-width: none; /* Pour Firefox */
-    -ms-overflow-style: none; /* Pour IE/Edge */
+    scrollbar-width: none; -ms-overflow-style: none;
 }
 #sidebar::-webkit-scrollbar, 
 #randonnees-list::-webkit-scrollbar, 
 .page-section::-webkit-scrollbar,
 #info-panel .panel-content::-webkit-scrollbar {
-    display: none; /* Pour Chrome, Safari */
+    display: none;
 }
 
 /* =========================================
-   4. ACCUEIL (HERO & FEATURES)
+   4. ACCUEIL (HERO)
    ========================================= */
 .hero {
-    min-height: 100vh; width: 100%;
+    min-height: 80vh; width: 100%;
     background: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.55)), url('photos/banniere.JPG');
     background-size: cover; background-position: center;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -97,7 +99,6 @@ header nav a.active { color: var(--accent); }
     font-size: 4rem; font-weight: 900; text-transform: uppercase; 
     margin-bottom: 20px; text-shadow: 0 4px 15px rgba(0,0,0,0.5); color:white; 
 }
-.hero p { font-size: 1.3rem; margin-bottom: 40px; font-weight: 600; opacity: 0.9; }
 .cta-button { 
     padding: 18px 45px; background: var(--accent); color: white; border: none; 
     font-size: 1rem; font-weight: 800; border-radius: 50px; cursor: pointer; 
@@ -105,7 +106,6 @@ header nav a.active { color: var(--accent); }
 }
 .cta-button:hover { transform: translateY(-3px); background: var(--accent-hover); }
 
-/* --- FEATURES (3 COLONNES) --- */
 .features-section {
     background: white; padding: 80px 10%;
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px;
@@ -125,7 +125,84 @@ header nav a.active { color: var(--accent); }
 .feature-card p { color: var(--text-light); line-height: 1.6; }
 
 /* =========================================
-   5. APP CARTE (LAYOUT & SIDEBAR)
+   5. GALERIE (BANNIÈRES IMMERSIVES)
+   ========================================= */
+.gallery-header {
+    text-align: center;
+    padding: 60px 20px 40px;
+    background: white;
+}
+.gallery-header h2 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 2.5rem;
+    color: var(--primary);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    font-weight: 900;
+}
+.gallery-header p {
+    color: var(--text-light);
+    font-size: 1.1rem;
+}
+
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 30px;
+    padding: 20px 8% 80px;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.rando-banner-card {
+    position: relative;
+    height: 280px;
+    border-radius: 20px;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.4s;
+    background: #000;
+}
+
+.rando-banner-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+    z-index: 10;
+}
+
+.rando-banner-img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform 0.8s ease;
+    opacity: 0.9;
+}
+
+.rando-banner-card:hover .rando-banner-img {
+    transform: scale(1.1); opacity: 1;
+}
+
+.rando-banner-overlay {
+    position: absolute;
+    bottom: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(to top, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.3) 50%, transparent 100%);
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 25px; box-sizing: border-box;
+}
+
+.banner-title {
+    color: white; font-family: 'Montserrat', sans-serif;
+    font-weight: 800; font-size: 1.6rem; margin: 0 0 8px 0;
+    text-shadow: 0 4px 10px rgba(0,0,0,0.6);
+    text-transform: uppercase; letter-spacing: -0.5px;
+}
+
+.banner-meta {
+    display: flex; align-items: center; gap: 12px;
+    font-weight: 700; color: #cbd5e1; font-size: 0.85rem;
+}
+
+/* =========================================
+   6. APP CARTE (LAYOUT)
    ========================================= */
 #sidebar { 
     width: 420px; min-width: 420px; height: 100%; 
@@ -142,68 +219,30 @@ header nav a.active { color: var(--accent); }
 .filter-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid #e2e8f0; background: white; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
 .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-#randonnees-list { 
-    flex-grow: 1; 
-    overflow-y: auto; 
-    padding: 10px 20px 80px 20px; /* Espace en bas pour le footer */
-}
+#randonnees-list { flex-grow: 1; overflow-y: auto; padding: 10px 20px 80px 20px; }
 
-/* --- STYLE DES FICHES RANDOS --- */
+/* Fiches Rando */
 .rando-item {
     display: flex; align-items: center; gap: 15px;
     padding: 15px; margin-bottom: 15px;
-    background: white; 
-    border: 1px solid #f1f5f9;
-    border-radius: 16px;
-    cursor: pointer; 
-    transition: all 0.3s ease;
+    background: white; border: 1px solid #f1f5f9; border-radius: 16px;
+    cursor: pointer; transition: all 0.3s ease;
     box-shadow: 0 4px 6px rgba(0,0,0,0.02);
 }
-.rando-item:hover { 
-    transform: translateY(-3px); 
-    box-shadow: 0 10px 20px rgba(0,0,0,0.08); 
-    border-color: #e2e8f0;
-}
-.rando-item.active { 
-    border: 2px solid var(--accent); 
-    background: #fff7ed; 
-    box-shadow: 0 10px 20px rgba(249, 115, 22, 0.15);
-}
+.rando-item:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.08); border-color: #e2e8f0; }
+.rando-item.active { border: 2px solid var(--accent); background: #fff7ed; box-shadow: 0 10px 20px rgba(249, 115, 22, 0.15); }
 
-.list-thumb { 
-    width: 70px; height: 70px; 
-    border-radius: 12px; 
-    object-fit: cover; 
-    background: #e2e8f0; flex-shrink: 0; 
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
+.list-thumb { width: 70px; height: 70px; border-radius: 12px; object-fit: cover; background: #e2e8f0; flex-shrink: 0; }
 .list-content { flex-grow: 1; }
-.list-content h3 { 
-    font-size: 1.05rem; 
-    font-weight: 800; 
-    margin-bottom: 5px; 
-    color: var(--primary); 
-    letter-spacing: -0.5px;
-}
+.list-content h3 { font-size: 1.05rem; font-weight: 800; margin-bottom: 5px; color: var(--primary); }
 .list-content p { font-size: 0.85rem; color: var(--text-light); margin: 0; }
 .diff-badge { display: inline-block; padding: 3px 10px; border-radius: 10px; color: white; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; margin-top: 6px; }
 
-/* Footer Sidebar */
-.sidebar-footer {
-    text-align: center;
-    padding: 20px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: #94a3b8;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    border-top: 1px solid #f1f5f9;
-    background: white;
-}
+.sidebar-footer { text-align: center; padding: 20px; font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; border-top: 1px solid #f1f5f9; background: white; }
 .sidebar-footer span { color: #ef4444; font-size: 0.9rem; }
 
 /* =========================================
-   6. PANNEAU DÉTAILS
+   7. PANNEAU DÉTAILS
    ========================================= */
 #info-panel {
     position: absolute; top: 20px; right: 20px; bottom: 20px; width: 420px;
@@ -241,7 +280,7 @@ header nav a.active { color: var(--accent); }
 .chart-container { background: #fff; padding: 10px; border-radius: 12px; border: 1px solid #f1f5f9; margin: 20px 0; height: 180px; }
 
 /* =========================================
-   7. À PROPOS & FOOTER PRINCIPAL
+   8. À PROPOS & FOOTER
    ========================================= */
 .about-container { max-width: 1100px; margin: 40px auto; padding: 0 30px 80px; }
 .about-main-title { text-align: center; font-size: 2.5rem; margin-bottom: 60px; text-transform: uppercase; color: var(--primary); }
@@ -252,11 +291,7 @@ header nav a.active { color: var(--accent); }
 .about-text { flex: 1; display: flex; flex-direction: column; justify-content: center; }
 .about-text p { font-size: 1.05rem; line-height: 1.8; margin-bottom: 20px; color: var(--text-main); text-align: justify; }
 
-/* --- FOOTER SOMBRE --- */
-.site-footer {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    color: white; padding: 50px 20px; text-align: center;
-}
+.site-footer { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 50px 20px; text-align: center; }
 .footer-content { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 25px; }
 .footer-brand { display: flex; align-items: center; gap: 10px; }
 .footer-logo-img { width: 40px; height: auto; }
@@ -269,9 +304,39 @@ header nav a.active { color: var(--accent); }
 .footer-nav-btn:hover { background: var(--accent); border-color: var(--accent); box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4); transform: translateY(-2px); }
 .copyright { font-size: 0.85rem; color: rgba(255, 255, 255, 0.5); margin-top: 20px; }
 
+/* DIVERS */
+.cinematic-container { height: 500px; width: 100%; background: #000; position: relative; }
+.cinematic-video { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+.cinematic-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.cinematic-overlay blockquote { font-family: 'Montserrat', sans-serif; font-size: 2.2rem; font-weight: 800; color: white; text-align: center; text-transform: uppercase; text-shadow: 0 4px 15px rgba(0,0,0,0.5); max-width: 800px; border: none; }
+.citation-author { color: var(--accent); font-weight: 700; letter-spacing: 4px; margin-top: 15px; }
+
+#back-to-top { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: white; width: 45px; height: 45px; border-radius: 50%; border: none; cursor: pointer; display: none; align-items: center; justify-content: center; z-index: 3000; }
+#back-to-top.visible { display: flex; }
+.fav-btn-list { background: none; border: none; font-size: 1.2rem; color: #cbd5e1; cursor: pointer; margin-left: auto; transition: 0.2s; }
+.fav-btn-list.active { color: #ef4444; }
+
+/* TAGS */
+.tags-container { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.rando-tag { font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; display: inline-block; }
+
+/* LEAFLET TWEAKS */
+.marker-cluster-small, .marker-cluster-medium, .marker-cluster-large { background-color: rgba(16, 185, 129, 0.6) !important; }
+.marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div { background-color: rgba(16, 185, 129, 0.9) !important; color: white !important; font-weight: 800 !important; border-radius: 50%; font-family: 'Nunito Sans', sans-serif; }
+.leaflet-popup-content-wrapper { padding: 0; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+.leaflet-popup-content { margin: 0 !important; width: 260px !important; }
+.popup-header-img { width: 100%; height: 140px; object-fit: cover; display: block; }
+.popup-info { padding: 15px; text-align: center; }
+.popup-title { font-weight: 800; font-size: 1.1rem; color: #0f172a; margin-bottom: 5px; display: block; }
+.marker-pin { width: 40px; height: 40px; border-radius: 50%; background: #f97316; border: 3px solid white; box-shadow: 0 4px 10px rgba(249, 115, 22, 0.4); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; position: relative; z-index: 20; }
+.marker-pin::after { content: ''; position: absolute; width: 100%; height: 100%; border-radius: 50%; background: rgba(249, 115, 22, 0.6); z-index: -1; animation: pulse 2s infinite; }
+@keyframes pulse { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(2.5); opacity: 0; } }
+.map-switch-btn-container { margin-top: 10px; margin-right: 10px; }
+.map-switch-btn { width: 44px; height: 44px; background: white; border-radius: 50%; border: none; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--primary); transition: all 0.3s ease; }
+.map-switch-btn:hover { transform: scale(1.1); color: var(--accent); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2); }
 
 /* =========================================
-   8. RESPONSIVE MOBILE
+   9. RESPONSIVE MOBILE
    ========================================= */
 @media (max-width: 900px) {
     header { padding: 0 20px; }
@@ -300,98 +365,8 @@ header nav a.active { color: var(--accent); }
 
     .about-row { flex-direction: column; gap: 30px; }
     .about-row.reverse-mobile { flex-direction: column-reverse; }
+    
+    .gallery-grid { grid-template-columns: 1fr; padding: 20px; }
+    .rando-banner-card { height: 220px; }
+    .banner-title { font-size: 1.3rem; }
 }
-
-/* DIVERS */
-.cinematic-container { height: 500px; width: 100%; background: #000; position: relative; }
-.cinematic-video { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
-.cinematic-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.cinematic-overlay blockquote { font-family: 'Montserrat', sans-serif; font-size: 2.2rem; font-weight: 800; color: white; text-align: center; text-transform: uppercase; text-shadow: 0 4px 15px rgba(0,0,0,0.5); max-width: 800px; border: none; }
-.citation-author { color: var(--accent); font-weight: 700; letter-spacing: 4px; margin-top: 15px; }
-
-#back-to-top { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: white; width: 45px; height: 45px; border-radius: 50%; border: none; cursor: pointer; display: none; align-items: center; justify-content: center; z-index: 3000; }
-#back-to-top.visible { display: flex; }
-.fav-btn-list { background: none; border: none; font-size: 1.2rem; color: #cbd5e1; cursor: pointer; margin-left: auto; transition: 0.2s; }
-.fav-btn-list.active { color: #ef4444; }
-
-
-/* =========================================
-   9. ELEMENTS "SEXY" POUR LA CARTE
-   ========================================= */
-
-/* --- 1. CLUSTERING (GROUPES DE MARQUEURS) --- */
-.marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
-    background-color: rgba(16, 185, 129, 0.6) !important; /* Vert émeraude transparent */
-}
-.marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
-    background-color: rgba(16, 185, 129, 0.9) !important; /* Vert plus foncé au centre */
-    color: white !important;
-    font-weight: 800 !important;
-    border-radius: 50%;
-    font-family: 'Nunito Sans', sans-serif;
-}
-
-/* --- 2. POPUPS MODERNES --- */
-.leaflet-popup-content-wrapper { padding: 0; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-.leaflet-popup-content { margin: 0 !important; width: 260px !important; }
-.popup-header-img { width: 100%; height: 140px; object-fit: cover; display: block; }
-.popup-info { padding: 15px; text-align: center; }
-.popup-title { font-weight: 800; font-size: 1.1rem; color: #0f172a; margin-bottom: 5px; display: block; }
-.popup-meta { font-size: 0.85rem; color: #64748b; }
-
-/* --- 3. MARQUEURS ANIMÉS (PULSATION) --- */
-.marker-pin {
-    width: 40px; height: 40px; border-radius: 50%; background: #f97316; border: 3px solid white;
-    box-shadow: 0 4px 10px rgba(249, 115, 22, 0.4); display: flex; align-items: center; justify-content: center;
-    font-size: 1.2rem; position: relative; z-index: 20;
-}
-.marker-pin::after {
-    content: ''; position: absolute; width: 100%; height: 100%; border-radius: 50%;
-    background: rgba(249, 115, 22, 0.6); z-index: -1; animation: pulse 2s infinite;
-}
-@keyframes pulse {
-    0% { transform: scale(1); opacity: 0.8; }
-    100% { transform: scale(2.5); opacity: 0; }
-}
-
-/* --- 4. BOUTONS CARTE & SATELLITE --- */
-.leaflet-bar { border: none !important; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important; }
-.leaflet-bar a {
-    border-bottom: 1px solid #f1f5f9 !important; color: var(--primary) !important;
-    background: rgba(255, 255, 255, 0.9) !important; backdrop-filter: blur(5px);
-    border-radius: 8px !important;
-}
-.leaflet-bar a:last-child { border-bottom: none !important; }
-.leaflet-bar a:hover { background: white !important; color: var(--accent) !important; }
-
-.map-switch-btn-container { margin-top: 10px; margin-right: 10px; }
-.map-switch-btn {
-    width: 44px; height: 44px; background: white; border-radius: 50%; border: none;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); cursor: pointer; display: flex; align-items: center; justify-content: center;
-    font-size: 1.2rem; color: var(--primary); transition: all 0.3s ease;
-}
-.map-switch-btn:hover { transform: scale(1.1); color: var(--accent); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2); }
-/* --- NOUVEAU : STYLE DES TAGS --- */
-.tags-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 8px;
-}
-
-.rando-tag {
-    font-size: 0.7rem;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    display: inline-block;
-}
-
-/* Couleurs spécifiques pour certains tags (optionnel) */
-.tag-bivouac { background: #dbeafe; color: #1e40af; } /* Bleu */
-.tag-alpinisme { background: #fce7f3; color: #9d174d; } /* Rose */
-.tag-neige { background: #f1f5f9; color: #475569; } /* Gris */
-.tag-sunset { background: #ffedd5; color: #9a3412; } /* Orange */
-.tag-default { background: #f3f4f6; color: #374151; } /* Défaut */
