@@ -309,7 +309,9 @@ function addRandoToList(data, index, photos, gpxLayer, tagsHTML) {
             else zoomAction();
         }
         
-        if (window.innerWidth < 768) { document.getElementById('sidebar').classList.add('minimized'); }
+        // Sur mobile, on minimise la sidebar quand on clique sur une rando pour laisser la place au panel
+        /* MODIF : On ne minimise plus ici, on laisse le panel prendre le dessus */
+        /* if (window.innerWidth < 768) { document.getElementById('sidebar').classList.add('minimized'); } */
     });
     list.appendChild(item);
 }
@@ -395,10 +397,12 @@ window.filtrerRandos = function(filtre) {
 
 
 // ==========================================
-// 8. UI DÉTAILS (VERSION MOBILE AMÉLIORÉE)
+// 8. UI DÉTAILS (VERSION MOBILE FINALISÉE)
 // ==========================================
 function afficherDetails(data, gpxLayer, tagsHTML) {
     const panel = document.getElementById('info-panel');
+    const sidebar = document.getElementById('sidebar'); // Référence à la sidebar
+    
     const displayDate = data.calculatedDate || "Date inconnue";
     const diffColor = getDiffColor(data.difficulty);
     const startLat = data.startPoint ? data.startPoint.lat : 0;
@@ -406,6 +410,7 @@ function afficherDetails(data, gpxLayer, tagsHTML) {
 
     const topPhotos = data.safePhotos.slice(0, 2);
     const bottomPhotos = data.safePhotos.slice(2);
+    
     let topGalleryHTML = '';
     if(topPhotos.length > 0) {
         topGalleryHTML = '<div class="photo-grid-top" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">';
@@ -414,7 +419,7 @@ function afficherDetails(data, gpxLayer, tagsHTML) {
     }
 
     panel.innerHTML = `
-        <div class="mobile-toggle-bar" onclick="toggleMobilePanel('info-panel')"><i class="fa-solid fa-chevron-down"></i></div>
+        <div class="mobile-toggle-bar" id="panel-toggle-bar"><i class="fa-solid fa-chevron-down"></i></div>
         
         <div class="panel-header">
             <h2 style="margin:0;">${data.title}</h2>
@@ -445,22 +450,14 @@ function afficherDetails(data, gpxLayer, tagsHTML) {
             <a href="${data.gpx}" download class="download-btn"><i class="fa-solid fa-download"></i> Télécharger GPX</a>
             
             <div style="color:#334155; line-height:1.6; margin: 20px 0; font-size:0.95rem;">${marked.parse(data.description || "")}</div>
-            
             <div class="chart-container"><canvas id="elevationChart"></canvas></div>
-
-            <div id="weather-widget" style="background:#f0f9ff; padding:15px; border-radius:12px; margin-top:20px; margin-bottom:20px; border:1px solid #bae6fd; display:flex; align-items:center; gap:15px;">
-                <i class="fa-solid fa-cloud-sun" style="font-size:1.5rem; color:#0ea5e9;"></i>
-                <div style="flex-grow:1;">
-                    <span style="font-weight:bold; color:#0284c7; display:block;">Météo au départ</span>
-                    <span id="weather-text" style="font-size:0.9rem; color:#334155;">Chargement...</span>
-                </div>
-            </div>
-
+            
             <h3 style="font-size:1rem; margin-top:10px; color:#334155;">📸 Plus de photos</h3>
             <div id="rando-photos-bottom" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; padding-bottom:20px;"></div>
         </div>
     `;
 
+    // Stats
     const dist = (gpxLayer.get_distance() / 1000).toFixed(1); 
     const elev = gpxLayer.get_elevation_gain().toFixed(0);    
     const time = msToTime(gpxLayer.get_moving_time());
@@ -469,8 +466,7 @@ function afficherDetails(data, gpxLayer, tagsHTML) {
         <div class="stat-item"><span class="stat-value">${elev} m</span><span class="stat-label">Dénivelé</span></div>
         <div class="stat-item"><span class="stat-value">${time}</span><span class="stat-label">Temps</span></div>`;
 
-    chargerMeteo(startLat, startLng);
-
+    // Photos du bas
     const pContainerBottom = document.getElementById('rando-photos-bottom');
     if(bottomPhotos.length > 0) {
         bottomPhotos.forEach(url => {
@@ -481,31 +477,70 @@ function afficherDetails(data, gpxLayer, tagsHTML) {
     } else { pContainerBottom.innerHTML = "<p style='color:#94a3b8; font-style:italic; font-size:0.9rem;'>Pas d'autres photos.</p>"; }
     
     if(typeof refreshFsLightbox === 'function') refreshFsLightbox();
-
     createChart(gpxLayer);
 
-    // --- ACTIONS BOUTONS ---
-    // 1. Fermer
+    // --- LOGIQUE D'OUVERTURE / FERMETURE ---
+
+    // 1. ACTION FERMER (Croix) : On ferme le panneau et on réaffiche la liste
     document.getElementById('close-panel-btn').onclick = () => {
         panel.classList.add('hidden');
+        panel.classList.remove('minimized');
+        
+        // IMPORTANT : On réaffiche la liste des randos (sidebar)
+        if(window.innerWidth < 900) {
+            sidebar.classList.remove('hidden-mobile');
+        }
+
         if(hoverMarker) map.removeLayer(hoverMarker);
         document.querySelectorAll('.rando-item').forEach(i => i.classList.remove('active'));
     };
 
-    // 2. Voir Carte (Réduit le panneau)
+    // 2. ACTION VOIR CARTE : On minimise le panneau ET on cache la liste
     document.getElementById('btn-show-map').onclick = () => {
         panel.classList.add('minimized');
+        // On cache la sidebar pour ne voir QUE la carte
+        if(window.innerWidth < 900) {
+            sidebar.classList.add('hidden-mobile');
+        }
+        
         const icon = panel.querySelector('.mobile-toggle-bar i');
         if(icon) { icon.classList.remove('fa-chevron-down'); icon.classList.add('fa-chevron-up'); }
     };
 
+    // 3. CLIC SUR LA BARRE DU HAUT (Toggle)
+    document.getElementById('panel-toggle-bar').onclick = () => {
+        if (panel.classList.contains('minimized')) {
+            // Si on est minimisé, on réouvre en grand
+            panel.classList.remove('minimized');
+            const icon = panel.querySelector('.mobile-toggle-bar i');
+            if(icon) { icon.classList.remove('fa-chevron-up'); icon.classList.add('fa-chevron-down'); }
+        } else {
+            // Si on est grand, on minimise
+            panel.classList.add('minimized');
+            // On s'assure que la sidebar est cachée
+            if(window.innerWidth < 900) {
+                sidebar.classList.add('hidden-mobile');
+            }
+            const icon = panel.querySelector('.mobile-toggle-bar i');
+            if(icon) { icon.classList.remove('fa-chevron-down'); icon.classList.add('fa-chevron-up'); }
+        }
+    };
+
+    // --- OUVERTURE INITIALE ---
     document.getElementById('share-btn-action').onclick = () => partagerRando(data.title);
     
-    // Reset à l'ouverture
     panel.classList.remove('hidden');
     panel.classList.remove('minimized');
-    const icon = panel.querySelector('.mobile-toggle-bar i');
-    if(icon) { icon.classList.remove('fa-chevron-up'); icon.classList.add('fa-chevron-down'); }
+    
+    // Sur mobile, quand on ouvre une fiche, on cache la liste derrière
+    if(window.innerWidth < 900) {
+        // La liste (sidebar) n'est pas cachée mais le panel est en z-index supérieur
+        // Donc on voit juste le panel.
+        // Si on veut vraiment être sûr, on peut ajouter sidebar.classList.add('hidden-mobile') ici aussi
+        // mais le z-index 100 du panel suffit normalement.
+        const icon = panel.querySelector('.mobile-toggle-bar i');
+        if(icon) { icon.classList.remove('fa-chevron-up'); icon.classList.add('fa-chevron-down'); }
+    }
 }
 
 function generateTagsHTML(tagsArray) {

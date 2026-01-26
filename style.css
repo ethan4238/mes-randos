@@ -340,7 +340,7 @@ header nav a.active { color: var(--accent); }
 .map-switch-btn:hover { transform: scale(1.1); color: var(--accent); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2); }
 
 /* =========================================
-   9. RESPONSIVE MOBILE (MODIFIÉ POUR PANNEAU PLEIN ÉCRAN)
+   9. RESPONSIVE MOBILE (CORRIGÉ)
    ========================================= */
 @media (max-width: 900px) {
     header { padding: 0 20px; }
@@ -358,33 +358,66 @@ header nav a.active { color: var(--accent); }
     .features-section { grid-template-columns: 1fr; padding: 60px 20px; margin-top: 0; }
 
     /* Carte Mobile */
-    #app-container { display: block; position: relative; height: calc(100vh - var(--header-height)); } 
-    #sidebar { width: 100%; height: 60vh; position: absolute; bottom: 0; border-radius: 20px 20px 0 0; }
-    #sidebar.minimized { height: 60px; overflow: hidden; }
+    #app-container { 
+        display: block; 
+        position: relative; 
+        height: calc(100vh - var(--header-height)); 
+        overflow: hidden; /* Important pour éviter le scroll global */
+    } 
+
+    /* LA LISTE (SIDEBAR) */
+    #sidebar { 
+        width: 100%; 
+        height: 60vh; /* Hauteur par défaut de la liste */
+        position: absolute; 
+        bottom: 0; left: 0; 
+        border-radius: 20px 20px 0 0; 
+        z-index: 50; /* Au-dessus de la carte, mais sous le panel */
+        transition: transform 0.3s ease;
+        background: white;
+        box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+    }
+    
+    /* Quand on veut voir la carte en grand, on cache la liste */
+    #sidebar.hidden-mobile {
+        transform: translateY(100%); /* Elle descend hors écran */
+    }
+
+    /* Le petit tiroir pour réouvrir la liste */
     .mobile-toggle-bar { display: flex; height: 40px; align-items: center; justify-content: center; background: white; border-radius: 20px 20px 0 0; cursor: pointer; }
 
-    /* --- MODIFICATION ICI : PANNEAU PLEIN ÉCRAN PAR DÉFAUT --- */
+    /* LE PANNEAU DÉTAILS (FICHE RANDO) */
     #info-panel { 
         width: 100%; 
         height: 100%; /* PREND TOUTE LA HAUTEUR */
-        top: 0; bottom: 0; right: 0; left: 0; 
+        position: absolute;
+        top: 0; left: 0; 
         border-radius: 0; 
         transform: translateY(0); 
-        z-index: 2000; /* Passe au-dessus de tout */
+        z-index: 100; /* Au-dessus de tout */
+        background: white;
     }
 
     #info-panel.hidden { 
-        transform: translateY(110%); 
+        transform: translateY(110%); /* Caché en bas */
     }
 
-    /* Quand on veut voir la carte (mode réduit) */
+    /* Quand on clique sur "Voir itinéraire", il devient un petit volet en bas */
     #info-panel.minimized { 
-        height: 180px; /* Petit tiroir en bas */
+        height: auto; /* S'adapte au contenu */
+        max-height: 200px;
         top: auto; 
         bottom: 0;
         border-radius: 20px 20px 0 0;
+        box-shadow: 0 -5px 20px rgba(0,0,0,0.15);
+        padding-bottom: 20px;
+    }
+    
+    /* On cache le contenu inutile en mode minimisé */
+    #info-panel.minimized .panel-content {
         overflow: hidden;
     }
+    #info-panel.minimized .panel-header h2 { font-size: 1rem; }
 
     .about-row { flex-direction: column; gap: 30px; }
     .about-row.reverse-mobile { flex-direction: column-reverse; }
