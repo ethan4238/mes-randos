@@ -165,9 +165,7 @@ header nav a.active { color: var(--accent); }
     background: #000;
 }
 
-.rando-banner-card:active {
-    transform: scale(0.98); /* Petit effet d'enfoncement au toucher sur mobile */
-}
+.rando-banner-card:active { transform: scale(0.98); }
 
 .rando-banner-card:hover {
     transform: translateY(-8px);
@@ -206,7 +204,7 @@ header nav a.active { color: var(--accent); }
 }
 
 /* =========================================
-   6. APP CARTE (LAYOUT)
+   6. APP CARTE (LAYOUT & SIDEBAR)
    ========================================= */
 #sidebar { 
     width: 420px; min-width: 420px; height: 100%; 
@@ -215,13 +213,33 @@ header nav a.active { color: var(--accent); }
 }
 #map { flex-grow: 1; height: 100%; z-index: 1; background: #ddd; }
 
-#sidebar h2 { padding: 20px 25px; font-size: 1.4rem; border-bottom: 1px solid #f1f5f9; }
-.search-container { padding: 15px 25px; }
-#search-input { width: 100%; padding: 14px 20px; border-radius: 50px; border: 1px solid #e2e8f0; outline: none; background: #f8fafc; }
+#sidebar h2 { padding: 20px 25px 10px; font-size: 1.4rem; border-bottom: 1px solid transparent; }
 
-.filter-buttons { padding: 0 25px 20px; display: flex; gap: 8px; flex-wrap: wrap; }
-.filter-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid #e2e8f0; background: white; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
-.filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+/* RECHERCHE OPTIMISÉE */
+.search-container { padding: 0 25px 15px; }
+#search-input { 
+    width: 100%; padding: 12px 20px; border-radius: 12px; 
+    border: 1px solid #e2e8f0; outline: none; background: #f1f5f9; font-weight: 600;
+}
+#search-input:focus { background: white; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1); }
+
+/* FILTRES DÉFILANTS (SCROLL HORIZONTAL) */
+.filter-buttons { 
+    padding: 0 25px 15px; 
+    display: flex; gap: 10px; 
+    overflow-x: auto; white-space: nowrap; flex-wrap: nowrap;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE */
+}
+.filter-buttons::-webkit-scrollbar { display: none; } /* Chrome */
+
+.filter-btn { 
+    flex-shrink: 0; padding: 8px 16px; border-radius: 20px; 
+    border: 1px solid #e2e8f0; background: white; 
+    font-size: 0.85rem; font-weight: 700; cursor: pointer; 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+.filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 10px rgba(15, 23, 42, 0.3); }
 
 #randonnees-list { flex-grow: 1; overflow-y: auto; padding: 10px 20px 80px 20px; }
 
@@ -340,7 +358,7 @@ header nav a.active { color: var(--accent); }
 .map-switch-btn:hover { transform: scale(1.1); color: var(--accent); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2); }
 
 /* =========================================
-   9. RESPONSIVE MOBILE (CORRIGÉ)
+   9. RESPONSIVE MOBILE (CORRIGÉ & OPTIMISÉ)
    ========================================= */
 @media (max-width: 900px) {
     header { padding: 0 20px; }
@@ -365,26 +383,42 @@ header nav a.active { color: var(--accent); }
         overflow: hidden; /* Important pour éviter le scroll global */
     } 
 
-    /* LA LISTE (SIDEBAR) */
+    /* LA LISTE (SIDEBAR) PLUS CONFORTABLE */
     #sidebar { 
         width: 100%; 
-        height: 60vh; /* Hauteur par défaut de la liste */
+        height: 70vh; /* Prend plus de place (70% de l'écran) */
         position: absolute; 
         bottom: 0; left: 0; 
-        border-radius: 20px 20px 0 0; 
-        z-index: 50; /* Au-dessus de la carte, mais sous le panel */
-        transition: transform 0.3s ease;
+        border-radius: 24px 24px 0 0; /* Plus arrondi */
+        z-index: 50; /* Au-dessus de la carte */
+        transition: transform 0.3s ease, height 0.3s ease;
         background: white;
-        box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+        box-shadow: 0 -10px 30px rgba(0,0,0,0.1);
+        display: flex; flex-direction: column;
     }
     
-    /* Quand on veut voir la carte en grand, on cache la liste */
-    #sidebar.hidden-mobile {
-        transform: translateY(100%); /* Elle descend hors écran */
+    /* Poignée pour montrer qu'on peut réduire */
+    .mobile-toggle-bar { 
+        min-height: 30px; 
+        display: flex; align-items: center; justify-content: center; cursor: pointer;
     }
+    .mobile-toggle-bar::before {
+        content: ''; width: 40px; height: 5px; background: #e2e8f0; border-radius: 10px; margin-top: 10px;
+    }
+    .mobile-toggle-bar i { display: none; } /* On cache l'icone flèche */
 
-    /* Le petit tiroir pour réouvrir la liste */
-    .mobile-toggle-bar { display: flex; height: 40px; align-items: center; justify-content: center; background: white; border-radius: 20px 20px 0 0; cursor: pointer; }
+    /* Mode Minimisé (Pour voir la carte) */
+    #sidebar.minimized { 
+        height: 140px; /* On voit juste la recherche */
+        overflow: hidden;
+    }
+    /* Quand minimisé, on cache la liste des randos */
+    #sidebar.minimized #randonnees-list { display: none; }
+
+    /* Quand on veut voir la carte en grand (cachée par le panel détails) */
+    #sidebar.hidden-mobile {
+        transform: translateY(100%);
+    }
 
     /* LE PANNEAU DÉTAILS (FICHE RANDO) */
     #info-panel { 
@@ -413,10 +447,7 @@ header nav a.active { color: var(--accent); }
         padding-bottom: 20px;
     }
     
-    /* On cache le contenu inutile en mode minimisé */
-    #info-panel.minimized .panel-content {
-        overflow: hidden;
-    }
+    #info-panel.minimized .panel-content { overflow: hidden; }
     #info-panel.minimized .panel-header h2 { font-size: 1rem; }
 
     .about-row { flex-direction: column; gap: 30px; }
