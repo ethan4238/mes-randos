@@ -165,6 +165,10 @@ header nav a.active { color: var(--accent); }
     background: #000;
 }
 
+.rando-banner-card:active {
+    transform: scale(0.98); /* Petit effet d'enfoncement au toucher sur mobile */
+}
+
 .rando-banner-card:hover {
     transform: translateY(-8px);
     box-shadow: 0 20px 40px rgba(0,0,0,0.25);
@@ -336,7 +340,7 @@ header nav a.active { color: var(--accent); }
 .map-switch-btn:hover { transform: scale(1.1); color: var(--accent); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2); }
 
 /* =========================================
-   9. RESPONSIVE MOBILE
+   9. RESPONSIVE MOBILE (MODIFIÉ POUR PANNEAU PLEIN ÉCRAN)
    ========================================= */
 @media (max-width: 900px) {
     header { padding: 0 20px; }
@@ -359,9 +363,28 @@ header nav a.active { color: var(--accent); }
     #sidebar.minimized { height: 60px; overflow: hidden; }
     .mobile-toggle-bar { display: flex; height: 40px; align-items: center; justify-content: center; background: white; border-radius: 20px 20px 0 0; cursor: pointer; }
 
-    #info-panel { width: 100%; height: 75vh; top: auto; bottom: 0; right: 0; left: 0; border-radius: 20px 20px 0 0; transform: translateY(0); }
-    #info-panel.hidden { transform: translateY(110%); }
-    #info-panel.minimized { height: 60px; overflow: hidden; }
+    /* --- MODIFICATION ICI : PANNEAU PLEIN ÉCRAN PAR DÉFAUT --- */
+    #info-panel { 
+        width: 100%; 
+        height: 100%; /* PREND TOUTE LA HAUTEUR */
+        top: 0; bottom: 0; right: 0; left: 0; 
+        border-radius: 0; 
+        transform: translateY(0); 
+        z-index: 2000; /* Passe au-dessus de tout */
+    }
+
+    #info-panel.hidden { 
+        transform: translateY(110%); 
+    }
+
+    /* Quand on veut voir la carte (mode réduit) */
+    #info-panel.minimized { 
+        height: 180px; /* Petit tiroir en bas */
+        top: auto; 
+        bottom: 0;
+        border-radius: 20px 20px 0 0;
+        overflow: hidden;
+    }
 
     .about-row { flex-direction: column; gap: 30px; }
     .about-row.reverse-mobile { flex-direction: column-reverse; }

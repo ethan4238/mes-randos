@@ -33,16 +33,13 @@ const sections = document.querySelectorAll('.page-section');
 
 // Fonction pour changer de section
 window.showSection = function(targetId) {
-    // 1. Masquer toutes les sections
     sections.forEach(sec => {
         sec.classList.remove('active');
         sec.classList.add('hidden');
     });
     
-    // 2. Désactiver tous les liens
     navLinks.forEach(link => link.classList.remove('active'));
 
-    // 3. Afficher la section demandée
     const targetSection = document.getElementById(targetId);
     if(targetSection) {
         targetSection.classList.remove('hidden');
@@ -50,16 +47,13 @@ window.showSection = function(targetId) {
         targetSection.scrollTop = 0; 
     }
 
-    // 4. Activer le bouton du menu correspondant
     const activeLink = document.querySelector(`.nav-link[data-target="${targetId}"]`);
     if(activeLink) activeLink.classList.add('active');
 
-    // 5. Rafraîchir la carte si nécessaire
     if(targetId === 'app-container' && typeof map !== 'undefined') {
         setTimeout(() => { map.invalidateSize(); }, 300);
     }
 
-    // 6. Cacher le bouton "Retour haut" sur la carte
     const backBtn = document.getElementById('back-to-top');
     if (backBtn) {
         backBtn.classList.remove('visible');
@@ -67,7 +61,6 @@ window.showSection = function(targetId) {
     }
 }
 
-// RESTAURATION : Écouteurs d'événements sur les liens du menu
 navLinks.forEach(link => {
     link.addEventListener('click', (e) => {
         e.preventDefault();
@@ -80,13 +73,12 @@ navLinks.forEach(link => {
 
 window.goToMap = function() { showSection('app-container'); }
 
-// Fonction spéciale Galerie -> Carte
 window.openFromGallery = function(index) {
     showSection('app-container'); 
     setTimeout(() => {
         const item = document.getElementById(`item-${index}`);
         if(item) {
-            item.click(); // Simule le clic pour zoomer
+            item.click(); 
             item.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }, 500); 
@@ -104,7 +96,6 @@ var map = L.map('map', {
     zoom: 12, 
     layers: [mainLayer], 
     zoomControl: false,
-    // Optimisation mobile : empêche le drag accidentel si besoin, sinon laisser par défaut
     tap: !L.Browser.mobile 
 });
 
@@ -137,8 +128,6 @@ L.control.locate({ position: 'topleft', strings: { title: "Me localiser" } }).ad
 let myElevationChart = null;
 let hoverMarker = null; 
 let currentChartCoords = []; 
-
-// REGISTRE DES LAYERS (Indispensable pour le filtre carte)
 let allMapLayers = {}; 
 
 
@@ -155,8 +144,6 @@ async function chargerRandos() {
         
         if(listContainer) listContainer.innerHTML = ''; 
         if(galleryGrid) galleryGrid.innerHTML = '';
-        
-        // Reset du registre
         allMapLayers = {};
 
         console.log("Chargement Firebase...");
@@ -177,10 +164,7 @@ async function chargerRandos() {
             data.tags = data.tags || [];
             const tagsHTML = generateTagsHTML(data.tags);
 
-            // 1. Carte (Configuration)
             setupMapLayer(data, index, safePhotos, tagsHTML);
-
-            // 2. Galerie (Création des bannières)
             addRandoToGallery(data, index, safePhotos);
         });
 
@@ -232,11 +216,9 @@ function setupMapLayer(data, index, safePhotos, tagsHTML) {
         startMarker.on('click', (ev) => { L.DomEvent.stopPropagation(ev); afficherDetails(data, gpxLayer, tagsHTML); updateActiveItem(index); });
         startMarker.on('mouseover', function() { this.openPopup(); });
         
-        // Ajout initial à la carte
         if (markersCluster) markersCluster.addLayer(startMarker); else startMarker.addTo(map);
         gpxLayer.addTo(map);
 
-        // --- ENREGISTREMENT DANS LE REGISTRE POUR FILTRAGE ---
         allMapLayers[index] = { marker: startMarker, track: gpxLayer };
 
         gpxLayer.bindPopup(popupContent);
@@ -283,7 +265,6 @@ function addRandoToList(data, index, photos, gpxLayer, tagsHTML) {
     item.className = 'rando-item';
     item.id = `item-${index}`;
     
-    // Attributs pour filtrage
     item.setAttribute('data-diff', data.difficulty); 
     item.setAttribute('data-id', index); 
     const tagsString = (data.tags || []).join(',').toLowerCase();
@@ -346,7 +327,6 @@ function addRandoToGallery(data, index, photos) {
 
     const card = document.createElement('div');
     card.className = 'rando-banner-card';
-    // Appel direct de la fonction globale
     card.setAttribute('onclick', `openFromGallery('${index}')`);
 
     card.innerHTML = `
@@ -390,10 +370,8 @@ window.filtrerRandos = function(filtre) {
             if (diff === filtre || itemTags.includes(filtreLower)) isVisible = true;
         }
 
-        // Liste
         item.style.display = isVisible ? 'flex' : 'none';
 
-        // Carte
         if (allMapLayers[id]) {
             const { marker, track } = allMapLayers[id];
             if (isVisible) {
@@ -417,7 +395,7 @@ window.filtrerRandos = function(filtre) {
 
 
 // ==========================================
-// 8. UI DÉTAILS & HELPERS
+// 8. UI DÉTAILS (VERSION MOBILE AMÉLIORÉE)
 // ==========================================
 function afficherDetails(data, gpxLayer, tagsHTML) {
     const panel = document.getElementById('info-panel');
@@ -437,25 +415,39 @@ function afficherDetails(data, gpxLayer, tagsHTML) {
 
     panel.innerHTML = `
         <div class="mobile-toggle-bar" onclick="toggleMobilePanel('info-panel')"><i class="fa-solid fa-chevron-down"></i></div>
+        
         <div class="panel-header">
             <h2 style="margin:0;">${data.title}</h2>
             <button id="close-panel-btn" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#64748b;">×</button>
         </div>
+
         <div class="panel-content">
+            <button id="btn-show-map" style="width:100%; padding:14px; background:#0f172a; color:white; border:none; border-radius:12px; font-weight:bold; margin-bottom:20px; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer;">
+                <i class="fa-solid fa-map"></i> Voir l'itinéraire sur la carte
+            </button>
+
             <div style="margin-bottom:15px;">${tagsHTML}</div>
+            
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                 <span style="color:#64748b; font-weight:700; font-size:0.9rem;">📅 ${displayDate}</span>
                 <span style="background:${diffColor}; color:white; padding:4px 12px; border-radius:12px; font-weight:700; font-size:0.75rem;">${data.difficulty}</span>
             </div>
+
             ${topGalleryHTML}
+
             <div id="stats-placeholder" class="stats-grid">Chargement...</div>
+
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
                 <button id="share-btn-action" class="share-btn" style="margin:0;"><i class="fa-solid fa-paper-plane"></i> Partager</button>
                 <a href="https://www.google.com/maps/dir/?api=1&destination=${startLat},${startLng}" target="_blank" class="share-btn" style="background:#10b981; color:white; margin:0; text-decoration:none;"><i class="fa-solid fa-location-arrow"></i> S'y rendre</a>
             </div>
+
             <a href="${data.gpx}" download class="download-btn"><i class="fa-solid fa-download"></i> Télécharger GPX</a>
+            
             <div style="color:#334155; line-height:1.6; margin: 20px 0; font-size:0.95rem;">${marked.parse(data.description || "")}</div>
+            
             <div class="chart-container"><canvas id="elevationChart"></canvas></div>
+
             <div id="weather-widget" style="background:#f0f9ff; padding:15px; border-radius:12px; margin-top:20px; margin-bottom:20px; border:1px solid #bae6fd; display:flex; align-items:center; gap:15px;">
                 <i class="fa-solid fa-cloud-sun" style="font-size:1.5rem; color:#0ea5e9;"></i>
                 <div style="flex-grow:1;">
@@ -463,6 +455,7 @@ function afficherDetails(data, gpxLayer, tagsHTML) {
                     <span id="weather-text" style="font-size:0.9rem; color:#334155;">Chargement...</span>
                 </div>
             </div>
+
             <h3 style="font-size:1rem; margin-top:10px; color:#334155;">📸 Plus de photos</h3>
             <div id="rando-photos-bottom" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; padding-bottom:20px;"></div>
         </div>
@@ -491,14 +484,28 @@ function afficherDetails(data, gpxLayer, tagsHTML) {
 
     createChart(gpxLayer);
 
+    // --- ACTIONS BOUTONS ---
+    // 1. Fermer
     document.getElementById('close-panel-btn').onclick = () => {
         panel.classList.add('hidden');
         if(hoverMarker) map.removeLayer(hoverMarker);
         document.querySelectorAll('.rando-item').forEach(i => i.classList.remove('active'));
     };
+
+    // 2. Voir Carte (Réduit le panneau)
+    document.getElementById('btn-show-map').onclick = () => {
+        panel.classList.add('minimized');
+        const icon = panel.querySelector('.mobile-toggle-bar i');
+        if(icon) { icon.classList.remove('fa-chevron-down'); icon.classList.add('fa-chevron-up'); }
+    };
+
     document.getElementById('share-btn-action').onclick = () => partagerRando(data.title);
+    
+    // Reset à l'ouverture
     panel.classList.remove('hidden');
     panel.classList.remove('minimized');
+    const icon = panel.querySelector('.mobile-toggle-bar i');
+    if(icon) { icon.classList.remove('fa-chevron-up'); icon.classList.add('fa-chevron-down'); }
 }
 
 function generateTagsHTML(tagsArray) {
