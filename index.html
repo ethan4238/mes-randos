@@ -161,15 +161,16 @@
             </div>
 
             <div class="filter-buttons">
-                <button class="filter-btn active" onclick="window.filtrerRandos('all')">Tout</button>
-                <button class="filter-btn" onclick="window.filtrerRandos('favoris')" style="border-color: #ef4444; color: #ef4444;">❤️ Favoris</button>
-                <button class="filter-btn" onclick="window.filtrerRandos('Bivouac')">⛺ Bivouac</button>
-                <button class="filter-btn" onclick="window.filtrerRandos('Coucher de soleil')">🌅 Sunset</button>
-                <button class="filter-btn" onclick="window.filtrerRandos('Mer de nuage')">☁️ Nuages</button>
-                <button class="filter-btn" onclick="window.filtrerRandos('Alpinisme')">🧗 Alpinisme</button>
-                <button class="filter-btn" onclick="window.filtrerRandos('Neige')">❄️ Neige</button>
-                <button class="filter-btn" onclick="window.filtrerRandos('Lac')">💧 Lac</button>
-                <button class="filter-btn" onclick="window.filtrerRandos('Faune')">🐐 Faune</button>
+                <button class="filter-btn active text-btn" onclick="window.filtrerRandos('all')">Tout</button>
+                
+                <button class="filter-btn" onclick="window.filtrerRandos('favoris')" aria-label="Favoris">❤️</button>
+                <button class="filter-btn" onclick="window.filtrerRandos('Bivouac')" aria-label="Bivouac">⛺</button>
+                <button class="filter-btn" onclick="window.filtrerRandos('Coucher de soleil')" aria-label="Sunset">🌅</button>
+                <button class="filter-btn" onclick="window.filtrerRandos('Mer de nuage')" aria-label="Nuages">☁️</button>
+                <button class="filter-btn" onclick="window.filtrerRandos('Alpinisme')" aria-label="Alpinisme">🧗</button>
+                <button class="filter-btn" onclick="window.filtrerRandos('Neige')" aria-label="Neige">❄️</button>
+                <button class="filter-btn" onclick="window.filtrerRandos('Lac')" aria-label="Lac">💧</button>
+                <button class="filter-btn" onclick="window.filtrerRandos('Faune')" aria-label="Faune">🐐</button>
             </div>
 
             <div id="randonnees-list"></div>

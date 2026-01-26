@@ -224,23 +224,58 @@ header nav a.active { color: var(--accent); }
 #search-input:focus { background: white; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1); }
 
 /* FILTRES DÉFILANTS (SCROLL HORIZONTAL) */
+/* --- FILTRES EMOJIS (STYLE BULLES) --- */
 .filter-buttons { 
-    padding: 0 25px 15px; 
-    display: flex; gap: 10px; 
-    overflow-x: auto; white-space: nowrap; flex-wrap: nowrap;
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE */
+    /* Espace en bas pour l'ombre + Scroll horizontal */
+    padding: 5px 25px 20px; 
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+    
+    overflow-x: auto; 
+    white-space: nowrap; 
+    
+    /* Scroll fluide */
+    -webkit-overflow-scrolling: touch; 
+    scrollbar-width: none; -ms-overflow-style: none; 
 }
-.filter-buttons::-webkit-scrollbar { display: none; } /* Chrome */
+.filter-buttons::-webkit-scrollbar { display: none; }
 
+/* Style de base (Bouton Rond) */
 .filter-btn { 
-    flex-shrink: 0; padding: 8px 16px; border-radius: 20px; 
-    border: 1px solid #e2e8f0; background: white; 
-    font-size: 0.85rem; font-weight: 700; cursor: pointer; 
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    flex-shrink: 0; 
+    width: 42px;       /* Largeur fixe */
+    height: 42px;      /* Hauteur fixe = rond */
+    border-radius: 50%; /* Cercle parfait */
+    
+    border: 1px solid #e2e8f0; 
+    background: white; 
+    font-size: 1.2rem; /* Gros émoji */
+    
+    display: flex; align-items: center; justify-content: center; /* Centrage */
+    cursor: pointer; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    transition: transform 0.1s, background 0.2s;
 }
-.filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 10px rgba(15, 23, 42, 0.3); }
 
+/* Cas spécial pour le bouton "Tout" (Ovale) */
+.filter-btn.text-btn {
+    width: auto;       /* Largeur auto */
+    padding: 0 18px;   /* Marge interne */
+    border-radius: 25px; /* Ovale */
+    font-size: 0.85rem;
+    font-weight: 800;
+}
+
+.filter-btn:active { transform: scale(0.9); }
+
+.filter-btn.active { 
+    background: var(--primary); 
+    color: white; 
+    border-color: var(--primary); 
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+    transform: translateY(-2px); /* Petit effet de saut */
+}
 #randonnees-list { flex-grow: 1; overflow-y: auto; padding: 10px 20px 80px 20px; }
 
 /* Fiches Rando */
