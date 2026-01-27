@@ -573,8 +573,10 @@ function afficherDetails(data, gpxLayer, tagsHTML) {
     panel.classList.remove('minimized');
     
     // Sur mobile, on cache la liste derrière pour ne pas gêner
-    /* Note : Grâce au z-index du CSS, le panel passe devant, pas besoin de masquer la sidebar ici 
-       sauf si on veut optimiser les performances, mais pour la transition c'est mieux de laisser. */
+    if(window.innerWidth < 900) {
+        // Optionnel : masquer explicitement la sidebar si le z-index ne suffit pas
+        // sidebar.classList.add('hidden-mobile');
+    }
 }
 
 function generateTagsHTML(tagsArray) {
