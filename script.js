@@ -50,6 +50,14 @@ window.showSection = function(targetId) {
     const activeLink = document.querySelector(`.nav-link[data-target="${targetId}"]`);
     if(activeLink) activeLink.classList.add('active');
 
+    // Mise à jour de la Bottom Nav (Mobile)
+    const navItems = document.querySelectorAll('.nav-item');
+    if(navItems.length > 0) {
+        navItems.forEach(el => el.classList.remove('active'));
+        const targetNav = document.querySelector(`.nav-item[onclick*="'${targetId}'"]`);
+        if(targetNav) targetNav.classList.add('active');
+    }
+
     if(targetId === 'app-container' && typeof map !== 'undefined') {
         setTimeout(() => { map.invalidateSize(); }, 300);
     }
@@ -132,23 +140,60 @@ let allMapLayers = {};
 
 
 // ==========================================
-// 4. CHARGEMENT DES DONNÉES
+// 4. CHARGEMENT DES DONNÉES (AVEC SQUELETTES)
 // ==========================================
+
+// Fonction pour afficher les squelettes de chargement
+function showLoadingSkeletons() {
+    const listContainer = document.getElementById('randonnees-list');
+    const galleryGrid = document.getElementById('gallery-grid');
+
+    // Squelettes pour la liste (Sidebar)
+    if (listContainer) {
+        let listHTML = '';
+        for (let i = 0; i < 6; i++) {
+            listHTML += `
+                <div class="skeleton-item">
+                    <div class="skeleton-thumb skeleton"></div>
+                    <div class="skeleton-content">
+                        <div class="skeleton-line skeleton"></div>
+                        <div class="skeleton-line short skeleton"></div>
+                    </div>
+                </div>`;
+        }
+        listContainer.innerHTML = listHTML;
+    }
+
+    // Squelettes pour la galerie
+    if (galleryGrid) {
+        let galleryHTML = '';
+        for (let i = 0; i < 6; i++) {
+            galleryHTML += `<div class="skeleton-banner skeleton"></div>`;
+        }
+        galleryGrid.innerHTML = galleryHTML;
+    }
+}
+
 async function chargerRandos() {
     try {
+        // 1. AFFICHER LES SQUELETTES IMMÉDIATEMENT
+        showLoadingSkeletons();
+
         if (markersCluster) markersCluster.clearLayers();
         map.eachLayer(layer => { if (layer instanceof L.GPX || layer === hoverMarker) map.removeLayer(layer); });
         
         const listContainer = document.getElementById('randonnees-list');
         const galleryGrid = document.getElementById('gallery-grid');
         
-        if(listContainer) listContainer.innerHTML = ''; 
-        if(galleryGrid) galleryGrid.innerHTML = '';
         allMapLayers = {};
 
         console.log("Chargement Firebase...");
         const querySnapshot = await getDocs(collection(db, "randos"));
         
+        // 2. VIDEZ LES SQUELETTES UNE FOIS CHARGÉ
+        if(listContainer) listContainer.innerHTML = ''; 
+        if(galleryGrid) galleryGrid.innerHTML = '';
+
         querySnapshot.forEach((doc) => {
             const data = doc.data();
             const index = doc.id; 
@@ -277,7 +322,7 @@ function addRandoToList(data, index, photos, gpxLayer, tagsHTML) {
     const heartClass = isFav ? 'active' : '';
 
     item.innerHTML = `
-        <img src="${thumbUrl}" class="list-thumb" loading="lazy" onerror="this.src='https://via.placeholder.com/80?text=Img'">
+        <img src="${thumbUrl}" class="list-thumb" loading="lazy" onerror="this.src='https://via.placeholder.com/80?text=No+Img'">
         <div class="list-content">
             <h3 style="margin:0; font-size:1rem; color:#0f172a;">${data.title}</h3>
             <p style="margin:2px 0; font-size:0.85rem; color:#64748b;">Distance : <span id="dist-${index}">...</span></p>
@@ -308,10 +353,6 @@ function addRandoToList(data, index, photos, gpxLayer, tagsHTML) {
             if (markersCluster) markersCluster.zoomToShowLayer(gpxLayer, zoomAction); 
             else zoomAction();
         }
-        
-        // Sur mobile, on minimise la sidebar quand on clique sur une rando pour laisser la place au panel
-        /* MODIF : On ne minimise plus ici, on laisse le panel prendre le dessus */
-        /* if (window.innerWidth < 768) { document.getElementById('sidebar').classList.add('minimized'); } */
     });
     list.appendChild(item);
 }
@@ -397,11 +438,11 @@ window.filtrerRandos = function(filtre) {
 
 
 // ==========================================
-// 8. UI DÉTAILS (VERSION MOBILE FINALISÉE)
+// 8. UI DÉTAILS (VERSION MOBILE FINALISÉE & CORRIGÉE)
 // ==========================================
 function afficherDetails(data, gpxLayer, tagsHTML) {
     const panel = document.getElementById('info-panel');
-    const sidebar = document.getElementById('sidebar'); // Référence à la sidebar
+    const sidebar = document.getElementById('sidebar'); // Référence à la sidebar IMPORTANTE
     
     const displayDate = data.calculatedDate || "Date inconnue";
     const diffColor = getDiffColor(data.difficulty);
@@ -457,7 +498,6 @@ function afficherDetails(data, gpxLayer, tagsHTML) {
         </div>
     `;
 
-    // Stats
     const dist = (gpxLayer.get_distance() / 1000).toFixed(1); 
     const elev = gpxLayer.get_elevation_gain().toFixed(0);    
     const time = msToTime(gpxLayer.get_moving_time());
@@ -466,7 +506,8 @@ function afficherDetails(data, gpxLayer, tagsHTML) {
         <div class="stat-item"><span class="stat-value">${elev} m</span><span class="stat-label">Dénivelé</span></div>
         <div class="stat-item"><span class="stat-value">${time}</span><span class="stat-label">Temps</span></div>`;
 
-    // Photos du bas
+    chargerMeteo(startLat, startLng);
+
     const pContainerBottom = document.getElementById('rando-photos-bottom');
     if(bottomPhotos.length > 0) {
         bottomPhotos.forEach(url => {
@@ -479,14 +520,14 @@ function afficherDetails(data, gpxLayer, tagsHTML) {
     if(typeof refreshFsLightbox === 'function') refreshFsLightbox();
     createChart(gpxLayer);
 
-    // --- LOGIQUE D'OUVERTURE / FERMETURE ---
-
-    // 1. ACTION FERMER (Croix) : On ferme le panneau et on réaffiche la liste
+    // --- ACTIONS BOUTONS ---
+    
+    // FERMETURE
     document.getElementById('close-panel-btn').onclick = () => {
         panel.classList.add('hidden');
         panel.classList.remove('minimized');
         
-        // IMPORTANT : On réaffiche la liste des randos (sidebar)
+        // IMPORTANT : On réaffiche la liste des randos (sidebar) si sur mobile
         if(window.innerWidth < 900) {
             sidebar.classList.remove('hidden-mobile');
         }
@@ -495,7 +536,7 @@ function afficherDetails(data, gpxLayer, tagsHTML) {
         document.querySelectorAll('.rando-item').forEach(i => i.classList.remove('active'));
     };
 
-    // 2. ACTION VOIR CARTE : On minimise le panneau ET on cache la liste
+    // VOIR CARTE
     document.getElementById('btn-show-map').onclick = () => {
         panel.classList.add('minimized');
         // On cache la sidebar pour ne voir QUE la carte
@@ -507,17 +548,16 @@ function afficherDetails(data, gpxLayer, tagsHTML) {
         if(icon) { icon.classList.remove('fa-chevron-down'); icon.classList.add('fa-chevron-up'); }
     };
 
-    // 3. CLIC SUR LA BARRE DU HAUT (Toggle)
+    // TOGGLE BAR
     document.getElementById('panel-toggle-bar').onclick = () => {
         if (panel.classList.contains('minimized')) {
-            // Si on est minimisé, on réouvre en grand
+            // Réouverture en grand
             panel.classList.remove('minimized');
             const icon = panel.querySelector('.mobile-toggle-bar i');
             if(icon) { icon.classList.remove('fa-chevron-up'); icon.classList.add('fa-chevron-down'); }
         } else {
-            // Si on est grand, on minimise
+            // Minimisation
             panel.classList.add('minimized');
-            // On s'assure que la sidebar est cachée
             if(window.innerWidth < 900) {
                 sidebar.classList.add('hidden-mobile');
             }
@@ -526,21 +566,15 @@ function afficherDetails(data, gpxLayer, tagsHTML) {
         }
     };
 
-    // --- OUVERTURE INITIALE ---
     document.getElementById('share-btn-action').onclick = () => partagerRando(data.title);
     
+    // OUVERTURE INITIALE
     panel.classList.remove('hidden');
     panel.classList.remove('minimized');
     
-    // Sur mobile, quand on ouvre une fiche, on cache la liste derrière
-    if(window.innerWidth < 900) {
-        // La liste (sidebar) n'est pas cachée mais le panel est en z-index supérieur
-        // Donc on voit juste le panel.
-        // Si on veut vraiment être sûr, on peut ajouter sidebar.classList.add('hidden-mobile') ici aussi
-        // mais le z-index 100 du panel suffit normalement.
-        const icon = panel.querySelector('.mobile-toggle-bar i');
-        if(icon) { icon.classList.remove('fa-chevron-up'); icon.classList.add('fa-chevron-down'); }
-    }
+    // Sur mobile, on cache la liste derrière pour ne pas gêner
+    /* Note : Grâce au z-index du CSS, le panel passe devant, pas besoin de masquer la sidebar ici 
+       sauf si on veut optimiser les performances, mais pour la transition c'est mieux de laisser. */
 }
 
 function generateTagsHTML(tagsArray) {

@@ -40,11 +40,6 @@
 
     <header>
         <div class="logo">🏔️ Ethan Randonnées</div>
-        
-        <button class="menu-toggle" aria-label="Ouvrir le menu">
-            <i class="fa-solid fa-bars"></i>
-        </button>
-
         <nav id="main-nav">
             <a href="#" class="nav-link active" data-target="home">Accueil</a>
             <a href="#" class="nav-link" data-target="gallery">Galerie</a>
@@ -131,19 +126,16 @@
                     <img src="icones/montagne.png" alt="Logo" class="footer-logo-img">
                     <h3>Ethan Randonnées</h3>
                 </div>
-
                 <div class="footer-socials">
-                    <a href="https://www.instagram.com/ethan4238/" target="_blank" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
-                    <a href="https://www.tiktok.com/@ethan42380" target="_blank" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
-                    <a href="https://www.strava.com/athletes/132170603" target="_blank" aria-label="Strava"><i class="fa-brands fa-strava"></i></a>
+                    <a href="https://www.instagram.com/ethan4238/" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="https://www.tiktok.com/@ethan42380" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
+                    <a href="https://www.strava.com/athletes/132170603" target="_blank"><i class="fa-brands fa-strava"></i></a>
                 </div>
-
                 <div class="footer-nav">
                     <button class="footer-nav-btn" onclick="window.showSection('home')">Accueil</button>
                     <button class="footer-nav-btn" onclick="window.showSection('app-container')">Carte</button>
                     <button class="footer-nav-btn" onclick="window.showSection('about')">À Propos</button>
                 </div>
-
                 <p class="copyright">© 2026 Ethan Randonnées - Tous droits réservés.</p>
             </div>
         </footer>
@@ -152,8 +144,7 @@
     <section id="app-container" class="page-section hidden">
         <div id="sidebar">
             <div class="mobile-toggle-bar" onclick="window.toggleMobilePanel('sidebar')">
-                <i class="fa-solid fa-chevron-down"></i>
-            </div>
+                </div>
             <h2>Mes Sorties</h2>
             
             <div class="search-container">
@@ -162,7 +153,6 @@
 
             <div class="filter-buttons">
                 <button class="filter-btn active text-btn" onclick="window.filtrerRandos('all')">Tout</button>
-                
                 <button class="filter-btn" onclick="window.filtrerRandos('favoris')" aria-label="Favoris">❤️</button>
                 <button class="filter-btn" onclick="window.filtrerRandos('Bivouac')" aria-label="Bivouac">⛺</button>
                 <button class="filter-btn" onclick="window.filtrerRandos('Coucher de soleil')" aria-label="Sunset">🌅</button>
@@ -220,19 +210,16 @@
                     <img src="icones/montagne.png" alt="Logo" class="footer-logo-img">
                     <h3>Ethan Randonnées</h3>
                 </div>
-
                 <div class="footer-socials">
-                    <a href="https://www.instagram.com/ethan4238/" target="_blank" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
-                    <a href="https://www.tiktok.com/@ethan42380" target="_blank" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
-                    <a href="https://www.strava.com/athletes/132170603" target="_blank" aria-label="Strava"><i class="fa-brands fa-strava"></i></a>
+                    <a href="https://www.instagram.com/ethan4238/" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="https://www.tiktok.com/@ethan42380" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
+                    <a href="https://www.strava.com/athletes/132170603" target="_blank"><i class="fa-brands fa-strava"></i></a>
                 </div>
-
                 <div class="footer-nav">
                     <button class="footer-nav-btn" onclick="window.showSection('home')">Accueil</button>
                     <button class="footer-nav-btn" onclick="window.showSection('gallery')">Galerie</button>
                     <button class="footer-nav-btn" onclick="window.showSection('app-container')">Carte</button>
                 </div>
-
                 <p class="copyright">© 2026 Ethan Randonnées - Tous droits réservés.</p>
             </div>
         </footer>
@@ -259,6 +246,7 @@
         });
       }
     </script>
+
     <nav class="bottom-nav">
         <a href="#" class="nav-item active" onclick="window.showSection('home'); updateNav(this);">
             <i class="fa-solid fa-house"></i>
