@@ -259,5 +259,30 @@
         });
       }
     </script>
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item active" onclick="window.showSection('home'); updateNav(this);">
+            <i class="fa-solid fa-house"></i>
+            <span>Accueil</span>
+        </a>
+        <a href="#" class="nav-item" onclick="window.showSection('gallery'); updateNav(this);">
+            <i class="fa-solid fa-images"></i>
+            <span>Galerie</span>
+        </a>
+        <a href="#" class="nav-item" onclick="window.showSection('app-container'); updateNav(this);">
+            <i class="fa-solid fa-map-location-dot"></i>
+            <span>Carte</span>
+        </a>
+        <a href="#" class="nav-item" onclick="window.showSection('about'); updateNav(this);">
+            <i class="fa-solid fa-user"></i>
+            <span>Profil</span>
+        </a>
+    </nav>
+
+    <script>
+        function updateNav(element) {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+        }
+    </script>
 </body>
 </html>
