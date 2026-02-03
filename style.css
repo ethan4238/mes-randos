@@ -412,7 +412,7 @@ header nav a.active { color: var(--accent); }
    9. RESPONSIVE MOBILE (CORRIGÉ & OPTIMISÉ)
    ========================================= */
 @media (max-width: 900px) {
-    header { padding: 0 20px; }
+    header { display: none !important; } /* CORRECTION: On cache le header pour de bon */
     .menu-toggle { display: block; }
     
     #main-nav { 
@@ -440,7 +440,7 @@ header nav a.active { color: var(--accent); }
         height: 70vh; /* Prend plus de place (70% de l'écran) */
         position: absolute; 
         bottom: 0; left: 0; 
-        border-radius: 24px 24px 0 0; /* Plus arrondi */
+        border-radius: 25px 25px 0 0; /* CORRECTION: Coins arrondis symétriques */
         z-index: 50; /* Au-dessus de la carte */
         transition: transform 0.3s ease, height 0.3s ease;
         background: white;
@@ -448,6 +448,9 @@ header nav a.active { color: var(--accent); }
         display: flex; flex-direction: column;
     }
     
+    /* CORRECTION: On cache le footer de la sidebar sur mobile */
+    .sidebar-footer { display: none; }
+
     /* Poignée pour montrer qu'on peut réduire */
     .mobile-toggle-bar { 
         min-height: 30px; 
@@ -512,7 +515,7 @@ header nav a.active { color: var(--accent); }
     .bottom-nav {
         position: fixed;
         bottom: 0; left: 0; width: 100%;
-        height: 70px;
+        height: 70px; /* CORRECTION: Hauteur augmentée */
         background: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(10px);
         border-top: 1px solid #e2e8f0;
@@ -520,7 +523,7 @@ header nav a.active { color: var(--accent); }
         justify-content: space-around;
         align-items: center;
         z-index: 3000; /* Au-dessus de tout */
-        padding-bottom: env(safe-area-inset-bottom);
+        padding-bottom: env(safe-area-inset-bottom); /* Pour les iPhone récents */
         box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
     }
 
@@ -531,11 +534,12 @@ header nav a.active { color: var(--accent); }
         justify-content: center;
         text-decoration: none;
         color: #94a3b8;
-        font-size: 0.7rem;
+        font-size: 0.7rem; /* CORRECTION: Taille de police ajustée */
         font-weight: 700;
         transition: 0.2s;
         width: 100%;
         height: 100%;
+        padding-top: 8px; /* CORRECTION: Petit padding pour centrer visuellement */
     }
 
     .nav-item i { font-size: 1.4rem; margin-bottom: 4px; transition: 0.2s; }
@@ -543,7 +547,6 @@ header nav a.active { color: var(--accent); }
     .nav-item.active i { transform: translateY(-2px); }
 
     /* Ajustements pour la Bottom Nav */
-    header { display: none !important; }
     .page-section { top: 0 !important; padding-bottom: 90px !important; height: 100vh; }
     #app-container { height: 100vh !important; padding-bottom: 70px !important; }
     #sidebar { bottom: 70px; height: calc(60vh - 70px); }
